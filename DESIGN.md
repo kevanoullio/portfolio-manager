@@ -111,29 +111,43 @@
 
     ```
     Portfolio-Manager/
-    |-- dashboard.py
+    |-- portfolio-manager.py
     |-- config.py
+    |-- dashboard/
+    |   |--__init__.py
+    |   |-- dashboard.py
     |-- authentication/
-    |   |-- login.py
+    |   |--__init__.py
+    |   |-- account.py
     |-- database/
+    |   |--__init__.py
+    |   |-- database.db
     |   |-- database.py
     |   |-- schema.sql
     |-- data_extraction/
+    |   |--__init__.py
     |   |-- extract_csv_to_db.py
     |   |-- extract_email_to_db.py
     |   |-- extract_market_to_db.py
     |-- automation/
+    |   |--__init__.py
     |   |-- automate.py
     |-- data_analysis/
+    |   |--__init__.py
     |   |-- portfolio_analysis.py
     |-- trading_strategies/
+    |   |--__init__.py
     |   |-- trading_strategies.py
     |-- reports/
+    |   |--__init__.py
     |   |-- generate_reports.py
     |-- export/
+    |   |--__init__.py
     |   |-- export_options.py
     |   |-- format_data.py
     |   |-- export_data.py
+    |-- user_data/
+    |   |-- portfolio.db
 
     POSSIBLE ADDITIONS
     |-- templates/
@@ -157,10 +171,11 @@ Explanation of the directory structure:
 - `dashboard.py`: The main entry point of your application. It handles routing and serves as the starting point for the dashboard.
 - `config.py`: Configuration file to store any application-specific settings or variables.
 - `database/`: A folder dedicated to all database-related operations.
+  - `database.db`: Contains all data for program (user data, login, etc)
   - `database.py`: Contains functions and classes to interact with the SQLite3 database.
   - `schema.sql`: SQL script defining the table structures and relationships for the database.
 - `authentication/`: Contains modules related to user authentication.
-  - `login.py`: Handles the login functionality and user authentication.
+  - `account.py`: Handles the login functionality and user authentication.
 - `data_extraction/`: Contains modules for extracting data from email folders.
   - `extract.py`: Implements functions to extract data from emails using the specified libraries.
 - `automation/`: Handles automation tasks related to email extraction, data cleaning, and database updates.
@@ -173,6 +188,9 @@ Explanation of the directory structure:
   - `generate_reports.py`: Implements functions to generate reports based on specified criteria.
 - `export/`: Contains modules for exporting data and visualizations.
   - `export_data.py`: Implements functions to export data and visualizations in different formats.
+- `user_data/`: Contains all user specific portfolio data
+    |   |-- `portfolio.db`: Main database file for all user data
+Possible Additions
 - `templates/`: Contains HTML templates for the dashboard.
 - `static/`: Includes static assets such as CSS and JavaScript files.
   - `css/`: Contains CSS files for styling the dashboard.
