@@ -6,27 +6,32 @@
 
 # Local Modules
 from database.database import Database
-from authentication.account import Account
+from authentication.user_authentication import UserAuthentication
 
 
-# Class Definitions
+# Dashboard class
 class Dashboard:
     def __init__(self, database: Database):
         self.database = database
+        self.user_auth = UserAuthentication(database)
         self.running = False
-        self.logged_in = False
+        self.user_auth.logged_in = False
         self.portfolio_manager = False
         self.view_portfolio = False
         self.manage_portfolio = False
         self.import_from_email = False
+        self.custom_import_scripts = False
+        self.custom_imported_scripts = False
         self.manage_market_data = False
         self.statistical_analysis = False
         self.trading_strategies = False
         self.reports = False
         self.export_data = False
         self.automation = False
+        self.notifications = False
         self.account_settings = False
         self.help = False
+        self.logout = False
         self.exit = False
 
 
@@ -63,19 +68,17 @@ class Dashboard:
 
             choice = int(choice)
             if choice == 1:
-                # Code for creating an account
-                print("Creating an account...")
-                self.logged_in = True
+                self.user_auth.create_account()
+                if self.user_auth.logged_in:
+                    self.handle_main_menu()
             elif choice == 2:
-                # Code for logging into an account
-                print("Logging into an account...")
-                self.logged_in = True
-                self.handle_main_menu()
+                self.user_auth.login()
+                if self.user_auth.logged_in:
+                    self.handle_main_menu()
             elif choice == 0:
-                # Code for logging out
-                self.logged_in = False
-                # Code for exiting the program
-                self.running = False
+                self.user_auth.logout()
+                if not self.user_auth.logged_in:
+                    self.running = False
 
 
     def print_main_menu(self):
@@ -91,7 +94,7 @@ class Dashboard:
 
 
     def handle_main_menu(self):
-        while self.logged_in:
+        while self.user_auth.logged_in:
             self.print_main_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
@@ -108,19 +111,19 @@ class Dashboard:
                 self.handle_account_settings_menu()
             elif choice == 3:
                 # Code for saving changes
-                pass
+                print("Portfolio saved!")
             elif choice == 4:
                 # Code for discarding changes
-                pass
+                print("Most recent Portfolio changes discarded!")
             elif choice == 5:
                 # Code for logging out
-                self.logged_in = False
+                self.user_auth.logged_in = False
             elif choice == 6:
                 self.help = True
                 self.handle_help_menu()
             elif choice == 0:
                 # Code for logging out
-                self.logged_in = False
+                self.user_auth.logged_in = False
                 # Exit the program
                 self.running = False
 
@@ -130,12 +133,13 @@ class Dashboard:
         print("------------------")
         print("1. View Portfolio")
         print("2. Manage Portfolio")
-        print("3. Manage Market Data")
+        print("3. Market Data")
         print("4. Statistical Analysis")
         print("5. Trading Strategies")
         print("6. Reports")
         print("7. Export Data")
         print("8. Automation")
+        print("9. Notifications")
         print("0. Return to Main Menu")
 
 
@@ -144,7 +148,7 @@ class Dashboard:
             self.print_portfolio_manager_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
-            while not self.valid_input(choice, 0, 8):
+            while not self.valid_input(choice, 0, 9):
                 print("Invalid input. Please try again: ", end="")
                 choice = input()
 
@@ -173,6 +177,9 @@ class Dashboard:
             elif choice == 8:
                 self.automation = True
                 self.handle_automation_menu()
+            elif choice == 9:
+                self.notifications = True
+                self.handle_notifications_menu()
             elif choice == 0:
                 self.portfolio_manager = False
 
@@ -220,8 +227,9 @@ class Dashboard:
         print("2. Import Existing Portfolio from CSV File")
         print("3. Import Existing Portfolio from Excel File")
         print("4. Import Existing Portfolio from Email Account")
-        print("5. Add An Investment Manually")
-        print("6. Modify An Investment Entry")
+        print("5. Manage Custom Import Scripts")
+        print("6. Add An Investment Manually")
+        print("7. Modify An Investment Entry")
         print("0. Return to Portfolio Manager Menu")
     
 
@@ -230,7 +238,7 @@ class Dashboard:
             self.print_manage_portfolio_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
-            while not self.valid_input(choice, 0, 6):
+            while not self.valid_input(choice, 0, 7):
                 print("Invalid input. Please try again: ", end="")
                 choice = input()
 
@@ -248,9 +256,12 @@ class Dashboard:
                 self.import_from_email = True
                 self.handle_import_from_email_menu()
             elif choice == 5:
+                self.custom_import_scripts = True
+                self.handle_custom_import_scripts_menu()
+            elif choice == 6:
                 # Code for adding an investment manually
                 print("Adding an investment manually...")
-            elif choice == 6:
+            elif choice == 7:
                 # Code for modifying an investment entry
                 print("Modifying an investment entry...")
             elif choice == 0:
@@ -289,9 +300,78 @@ class Dashboard:
                 self.import_from_email = False
 
 
+    def print_custom_import_scripts_menu(self):
+        print("\nMANAGE CUSTOM IMPORT SCRIPTS")
+        print("-----------------------------")
+        print("1. View/Run Custom Import Scripts")
+        print("2. Add Custom Import Script")
+        print("3. Remove Custom Import Script")
+        print("0. Return to Manage Portfolio Menu")
+
+
+    def handle_custom_import_scripts_menu(self):
+        while self.custom_import_scripts:
+            self.print_custom_import_scripts_menu()
+            choice = input("\nPlease enter your choice: ")
+            # Check if the input is valid
+            while not self.valid_input(choice, 0, 3):
+                print("Invalid input. Please try again: ", end="")
+                choice = input()
+
+            choice = int(choice)
+            if choice == 1:
+                if len(self.custom_imported_scripts_menu) > 1:
+                    self.custom_imported_scripts = True
+                    self.handle_custom_imported_scripts_menu()
+                else:
+                    print("No custom import scripts to view/run.")
+            elif choice == 2:
+                # Code for adding a custom import script
+                print("Adding a custom import script...")
+                self.database.import_custom_script(self.custom_imported_scripts_menu)
+
+            elif choice == 3:
+                # Code for removing a custom import script
+                print("Removing a custom import script...")
+            elif choice == 0:
+                self.custom_import_scripts = False
+
+
+    custom_imported_scripts_menu = [
+        "0. Return to Custom Import Scripts Menu"
+    ]
+
+
+    def print_custom_imported_scripts_menu(self):
+        print("\nCUSTOM IMPORTED SCRIPTS")
+        print("------------------------")
+        for i in range(1, len(self.custom_imported_scripts_menu)):
+            print(f"{i}. {self.custom_imported_scripts_menu[i]}")
+        print(self.custom_imported_scripts_menu[0])
+
+
+    def handle_custom_imported_scripts_menu(self):
+        while self.custom_imported_scripts:
+            self.print_custom_imported_scripts_menu()
+            choice = input("\nPlease choose a custom script to run: ")
+            # Check if the input is valid
+            while not self.valid_input(choice, 0, len(self.custom_imported_scripts_menu) - 1):
+                print("Invalid input. Please try again: ", end="")
+                choice = input()
+
+            choice = int(choice)
+            if len(self.custom_imported_scripts_menu) > 1 and choice != 0:
+                for i in range(1, len(self.custom_imported_scripts_menu)):
+                    if choice == i:
+                        # Code for running the custom script
+                        print(f"Running {self.custom_imported_scripts_menu[i]}...")
+            elif choice == 0:
+                self.custom_imported_scripts = False
+                
+
     def print_manage_market_data_menu(self):
-        print("\nMANAGE MARKET DATA")
-        print("-------------------")
+        print("\nMARKET DATA")
+        print("------------")
         print("1. Import Market Data from CSV")
         print("2. Import Market Data from Excel")
         print("3. Import Market Data from an API")
@@ -554,6 +634,42 @@ class Dashboard:
                 self.automation = False
 
 
+    def print_notifications_menu(self):
+        print("\nNOTIFICATIONS")
+        print("--------------")
+        print("1. View Current Notifications")
+        print("2. Add A Notification")
+        print("3. Modify A Notification")
+        print("4. Remove A Notification")
+        print("0. Return to Portfolio Manager Menu")
+
+
+    def handle_notifications_menu(self):
+        while self.notifications:
+            self.print_notifications_menu()
+            choice = input("\nPlease enter your choice: ")
+            # Check if the input is valid
+            while not self.valid_input(choice, 0, 4):
+                print("Invalid input. Please try again: ", end="")
+                choice = input()
+
+            choice = int(choice)
+            if choice == 1:
+                # Code for viewing current notifications
+                print("Viewing current notifications...")
+            elif choice == 2:
+                # Code for adding a notification
+                print("Adding a notification...")
+            elif choice == 3:
+                # Code for modifying a notification
+                print("Modifying a notification...")
+            elif choice == 4:
+                # Code for removing a notification
+                print("Removing a notification...")
+            elif choice == 0:
+                self.notifications = False
+
+
     def print_account_settings_menu(self):
         print("\nACCOUNT SETTINGS")
         print("-----------------")
@@ -640,6 +756,34 @@ class Dashboard:
                 print("Viewing the license...")
             elif choice == 0:
                 self.help = False
+
+
+    def print_logout_menu(self):
+        print("\nLOGOUT")
+        print("-------")
+        print("1. Save and Logout")
+        print("2. Discard and Logout")
+        print("0. Return to Main Menu")
+
+
+    def handle_logout_menu(self):
+        while self.logout:
+            self.print_logout_menu()
+            choice = input("\nPlease enter your choice: ")
+            # Check if the input is valid
+            while not self.valid_input(choice, 0, 2):
+                print("Invalid input. Please try again: ", end="")
+                choice = input()
+
+            choice = int(choice)
+            if choice == 1:
+                # Code for saving and logging out
+                print("Saving and logging out...")
+            elif choice == 2:
+                # Code for discarding and logging out
+                print("Discarding and logging out...")
+            elif choice == 0:
+                self.logout = False
 
 
     def print_exit_menu(self):
