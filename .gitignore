@@ -1,0 +1,14 @@
+# Ignore VS Code specific files
+.vscode/
+
+# Ignore old code and old data which has sensitive information
+old_code
+old_data
+
+# Ignore database files
+user_data/
+*.db
+
+# Ignore Python related cache files and folders
+**/__pycache__/
+*.py[cod]
