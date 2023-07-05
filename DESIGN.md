@@ -90,14 +90,14 @@
 
 2. Modular Approach:
    - Break down your application into separate modules, each responsible for a specific functionality.
-   - For example, `login.py`, `data_extraction.py`, `automation.py`, `data_analysis.py`, `trading_strategies.py`, `reports.py`, etc.
+   - For example, `login.py`, `database.py`, `import.py`, `automation.py`, `data_analysis.py`, `trading_strategies.py`, `reports.py`, etc.
    - Each module can contain the necessary functions, classes, or methods to handle the related tasks.
 
 
 3. Importing and Calling Modules:
    - Import the required modules within your main `dashboard.py` script.
    - Use the module names directly when importing, without specifying subdirectories.
-   - For example, `import login`, `import data_extraction`, `import automation`, etc.
+   - For example, `import login`, `import database`, `import automation`, etc.
 
 4. Shared Utilities Functions:
    - You can also create a separate module for shared utilities or helper functions that are used across different modules.
@@ -124,11 +124,11 @@
     |   |-- database.db
     |   |-- database.py
     |   |-- schema.sql
-    |-- data_extraction/
+    |-- import/
     |   |--__init__.py
-    |   |-- extract_csv_to_db.py
-    |   |-- extract_email_to_db.py
-    |   |-- extract_market_to_db.py
+    |   |-- import_csv.py
+    |   |-- import_email_account.py
+    |   |-- import_market_data.py
     |-- automation/
     |   |--__init__.py
     |   |-- automate.py
@@ -176,8 +176,8 @@ Explanation of the directory structure:
   - `schema.sql`: SQL script defining the table structures and relationships for the database.
 - `authentication/`: Contains modules related to user authentication.
   - `account.py`: Handles the login functionality and user authentication.
-- `data_extraction/`: Contains modules for extracting data from email folders.
-  - `extract.py`: Implements functions to extract data from emails using the specified libraries.
+- `import/`: Contains modules for extracting data from email folders.
+  - `import.py`: Implements functions to import data from emails using the specified libraries.
 - `automation/`: Handles automation tasks related to email extraction, data cleaning, and database updates.
   - `automate.py`: Contains functions and scripts for automating the processes.
 - `data_analysis/`: Includes modules for performing data analysis.
