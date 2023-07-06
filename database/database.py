@@ -14,25 +14,15 @@ import sqlite3
 # Class Definitions
 class Database: #TODO prevent SQL injections in all SQL queries!!!
     def __init__(self, db_filename: str):
-        self.db_file = db_filename
+        self.db_filename = db_filename
         self.connection = None
         self.cursor = None
-
-
-    def initialize_database(self):
-        # Check if the user table exists
-        if not self.table_exists("user"):
-            # If the user table does not exist, create it
-            self.create_user_table()
-        else:
-            # If the user table exists, do nothing
-            pass
 
 
     def open_connection(self):
         if self.connection is None:
             try:
-                self.connection = sqlite3.connect(self.db_file)
+                self.connection = sqlite3.connect(self.db_filename)
                 self.cursor = self.connection.cursor()
                 print("Database connection opened.")
             except sqlite3.Error as e:
@@ -56,6 +46,21 @@ class Database: #TODO prevent SQL injections in all SQL queries!!!
                 raise Exception(f"Error closing the database connection: {e}")
         else:
             print("Database connection is already closed.")
+
+
+    def initialize_database(self, schema_filename: str) -> None:
+        # Read the schema file
+        with open(schema_filename, 'r') as schema_file:
+            schema_sql = schema_file.read()
+
+        # Check if the connection is open
+        if self.connection is not None:
+            # Execute the schema SQL statements
+            self.connection.executescript(schema_sql)
+            # Commit the changes
+            self.connection.commit()
+        else:
+            raise Exception("Database connection is not open.")
 
 
     def table_exists(self, table_name):
@@ -102,26 +107,8 @@ class Database: #TODO prevent SQL injections in all SQL queries!!!
             raise Exception("Error opening the database connection.")
 
 
-    def create_user_table(self):
-        # SQL statement to create a user table
-        create_table_query = '''
-            CREATE TABLE IF NOT EXISTS user (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL
-            )
-        '''
-        # Check if the connection is open
-        if self.connection is not None:
-            self.connection.execute(create_table_query)
-            self.connection.commit()
-            print("user table created.")
-        else:
-            raise Exception("Database connection is not open.")
-
-
     def store_username_and_password(self, username: str, password: str):
-        conn = sqlite3.connect(self.db_file)
+        conn = sqlite3.connect(self.db_filename)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO user (username, password_hash) VALUES (?, ?)",
                        (username, password))
@@ -172,29 +159,7 @@ class Database: #TODO prevent SQL injections in all SQL queries!!!
             raise Exception("Error opening the database connection.")
 
 
-    def create_imported_scripts_table(self):
-        # SQL statement to create a user table
-        create_table_query = '''CREATE TABLE IF NOT EXISTS imported_script
-                            (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            script_path TEXT)'''
-        # Check if the connection is open
-        if self.connection is not None:
-            self.connection.execute(create_table_query)
-            self.connection.commit()
-            print("imported_script table created.")
-        else:
-            raise Exception("Database connection is not open.")
-
-
     def import_custom_script(self, menu_options: list):
-        # Check if the imported_script table exists
-        if not self.table_exists("imported_script"):
-            # If the imported_script table does not exist, create it
-            self.create_user_table()
-        else:
-            # If the user table exists, do nothing
-            pass
-
         # Only allow importing python scripts
         print("allowed scripts: [.py]")
         # Prompt the user for the script file path
@@ -222,5 +187,5 @@ class Database: #TODO prevent SQL injections in all SQL queries!!!
 
 
 if __name__ == "__main__":
-    db = Database('database.db')
-    db.initialize_database()
+    db = Database("database.db")
+    db.initialize_database("./database/schema.sql")

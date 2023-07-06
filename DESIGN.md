@@ -118,7 +118,7 @@
     |   |-- dashboard.py
     |-- authentication/
     |   |--__init__.py
-    |   |-- account.py
+    |   |-- user_authentication.py
     |-- database/
     |   |--__init__.py
     |   |-- database.db
@@ -129,9 +129,6 @@
     |   |-- import_csv.py
     |   |-- import_email_account.py
     |   |-- import_market_data.py
-    |-- automation/
-    |   |--__init__.py
-    |   |-- automate.py
     |-- data_analysis/
     |   |--__init__.py
     |   |-- portfolio_analysis.py
@@ -146,6 +143,12 @@
     |   |-- export_options.py
     |   |-- format_data.py
     |   |-- export_data.py
+    |-- automation/
+    |   |--__init__.py
+    |   |-- automation.py
+    |-- notifications/
+    |   |--__init__.py
+    |   |-- notifications.py
     |-- user_data/
     |   |-- portfolio.db
 
@@ -175,11 +178,9 @@ Explanation of the directory structure:
   - `database.py`: Contains functions and classes to interact with the SQLite3 database.
   - `schema.sql`: SQL script defining the table structures and relationships for the database.
 - `authentication/`: Contains modules related to user authentication.
-  - `account.py`: Handles the login functionality and user authentication.
+  - `user_authentication.py`: Handles the login functionality and user authentication.
 - `import/`: Contains modules for extracting data from email folders.
   - `import.py`: Implements functions to import data from emails using the specified libraries.
-- `automation/`: Handles automation tasks related to email extraction, data cleaning, and database updates.
-  - `automate.py`: Contains functions and scripts for automating the processes.
 - `data_analysis/`: Includes modules for performing data analysis.
   - `analysis.py`: Implements functions for querying and analyzing data from the SQLite3 database.
 - `trading_strategies/`: Contains modules for implementing and testing trading strategies.
@@ -188,13 +189,18 @@ Explanation of the directory structure:
   - `generate_reports.py`: Implements functions to generate reports based on specified criteria.
 - `export/`: Contains modules for exporting data and visualizations.
   - `export_data.py`: Implements functions to export data and visualizations in different formats.
+- `automation/`: Handles automation tasks related to email extraction, data cleaning, and database updates.
+  - `automation.py`: Contains functions and scripts for automating the processes.
+- `notifications/`: Handles sending notifications to the user.
+  - `notifications.py`: Implements functions to send notifications to the user via email or text.
 - `user_data/`: Contains all user specific portfolio data
     |   |-- `portfolio.db`: Main database file for all user data
+
 Possible Additions
 - `templates/`: Contains HTML templates for the dashboard.
 - `static/`: Includes static assets such as CSS and JavaScript files.
-  - `css/`: Contains CSS files for styling the dashboard.
-  - `js/`: Contains JavaScript files for any client-side functionality.
+    - `css/`: Contains CSS files for styling the dashboard.
+    - `js/`: Contains JavaScript files for any client-side functionality.
 
 This directory structure separates different modules based on the main menu options, making it easier to maintain and navigate through the codebase. Each module can be developed independently and imported as needed within the main application.
 

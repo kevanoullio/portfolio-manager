@@ -31,7 +31,7 @@ def main():
         # Open the database connection
         database.open_connection()
         # Initialize the database
-        database.initialize_database()
+        database.initialize_database("./database/schema.sql")
     else:
         # If the database file exists, create a database object
         database = Database(db_filename)

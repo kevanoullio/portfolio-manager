@@ -148,45 +148,21 @@ if __name__ == "__main__":
 # By combining these steps, you can create a robust user authentication and data access control system in your application, ensuring that only authenticated users can access their own data while protecting the privacy and security of the users' information.
 
 
+
+
 ##########################
 
-# When dealing with sensitive operations and data, it's important to implement proper authorization mechanisms in addition to authentication. Authorization ensures that authenticated users have the appropriate permissions to access specific resources or perform certain actions.
 
-# Here are a few suggestions on how to handle sensitive operations in your code:
 
-# 1. Assign user roles or permissions: Define roles or permissions for each user, indicating what actions they are allowed to perform and what data they can access. For example, you can have roles like "admin" and "user" with different levels of access.
 
-# 2. Store user roles or permissions in the database: Associate each user with their respective role or set of permissions in the database. This information can be used later to determine whether a user is authorized to perform a specific sensitive operation.
+# To ensure that only the corresponding user can access their own data, you can include a `user_id` column in your database tables. This `user_id` column will associate each row of data with the respective user. 
 
-# 3. Implement authorization checks: Before allowing a user to perform a sensitive operation, check their role or permissions to ensure they have the necessary authorization. This can be done by comparing the user's role or permissions with the required authorization level for the operation.
+# Here are the steps you can follow:
 
-# Here's an example of how you can implement authorization checks:
+# 1. Modify the table schema: Add a `user_id` column to the tables that store user-specific data. This column will reference the `id` column in the user table as a foreign key.
 
-# ```python
-# class UserAuthentication:
-#     # ...
+# 2. During data insertion: When inserting data into these tables, make sure to include the appropriate `user_id` value that corresponds to the logged-in user. This way, each row of data is associated with the specific user who created it.
 
-#     def has_permission(self, required_permission):
-#         # Check if the user has the required permission
-#         # You can retrieve the user's role or permissions from the database
-#         # and compare them with the required_permission
-#         # Return True if the user has the required permission, False otherwise
-#         return self.role == required_permission
+# 3. Data retrieval: When fetching data from these tables, include a filtering condition in your SQL queries to retrieve only the rows that belong to the logged-in user. For example, you can use a `WHERE` clause to filter by the `user_id` column.
 
-#     def handle_sensitive_operation(self):
-#         if self.is_authenticated():
-#             if self.has_permission("admin"):
-#                 # Perform the sensitive operation for users with admin role
-#                 print("Sensitive operation performed for admin user.")
-#             elif self.has_permission("user"):
-#                 # Perform the sensitive operation for users with user role
-#                 print("Sensitive operation performed for regular user.")
-#             else:
-#                 print("You are not authorized to perform this operation.")
-#         else:
-#             print("You must be logged in to perform this operation.")
-# ```
-
-# In the example above, the `has_permission()` method checks if the user has the required permission for a specific operation. The `handle_sensitive_operation()` method then checks the user's authentication status and authorization level to determine whether they can perform the sensitive operation.
-
-# You would need to adapt the code to fit your specific database structure and user roles/permissions. Additionally, consider implementing additional security measures like input validation, secure session management, and protecting sensitive data at rest and in transit.
+# By following these steps, you can enforce data isolation and ensure that each user can only access their own data.

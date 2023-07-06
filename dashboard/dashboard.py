@@ -116,16 +116,17 @@ class Dashboard:
                 # Code for discarding changes
                 print("Most recent Portfolio changes discarded!")
             elif choice == 5:
-                # Code for logging out
-                self.user_auth.logged_in = False
+                # Log out the user
+                self.user_auth.logout()
             elif choice == 6:
                 self.help = True
                 self.handle_help_menu()
             elif choice == 0:
-                # Code for logging out
-                self.user_auth.logged_in = False
-                # Exit the program
-                self.running = False
+                # Log out the user
+                self.user_auth.logout()
+                # If logout was successful, exit the program
+                if not self.user_auth.logged_in:
+                    self.running = False
 
 
     def print_portfolio_manager_menu(self):
