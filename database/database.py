@@ -7,7 +7,6 @@ import sqlite3
 
 # Third-party Libraries
 
-
 # Local Modules
 
 
@@ -184,6 +183,52 @@ class Database: #TODO prevent SQL injections in all SQL queries!!!
         # Add the script to the menu options
         menu_options.append(script_name)
         print("Script imported successfully.")
+
+
+    def column_exists(self, table_name: str, column_name: str) -> bool:
+        # SQL query to check if a column exists
+        check_column_query = f"SELECT count(*) FROM pragma_table_info('{table_name}') WHERE name='{column_name}'"
+
+        if self.connection is not None:
+            try:
+                cursor = self.connection.cursor()
+                cursor.execute(check_column_query)
+                result = cursor.fetchone()
+
+                if result is not None:
+                    print(f"Column '{column_name}' exists.")
+                    return True
+                else:
+                    print(f"Column '{column_name}' does not exist.")
+                    return False
+            except sqlite3.Error as e:
+                raise Exception(f"Error checking column existence: {e}")
+        else:
+            raise Exception("Error opening the database connection.")
+        
+
+    def add_email_column(self):
+        # Define the ALTER TABLE statement
+        alter_table_query = '''
+            ALTER TABLE user
+            ADD COLUMN email VARCHAR(255) UNIQUE NOT NULL
+        '''
+
+        # Check if the email column already exists in the user table
+        if not self.table_exists("user") and self.column_exists("user", "email"):
+            # Check if the connection is open
+            if self.connection is not None:
+                try:
+                    # Execute the ALTER TABLE statement
+                    cursor = self.connection.cursor()
+                    cursor.execute(alter_table_query)
+                    # Commit the changes
+                    self.connection.commit()
+                    print("Email column added successfully.")
+                except sqlite3.Error as e:
+                    raise Exception(f"Error adding email column: {e}")
+            else:
+                raise Exception("Database connection is not open.")
 
 
 if __name__ == "__main__":

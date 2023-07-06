@@ -3,33 +3,34 @@
 -- Create table for users
 CREATE TABLE IF NOT EXISTS user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    email TEXT
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create table for investment type data
-CREATE TABLE IF NOT EXISTS investment_type (
+-- Create table for asset class type data
+CREATE TABLE IF NOT EXISTS asset_class (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    type TEXT UNIQUE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user (id)
+    asset_class_type VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user (id),
+    UNIQUE (user_id, asset_class_type)
 );
 
 -- Create table for portfolio data
 CREATE TABLE IF NOT EXISTS portfolio (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    transaction_date TEXT NOT NULL,
-    account TEXT,
-    investment_type TEXT NOT NULL,
-    symbol TEXT,
-    quantity INT,
-    avg_price DECIMAL(10, 2),
-    total DECIMAL(10, 2),
-    currency TEXT,
+    transaction_date DATE NOT NULL,
+    account VARCHAR(255) NOT NULL,
+    asset_class_id INTEGER NOT NULL,
+    symbol VARCHAR(255) NOT NULL,
+    quantity INT NOT NULL,
+    avg_price DECIMAL(10, 2) NOT NULL,
+    total DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(63) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user (id),
-    FOREIGN KEY (investment_type) REFERENCES investment_type (type)
+    FOREIGN KEY (asset_class_id) REFERENCES asset_class (id)
 );
 
 
@@ -37,10 +38,12 @@ CREATE TABLE IF NOT EXISTS portfolio (
 -- Create table for imported scripts
 CREATE TABLE IF NOT EXISTS imported_script (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    script_path TEXT,
+    user_id INTEGER NOT NULL,
+    script_path VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user (id)
 );
+
+
 
 -- Add more tables as needed for other user-specific data
 
@@ -49,6 +52,7 @@ CREATE TABLE IF NOT EXISTS imported_script (
 -- Create indices or other constraints as needed
 
 -- Add more table definitions and constraints as required
+
 
 -- Optionally, add sample data for testing purposes
 -- INSERT INTO user (username, password_hash) VALUES ('user1', 'hashed_password1');

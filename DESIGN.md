@@ -245,40 +245,31 @@ else:
 
 # Schema File
 
-The schema.sql file is typically used to define the database schema, which includes the structure, relationships, and constraints of the database tables. It is written in SQL (Structured Query Language) and contains the necessary SQL statements to create tables, define columns, set primary keys, establish foreign key relationships, and enforce constraints like unique values or not null requirements. The schema file is executed during the setup or initialization process of the database to create the required tables and their structures.
+The schema.sql file is typically used to define the database schema, which includes the structure, relationships, and constraints of the database tables. It is written in SQL (Structured Query Language) and contains the necessary SQL statements to create tables, define columns, set primary keys, establish foreign key relationships, and enforce constraints like unique values or not null requirements. The schema file is executed during the initialization of the database to create the required tables and their structures.
 
-Certainly! Here's an example of a `schema.sql` file that defines the database schema using SQL statements:
+Here's a small snippet from the `schema.sql`:
 
 ```sql
--- Create the "users" table
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
+-- Create table for users
+CREATE TABLE IF NOT EXISTS user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create the "orders" table
-CREATE TABLE orders (
-    id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    total_amount DECIMAL(10, 2) NOT NULL,
-    order_date DATE NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (id)
-);
-
--- Create the "products" table
-CREATE TABLE products (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    price DECIMAL(10, 2) NOT NULL
+-- Create table for investment type data
+CREATE TABLE IF NOT EXISTS investment_type (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type TEXT UNIQUE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user (id)
 );
 ```
 
-In this example, we have three tables: "users", "orders", and "products". The "users" table has a unique username and email, while the "orders" table has a foreign key relationship with the "users" table.
+In this example, we have the tables: "user" and "investment_type". The "user" table has a unique username and email, while the "investment_type" table has a foreign key relationship with the "user" table.
 
-To execute the `schema.sql` file and create the required tables and their structures, you can use a database management tool or execute the SQL statements programmatically. Here's an example of how you can execute the schema file using Python and the `sqlite3` module:
+The `schema.sql` file is executed using Python and the `sqlite3` module:
 
 ```python
 import sqlite3
@@ -299,9 +290,7 @@ conn.commit()
 conn.close()
 ```
 
-In this example, we use the `executescript()` method of the `cursor` object to execute the SQL statements from the `schema.sql` file. The `commit()` method is used to save the changes, and the `close()` method is used to close the connection to the database.
-
-You can place this code in your setup or initialization process to create the required tables and their structures in the database. Make sure to adjust the database connection details (`mydatabase.db`) and the file path of the `schema.sql` file according to your specific setup.
+In this example, the `executescript()` method of the `cursor` object is used to execute the SQL statements from the `schema.sql` file. The `commit()` method is used to save the changes, and the `close()` method is used to close the connection to the database. This is just an example but is not the exact code that is used in the application.
 
 
 # Template Folder
