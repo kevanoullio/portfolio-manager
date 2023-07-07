@@ -11,6 +11,3 @@ from database.database import Database
 class Notifications:
     def __init__(self, database: Database):
         self.database = database
-
-    def add_email_column(self):
-        self.database.add_email_column()

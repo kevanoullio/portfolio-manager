@@ -289,11 +289,40 @@ class Dashboard:
 
             choice = int(choice)
             if choice == 1:
-                # Code for viewing email accounts
-                print("Viewing email accounts...")
+                if self.user_auth.current_user_id == None:
+                    print("You must be logged in to view email accounts.")
+                else:
+                    print("Viewing email accounts...")
+                    emails = self.database.fetch_email_accounts(self.user_auth.current_user_id)
+                    if len(emails) > 0:
+                        print("Email accounts:")
+                        for i in range(len(emails)):
+                            print(f"{i}. {emails[0]}")
+                    else:
+                        print("No email accounts found.")
             elif choice == 2:
-                # Code for adding an email account
-                print("Adding an email account...")
+                if self.user_auth.current_user_id == None:
+                    print("You must be logged in to add an email account.")
+                else:
+                    print("Adding an email account...")
+
+                    email = input("Please enter the email address: ")
+                    # TODO Check if the email address is valid
+                    # Check if the email address is already in the database
+                    if self.database.check_entry_exists("user_email",
+                            f"email_address={email} AND email_usage_id='import_email_account'",
+                            self.user_auth.current_user_id):
+                        print("Email address already in database.")
+                        return
+                    
+                    password = input("Please enter the email password: ")
+                    # Hash the password
+                    password_hash = self.user_auth.__hash_password(password)
+
+                    # Add all the information to the database
+                    columns = ["user_id", "email_address", "email_password_hash", "email_usage_id"]
+                    values = [self.user_auth.current_user_id, email, password_hash, "import_email_account"]
+                    self.database.add_entry("user_email", columns, values)
             elif choice == 3:
                 # Code for removing an email account
                 print("Removing an email account...")

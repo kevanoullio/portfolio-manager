@@ -8,6 +8,27 @@ CREATE TABLE IF NOT EXISTS user (
     created_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create table for email usage
+CREATE TABLE IF NOT EXISTS email_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usage VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- Insert default email usage
+INSERT OR IGNORE INTO email_usage (usage) VALUES ('import_email_account');
+INSERT OR IGNORE INTO email_usage (usage) VALUES ('email_notification');
+
+-- Create table for user email accounts
+CREATE TABLE IF NOT EXISTS user_email (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    email_address VARCHAR(255) NOT NULL,
+    email_password_hash VARCHAR(255),
+    email_usage_id VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user (id)
+    FOREIGN KEY (email_usage_id) REFERENCES email_usage (id)
+);
+
 -- Create table for asset class type data
 CREATE TABLE IF NOT EXISTS asset_class (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

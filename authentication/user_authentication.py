@@ -15,6 +15,7 @@ class UserAuthentication:
     def __init__(self, database):
         self.database = database
         self.logged_in = False
+        self.current_user_id = None
         self.__username = None
         self.__password = None
 
@@ -22,9 +23,9 @@ class UserAuthentication:
     def create_account(self) -> int:
         print("Creating a new account...")
         
-        username = input("Enter your username: ")
+        self.__username = input("Enter your username: ")
         # Check if the username already exists
-        if self.database.username_exists(username):
+        if self.database.username_exists(self.__username):
             print("Username already exists. Account creation failed.")
             return 1
         
@@ -36,10 +37,12 @@ class UserAuthentication:
             return 2
 
         # Create the account
-        self.__username = username
         self.__password = self.__hash_password(password)
         self.database.store_username_and_password(self.__username, self.__password)
         print("Account creation successful.")
+        
+        # Load the user id of the created account
+        self.__load_user_id(self.__username)
 
         # Log the user in
         self.logged_in = True
@@ -51,19 +54,21 @@ class UserAuthentication:
         if not self.logged_in:
             print("Logging in...")
 
-            username = input("Enter your username: ")
+            self.__username = input("Enter your username: ")
             # Check if the username exists
-            if not self.database.username_exists(username):
+            if not self.database.username_exists(self.__username):
                 print("Account login failed.")
                 return 1
             
-            password = getpass("Enter your password: ")
+            self.__password = getpass("Enter your password: ")
             # Retrieve the hashed password from the database
-            stored_password_hash = self.database.get_password_hash(username)
+            stored_password_hash = self.database.get_password_hash(self.__username)
 
             # Verify the entered password
-            if bcrypt.checkpw(password.encode(), stored_password_hash):
-                print(f"Logging in as {username}...")
+            if bcrypt.checkpw(self.__password.encode(), stored_password_hash):
+                print(f"Logging in as {self.__username}...")
+                # Load the user id of the current account
+                self.__load_user_id(self.__username)
                 self.logged_in = True
                 print("Login successful.")
                 return 0
@@ -79,6 +84,8 @@ class UserAuthentication:
         if self.logged_in:
             # Log the user out
             print("Logging out...")
+            # Unload the user id of the current account
+            self.__unload_user_id()
             self.logged_in = False
             print("Logout successful.")
             return 0
@@ -87,7 +94,7 @@ class UserAuthentication:
             return 1
 
 
-    def __hash_password(self, password: str) -> bytes:
+    def __hash_password(self, password) -> bytes:
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode(), salt)
         return hashed_password
@@ -105,7 +112,22 @@ class UserAuthentication:
         # Code for deleting the account
         # Example: Use a third-party library or API to delete the account
         print("Account deletion successful.")
+        # Unload the user id of the deleted account
+        self.__unload_user_id()
         self.logged_in = False
+
+
+    def add_email_account(self):
+        pass
+
+    
+    def __load_user_id(self, username: str) -> None:
+        self.current_user_id = self.database.get_user_id(username)
+
+    
+    def __unload_user_id(self) -> None:
+        self.current_user_id = None
+
     
 
 if __name__ == "__main__":
