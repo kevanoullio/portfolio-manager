@@ -321,27 +321,22 @@ class Dashboard:
                 self.import_existing_portfolio = False
 
 
-    def print_imported_email_accounts(self) -> None:
+    def print_imported_email_accounts(self) -> int | None:
         if self.user_auth.current_user_id is None:
             print("You must be logged in to view email accounts.")
-            return
+            return None
         else:
             # Get the list of email accounts
-            # query = "SELECT email_address FROM email WHERE user_id = ?"
-            # params = (self.user_auth.current_user_id,)
-            # results = self.database.execute_query(query, params)
-            # emails = [row[0] for row in results.fetchall()]
             emails = self.database.fetch_email_accounts(self.user_auth.current_user_id, "import_email_account")
-            if emails is None:
-                print("No imported email accounts found.")
-            else:
+            if len(emails) > 0:
                 print("\nCURRENT IMPORTED EMAIL ACCOUNTS:")
                 # print("--------------------------------")
                 for email in emails:
                     print(f"{email}")
-                for email_tuple in emails:
-                    email_address = email_tuple[0]  # Extract the email address from the tuple
-                    print(email_address)
+                return len(emails)
+            else:
+                print("No imported email accounts found.")
+                return 0
 
 
     def print_import_from_email_menu(self):
@@ -372,11 +367,12 @@ class Dashboard:
                     self.print_imported_email_accounts()
                 elif choice == 2:
                     print("Adding an email account...")
-                    self.user_auth.import_email_account(self.database)
+                    self.user_auth.import_email_account(self.database, "import_email_account")
                 elif choice == 3:
                     # Code for removing an email account
                     print("Removing an email account...")
                     self.print_imported_email_accounts()
+                    self.user_auth.remove_email_account(self.database, "import_email_account")
                 elif choice == 0:
                     self.import_from_email = False
 

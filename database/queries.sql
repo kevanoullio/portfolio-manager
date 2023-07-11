@@ -16,7 +16,7 @@ SELECT SUM(amount) AS total_dividends FROM dividend;
 SELECT symbol, SUM(amount) AS total_dividends FROM dividend GROUP BY symbol;
 
 
--- query_net_ticker_summary: Calculate the net average price of securities by symbol
+-- net_ticker_summary: Calculate the net average price of securities by symbol
 SELECT
     '?' AS symbol,
     buy.total_buy_qty,

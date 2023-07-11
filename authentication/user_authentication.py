@@ -212,26 +212,30 @@ class UserAuthentication:
         self.logged_in = False
 
 
-    def import_email_account(self, database: Database) -> int:
+    def import_email_account(self, database: Database, email_usage: str) -> int:
         if self.current_user_id is None:
             print("You are not logged in.")
             return 1
 
         # Get the email address from the user
         email = input("Please enter the email address: ")
-        # TODO - Check if the email address is valid, use third-party service?
-        if not self.is_valid_email(email):
+        # TODO - Check if the email is valid using third-party service?
+        while not self.is_valid_email(email):
             print("Invalid email address, please try again. ", end="")
+            email = input()
 
         # Sanitize the email address
         email = self.__sanitize_input(email)
 
+        # Get the email_usage_id from the database
+        email_usage_id = database.get_email_usage_id(email_usage)
+
         # Check if the email address is already in the database
         if database.check_entry_exists("email",
-                f"email_address='{email}' AND email_usage_id='import_email_account'",
+                f"email_address='{email}' AND email_usage_id='{email_usage_id}'",
                 self.current_user_id):
             print("Email address already in database.")
-            return 0
+            return 2
         
         # Get the password from the user
         self.__password_input("Please enter the email password: ")
@@ -239,15 +243,50 @@ class UserAuthentication:
 
         if password is None:
             print("Account login failed. Password is None.")
-            return 1
+            return 3
 
         # Add all the information to the database
         columns = ["email_address", "password_hash", "email_usage_id"]
-        values = [email, password, "import_email_account"]
+        values = [email, password, email_usage_id]
         
         # Insert the entry into the database
         database.insert_entry(self.current_user_id, "email", columns, values)
         print("Email account import successful.")
+        return 0
+
+
+    def remove_email_account(self, database: Database, email_usage: str) -> int:
+        if self.current_user_id is None:
+            print("You are not logged in.")
+            return 1
+    
+        # Get the email address from the user
+        email = input("Please enter the email address you want to remove: ")
+        # TODO - Check if the email is valid using third-party service?
+        while not self.is_valid_email(email):
+            print("Invalid email address, please try again. ", end="")
+            email = input()
+
+        # Sanitize the email address
+        email = self.__sanitize_input(email)
+
+        # Get the email_usage_id from the database
+        email_usage_id = database.get_email_usage_id(email_usage)
+
+        # Check if the email address is already in the database
+        if not database.check_entry_exists("email",
+                f"email_address='{email}' AND email_usage_id='{email_usage_id}'",
+                self.current_user_id):
+            print("Email address already in database.")
+            return 2
+
+        # Add all the information to the database
+        columns = ["email_address", "email_usage_id"]
+        values = [email, email_usage_id]
+        
+        # Insert the entry into the database
+        database.delete_entry(self.current_user_id, "email", columns, values)
+        print("Email account successfully removed.")
         return 0
 
 

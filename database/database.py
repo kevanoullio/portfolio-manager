@@ -303,7 +303,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
             raise Exception(f"Error adding column '{column_definition}' to table '{table_name}'.") 
 
 
-    def insert_entry(self, user_id: int, table_name: str, columns: list[str], values: list[str]):
+    def insert_entry(self, user_id: int, table_name: str, columns: list[str], values: list[str]) -> None:
         # Validate the table_name against allowed values
         allowed_table_names = self.__get_allowable_table_names()
         print(f"Allowed table names: {allowed_table_names}")
@@ -329,21 +329,29 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
             raise Exception(f"Error adding entry to table '{table_name}'. Entry may already exist")
 
 
-    def update_entry(self, table_name: str, columns, values, condition):
-        # Join the column names
-        columns_str = ', '.join([f"{column} = ?" for column in columns])
-        # SQL query to update an entry in a table
-        update_query = "UPDATE ? SET {} WHERE ?".format(columns_str)
+    def delete_entry(self, user_id: int, table_name: str, columns: list[str], values: list[str]) -> None:
+        # Validate the table_name against allowed values
+        allowed_table_names = self.__get_allowable_table_names()
+        print(f"Allowed table names: {allowed_table_names}")
+        print(f"Table name: {table_name}")
+        if table_name not in allowed_table_names:
+            raise Exception("Invalid table name.")
+
+        # Join the column names and values using a list comprehension
+        placeholder = [f" AND {column} = '{value}'" for column, value in zip(columns, values)]
+
+        # SQL query to delete an entry from a table
+        delete_query = f"DELETE FROM {table_name} WHERE user_id = ? {placeholder}"
+        # Set the query parameters
+        params = (user_id,)
 
         # Execute the query
-        cursor = self.execute_query(update_query, (table_name, *values, condition))
-        result = cursor.fetchone()
+        cursor = self.execute_query(delete_query, params)
 
-        # Print the appropriate message
-        if result is not None:
-            print(f"Entry updated in table '{table_name}' successfully.")
+        if cursor.rowcount > 0:
+            print(f"Entry deleted from table '{table_name}' successfully.")
         else:
-            raise Exception(f"Error updating entry in table '{table_name}'.")
+            raise Exception(f"Error deleting entry from table '{table_name}'. Entry may not exist")
 
 
     def execute_query_by_title(self, query_title: str, *args: str):
@@ -431,7 +439,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         print("Script imported successfully.")
 
 
-    def __get_email_usage_id(self, email_usage: str) -> int:
+    def get_email_usage_id(self, email_usage: str) -> int:
         # SQL query to get the email usage id
         get_email_usage_id_query = "SELECT id FROM email_usage WHERE usage = ?"
         # Set the query parameters
@@ -451,7 +459,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
 
     def fetch_email_accounts(self, user_id: int, email_usage: str) -> list:
         # Get the email usage id
-        email_usage_id = self.__get_email_usage_id(email_usage)
+        email_usage_id = self.get_email_usage_id(email_usage)
         # Define the SQL query, ensure only emails associated with currently logged in user are displayed
         fetch_email_accounts_query = "SELECT email_address FROM email WHERE user_id = ? AND email_usage_id = ?"
         print(f"fetch_email_accounts_query: {fetch_email_accounts_query}")
@@ -462,16 +470,11 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # Execute the query
         cursor = self.execute_query(fetch_email_accounts_query, params)
         # result = cursor.fetchall()
-        result = cursor.fetchone()
-        # result = [row[0] for row in cursor.fetchall()]
+        result = [row[0] for row in cursor.fetchall()]
         print(f"result: {result}")
 
         # Print the appropriate message and return the result
-        if result:
-            print(f"Email accounts fetched successfully.")
-        else:
-            print(f"Error fetching email accounts.")
-
+        print(f"Email accounts fetched successfully.")
         return result
 
 

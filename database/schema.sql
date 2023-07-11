@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS email (
     user_id INTEGER NOT NULL,
     email_address VARCHAR(255) NOT NULL,
     password_hash BLOB NOT NULL,
-    email_usage_id VARCHAR(255) NOT NULL,
+    email_usage_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (email_usage_id) REFERENCES email_usage (id)
 );
