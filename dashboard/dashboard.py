@@ -19,6 +19,7 @@ class Dashboard:
         self.portfolio_manager = False
         self.view_portfolio = False
         self.manage_portfolio = False
+        self.import_existing_portfolio = False
         self.import_from_email = False
         self.custom_import_scripts = False
         self.custom_imported_scripts = False
@@ -190,8 +191,8 @@ class Dashboard:
         print("---------------")
         print("1. View Current Portfolio")
         print("2. View Entire Portfolio History")
-        print("3. Search for Current Investment")
-        print("4. Search for Investment in Portfolio History")
+        print("3. Search for A Current Investment")
+        print("4. Search for An Investment in Portfolio History")
         print("0. Return to Portfolio Manager Menu")
 
 
@@ -214,9 +215,14 @@ class Dashboard:
             elif choice == 3:
                 # Code to search for a current investment
                 print("Searching for a current investment...")
-            elif choice == 4:
-                # Code to search for an investment in portfolio history
-                print("Searching for an investment in portfolio history...")
+            elif choice ==      4:
+                # Get the ticker symbol of the investment to search for, ensure it's alphanumeric
+                ticker = input("Enter the ticker symbol of the investment you would like to search for: ")
+                while not ticker.isalnum():
+                    print("Invalid ticker symbol. Please try again: ", end="")
+                    ticker = input()
+                # Execute the query to search for an investment in portfolio history
+                self.database.execute_query_by_title("query_net_ticker_summary", ticker)
             elif choice == 0:
                 self.view_portfolio = False
 
@@ -224,29 +230,73 @@ class Dashboard:
     def print_manage_portfolio_menu(self):
         print("\nMANAGE PORTFOLIO")
         print("-----------------")
-        print("1. Import Existing Portfolio from Brokerage Account")
-        print("2. Import Existing Portfolio from CSV File")
-        print("3. Import Existing Portfolio from Excel File")
-        print("4. Import Existing Portfolio from Email Account")
-        print("5. Manage Custom Import Scripts")
-        print("6. Add An Investment Manually")
-        print("7. Modify An Investment Entry")
+        print("1. Build Portfolio from Data Set(s)")
+        print("2. Import Existing Portfolio Data Set")
+        print("3. Delete Existing Portfolio Data Set")
+        print("4. Manage Custom Import Scripts")
+        print("5. Add An Investment Manually")
+        print("6. Modify An Investment Entry")
         print("0. Return to Portfolio Manager Menu")
-    
+
 
     def handle_manage_portfolio_menu(self):
         while self.manage_portfolio:
             self.print_manage_portfolio_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
-            while not self.valid_input(choice, 0, 7):
+            while not self.valid_input(choice, 0, 6):
+                print("Invalid input. Please try again: ", end="")
+                choice = input()
+
+            choice = int(choice)
+            if choice == 1:
+                # Code for building portfolio from data set(s)
+                print("Building portfolio from data set(s)...")
+            elif choice == 2:
+                print("Importing existing portfolio data set...")
+                self.import_existing_portfolio = True
+                self.handle_import_existing_portfolio_menu()
+            elif choice == 3:
+                print("Deleting existing portfolio data set...")
+                # self.delete_existing_portfolio = True
+                # self.handle_delete_existing_portfolio_menu()
+            elif choice == 4:
+                print("Managing custom import scripts...")
+                self.custom_import_scripts = True
+                self.handle_custom_import_scripts_menu()
+            elif choice == 5:
+                # Code for adding an investment manually
+                print("Adding an investment manually...")
+            elif choice == 6:
+                # Code for modifying an investment entry
+                print("Modifying an investment entry...")
+            elif choice == 0:
+                self.manage_portfolio = False
+
+
+    def print_import_existing_portfolio_menu(self):    
+        print("1. Import Existing Portfolio from Brokerage Account")
+        print("2. Import Existing Portfolio from CSV File")
+        print("3. Import Existing Portfolio from Excel File")
+        print("4. Import Existing Portfolio from PDF file")
+        print("5. Import Existing Portfolio from Database file")
+        print("6. Import Existing Portfolio from Email Account")
+        print("0. Return to Manage Portfolio Menu")
+
+
+    def handle_import_existing_portfolio_menu(self):
+        while self.import_existing_portfolio:
+            self.print_import_existing_portfolio_menu()
+            choice = input("\nPlease enter your choice: ")
+            # Check if the input is valid
+            while not self.valid_input(choice, 0, 6):
                 print("Invalid input. Please try again: ", end="")
                 choice = input()
 
             choice = int(choice)
             if choice == 1:
                 # Code for importing from brokerage account
-                print("Importing from brokerage account...")
+                print("Importing from Brokerage Account...")
             elif choice == 2:
                 # Code for importing from CSV file
                 print("Importing from CSV file...")
@@ -254,25 +304,50 @@ class Dashboard:
                 # Code for importing from Excel file
                 print("Importing from Excel file...")
             elif choice == 4:
+                print("Importing from PDF file...")
+                # self.import_from_pdf = True
+                # self.handle_import_from_pdf_menu()
+            elif choice == 5:
+                print("Importing from Database file...")
+                if self.user_auth.current_user_id != None:
+                    self.database.import_file(self.user_auth.current_user_id, "database", [".db"])
+                else:
+                    print("You must be logged in to import from a database file.")
+            elif choice == 6:
+                print("Importing from Email Account...")
                 self.import_from_email = True
                 self.handle_import_from_email_menu()
-            elif choice == 5:
-                self.custom_import_scripts = True
-                self.handle_custom_import_scripts_menu()
-            elif choice == 6:
-                # Code for adding an investment manually
-                print("Adding an investment manually...")
-            elif choice == 7:
-                # Code for modifying an investment entry
-                print("Modifying an investment entry...")
             elif choice == 0:
-                self.manage_portfolio = False
-    
+                self.import_existing_portfolio = False
+
+
+    def print_imported_email_accounts(self) -> None:
+        if self.user_auth.current_user_id is None:
+            print("You must be logged in to view email accounts.")
+            return
+        else:
+            # Get the list of email accounts
+            # query = "SELECT email_address FROM email WHERE user_id = ?"
+            # params = (self.user_auth.current_user_id,)
+            # results = self.database.execute_query(query, params)
+            # emails = [row[0] for row in results.fetchall()]
+            emails = self.database.fetch_email_accounts(self.user_auth.current_user_id, "import_email_account")
+            if emails is None:
+                print("No imported email accounts found.")
+            else:
+                print("\nCURRENT IMPORTED EMAIL ACCOUNTS:")
+                # print("--------------------------------")
+                for email in emails:
+                    print(f"{email}")
+                for email_tuple in emails:
+                    email_address = email_tuple[0]  # Extract the email address from the tuple
+                    print(email_address)
+
 
     def print_import_from_email_menu(self):
         print("\nIMPORT FROM EMAIL ACCOUNT")
         print("--------------------------")
-        print("1. View Email Accounts")
+        print("1. View Imported Email Accounts")
         print("2. Add Email Account")
         print("3. Remove Email Account")
         print("0. Return to Manage Portfolio Menu")
@@ -280,54 +355,30 @@ class Dashboard:
     
     def handle_import_from_email_menu(self):
         while self.import_from_email:
-            self.print_import_from_email_menu()
-            choice = input("\nPlease enter your choice: ")
-            # Check if the input is valid
-            while not self.valid_input(choice, 0, 3):
-                print("Invalid input. Please try again: ", end="")
-                choice = input()
+            if self.user_auth.current_user_id is None:
+                print("You must be logged in to view email accounts.")
+            else:
+                # Print the menu
+                self.print_import_from_email_menu()
+                choice = input("\nPlease enter your choice: ")
+                # Check if the input is valid
+                while not self.valid_input(choice, 0, 3):
+                    print("Invalid input. Please try again: ", end="")
+                    choice = input()
 
-            choice = int(choice)
-            if choice == 1:
-                if self.user_auth.current_user_id == None:
-                    print("You must be logged in to view email accounts.")
-                else:
+                choice = int(choice)
+                if choice == 1:
                     print("Viewing email accounts...")
-                    emails = self.database.fetch_email_accounts(self.user_auth.current_user_id)
-                    if len(emails) > 0:
-                        print("Email accounts:")
-                        for i in range(len(emails)):
-                            print(f"{i}. {emails[0]}")
-                    else:
-                        print("No email accounts found.")
-            elif choice == 2:
-                if self.user_auth.current_user_id == None:
-                    print("You must be logged in to add an email account.")
-                else:
+                    self.print_imported_email_accounts()
+                elif choice == 2:
                     print("Adding an email account...")
-
-                    email = input("Please enter the email address: ")
-                    # TODO Check if the email address is valid
-                    # Check if the email address is already in the database
-                    if self.database.check_entry_exists("user_email",
-                            f"email_address={email} AND email_usage_id='import_email_account'",
-                            self.user_auth.current_user_id):
-                        print("Email address already in database.")
-                        return
-                    
-                    password = input("Please enter the email password: ")
-                    # Hash the password
-                    password_hash = self.user_auth.__hash_password(password)
-
-                    # Add all the information to the database
-                    columns = ["user_id", "email_address", "email_password_hash", "email_usage_id"]
-                    values = [self.user_auth.current_user_id, email, password_hash, "import_email_account"]
-                    self.database.add_entry("user_email", columns, values)
-            elif choice == 3:
-                # Code for removing an email account
-                print("Removing an email account...")
-            elif choice == 0:
-                self.import_from_email = False
+                    self.user_auth.import_email_account(self.database)
+                elif choice == 3:
+                    # Code for removing an email account
+                    print("Removing an email account...")
+                    self.print_imported_email_accounts()
+                elif choice == 0:
+                    self.import_from_email = False
 
 
     def print_custom_import_scripts_menu(self):
@@ -358,6 +409,7 @@ class Dashboard:
             elif choice == 2:
                 # Code for adding a custom import script
                 print("Adding a custom import script...")
+                # TODO rewrite using new import_file function
                 self.database.import_custom_script(self.custom_imported_scripts_menu)
 
             elif choice == 3:
@@ -367,6 +419,7 @@ class Dashboard:
                 self.custom_import_scripts = False
 
 
+    # Dynamic menu of imported custom scripts
     custom_imported_scripts_menu = [
         "0. Return to Custom Import Scripts Menu"
     ]

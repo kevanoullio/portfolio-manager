@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash BLOB NOT NULL,
     created_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -19,13 +19,13 @@ INSERT OR IGNORE INTO email_usage (usage) VALUES ('import_email_account');
 INSERT OR IGNORE INTO email_usage (usage) VALUES ('email_notification');
 
 -- Create table for user email accounts
-CREATE TABLE IF NOT EXISTS user_email (
+CREATE TABLE IF NOT EXISTS email (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     email_address VARCHAR(255) NOT NULL,
-    email_password_hash VARCHAR(255),
+    password_hash BLOB NOT NULL,
     email_usage_id VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user (id)
+    FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (email_usage_id) REFERENCES email_usage (id)
 );
 
@@ -33,9 +33,9 @@ CREATE TABLE IF NOT EXISTS user_email (
 CREATE TABLE IF NOT EXISTS asset_class (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    asset_class_type VARCHAR(255) NOT NULL,
+    [type] VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user (id),
-    UNIQUE (user_id, asset_class_type)
+    UNIQUE (user_id, [type])
 );
 
 -- Create table for portfolio data
@@ -50,18 +50,30 @@ CREATE TABLE IF NOT EXISTS portfolio (
     avg_price DECIMAL(10, 2) NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
     currency VARCHAR(63) NOT NULL,
+    import_file VARCHAR(255),
+    import_date VARCHAR(255) DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (asset_class_id) REFERENCES asset_class (id)
 );
 
-
-
--- Create table for imported scripts
-CREATE TABLE IF NOT EXISTS imported_script (
+-- Create table for data types
+CREATE TABLE IF NOT EXISTS data_type (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    script_path VARCHAR(255) NOT NULL,
+    [name] VARCHAR(255) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user (id)
+);
+
+-- Create table for imported data
+CREATE TABLE IF NOT EXISTS imported_data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    [name] VARCHAR(255) NOT NULL,
+    data_type_id INTEGER NOT NULL,
+    filepath VARCHAR(255) NOT NULL,
+    import_date VARCHAR(255) DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user (id),
+    FOREIGN KEY (data_type_id) REFERENCES data_type (id)
 );
 
 
