@@ -1,21 +1,31 @@
-# Purpose: Dashboard class for managing the user interface.
+# Purpose: Dashboard module for managing the user interface.
 
 # Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from database.database import Database
-from authentication.user_authentication import UserAuthentication
+from data_management.database import Database
+from session.session_manager import SessionManager
+from user_authentication.authentication import UserAuthentication
+from user_interface.login_dashboard import LoginManager
+
+# Configure logging
+import logging
+from config import configure_logging
+configure_logging()
+
+# Start using logging
+logging.debug("This is a debug message.")
 
 
-# Dashboard class
-class Dashboard:
-    def __init__(self, database: Database):
+# Dashboard class for managing the user interface
+class MainDashboard:
+    def __init__(self, session_manager: SessionManager, login_manager: LoginManager, database: Database) -> None:
+        self.session_manager = session_manager
         self.database = database
-        self.user_auth = UserAuthentication(database)
-        self.running = False
-        self.user_auth.logged_in = False
+        self.login_manager = login_manager
+        self.user_authentication = UserAuthentication(self.session_manager, self.database.query_executor)
         self.portfolio_manager = False
         self.view_portfolio = False
         self.manage_portfolio = False
@@ -43,43 +53,8 @@ class Dashboard:
 
 
     def run(self):
-        self.running = True
-        self.handle_login_menu()
-
-
-    def print_login_menu(self):
-        print("\n====================================")
-        print("|| Welcome to 'PORTFOLIO MANAGER' ||")
-        print("====================================")
-        print("\nLOGIN MENU")
-        print("-----------")
-        print("1. Create an account")
-        print("2. Log into account")
-        print("0. Exit")
-
-
-    def handle_login_menu(self):
-        while self.running:
-            self.print_login_menu()
-            choice = input("\nPlease enter your choice: ")
-            # Check if the input is valid
-            while not self.valid_input(choice, 0, 2):
-                print("Invalid input. Please try again: ", end="")
-                choice = input()
-
-            choice = int(choice)
-            if choice == 1:
-                self.user_auth.create_account()
-                if self.user_auth.logged_in:
-                    self.handle_main_menu()
-            elif choice == 2:
-                self.user_auth.login()
-                if self.user_auth.logged_in:
-                    self.handle_main_menu()
-            elif choice == 0:
-                self.user_auth.logout()
-                if not self.user_auth.logged_in:
-                    self.running = False
+        self.session_manager.set_main_db_is_running(True)
+        self.handle_main_menu()
 
 
     def print_main_menu(self):
@@ -95,7 +70,7 @@ class Dashboard:
 
 
     def handle_main_menu(self):
-        while self.user_auth.logged_in:
+        while self.session_manager.logged_in:
             self.print_main_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
@@ -105,9 +80,11 @@ class Dashboard:
             
             choice = int(choice)
             if choice == 1:
+                # Start the portfolio manager
                 self.portfolio_manager = True
                 self.handle_portfolio_manager_menu()
             elif choice == 2:
+                # Go to account settings
                 self.account_settings = True
                 self.handle_account_settings_menu()
             elif choice == 3:
@@ -118,16 +95,13 @@ class Dashboard:
                 print("Most recent Portfolio changes discarded!")
             elif choice == 5:
                 # Log out the user
-                self.user_auth.logout()
+                self.login_manager.logout()
             elif choice == 6:
                 self.help = True
                 self.handle_help_menu()
             elif choice == 0:
                 # Log out the user
-                self.user_auth.logout()
-                # If logout was successful, exit the program
-                if not self.user_auth.logged_in:
-                    self.running = False
+                self.login_manager.logout()
 
 
     def print_portfolio_manager_menu(self):
@@ -274,7 +248,9 @@ class Dashboard:
                 self.manage_portfolio = False
 
 
-    def print_import_existing_portfolio_menu(self):    
+    def print_import_existing_portfolio_menu(self):
+        print("\nIMPORT EXISTING PORTFOLIO")
+        print("--------------------------")
         print("1. Import Existing Portfolio from Brokerage Account")
         print("2. Import Existing Portfolio from CSV File")
         print("3. Import Existing Portfolio from Excel File")
@@ -309,8 +285,9 @@ class Dashboard:
                 # self.handle_import_from_pdf_menu()
             elif choice == 5:
                 print("Importing from Database file...")
-                if self.user_auth.current_user_id != None:
-                    self.database.import_file(self.user_auth.current_user_id, "database", [".db"])
+                if self.session_manager.current_user is not None:
+                    if self.session_manager.current_user.user_id is not None:
+                        self.database.import_file(self.session_manager.current_user.user_id, "database", [".db"])
                 else:
                     print("You must be logged in to import from a database file.")
             elif choice == 6:
@@ -322,13 +299,13 @@ class Dashboard:
 
 
     def print_imported_email_accounts(self) -> int | None:
-        if self.user_auth.current_user_id is None:
+        if self.session_manager.current_user is None or self.session_manager.current_user.user_id is None:
             print("You must be logged in to view email accounts.")
             return None
         else:
             # Get the list of email accounts
-            emails = self.database.fetch_email_accounts(self.user_auth.current_user_id, "import_email_account")
-            if len(emails) > 0:
+            emails = self.database.query_executor.fetch_email_accounts(self.session_manager.current_user.user_id, "import_email_account")
+            if emails is not None:
                 print("\nCURRENT IMPORTED EMAIL ACCOUNTS:")
                 # print("--------------------------------")
                 for email in emails:
@@ -350,8 +327,9 @@ class Dashboard:
     
     def handle_import_from_email_menu(self):
         while self.import_from_email:
-            if self.user_auth.current_user_id is None:
+            if self.session_manager.current_user is None or self.session_manager.current_user.user_id is None:
                 print("You must be logged in to view email accounts.")
+                self.import_from_email = False
             else:
                 # Print the menu
                 self.print_import_from_email_menu()
@@ -367,12 +345,12 @@ class Dashboard:
                     self.print_imported_email_accounts()
                 elif choice == 2:
                     print("Adding an email account...")
-                    self.user_auth.import_email_account(self.database, "import_email_account")
+                    # self.user_authentication.query_executor.import_email_account(self.database, "import_email_account")
                 elif choice == 3:
                     # Code for removing an email account
                     print("Removing an email account...")
                     self.print_imported_email_accounts()
-                    self.user_auth.remove_email_account(self.database, "import_email_account")
+                    # self.user_authentication.query_executor.remove_email_account(self.database, "import_email_account")
                 elif choice == 0:
                     self.import_from_email = False
 
@@ -894,6 +872,4 @@ class Dashboard:
 
 
 if __name__ == "__main__":
-    database = Database("db_file_test.db")
-    dashboard = Dashboard(database)
-    dashboard.run()
+    pass

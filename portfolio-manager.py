@@ -1,57 +1,64 @@
 # Purpose: Main entry point for the portfolio manager application.
 
 # Standard Libraries
-import logging
 import os
 import shutil
 
 # Third-party Libraries
 
 # Local Modules
-from database.database import Database
-from dashboard.dashboard import Dashboard
+from data_management.database import Database
+from session.session_manager import SessionManager
+from user_interface.main_dashboard import MainDashboard
+from user_interface.login_dashboard import LoginDashboard
+
+# Configure logging
+import logging
+from config import configure_logging
+configure_logging()
 
 
-def print_vs_logging():
-    logging.debug("debug")
-    logging.info("info")
-    logging.warning("warning")
-    logging.error("error")
-
-
+# Main entry point for the portfolio manager application
 def main():
-    # Configure logging
-    level = logging.DEBUG
-    format = "[%(levelname)s] %(asctime)s - %(message)s"
-    datefmt = "%Y-%m-%d %H:%M:%S"
-    filename = "portfolio-manager.log"
-    logging.basicConfig(level=level, format=format, datefmt=datefmt, filename=filename)
-
-    # Create the user_data folder if it doesn't exist
-    if not os.path.exists("user_data"):
-        os.makedirs("user_data")
+    # Create the data folder if it doesn't exist
+    if not os.path.exists("data"):
+        os.makedirs("data")
     
     # Declare database as None initially
     database = None
-    db_filename = "./user_data/database.db"
+    db_filename = "./data/database.db"
 
     # Declare tmp_database as None initially
     tmp_database = None
-    tmp_db_filename = "./user_data/tmp_database.db"
+    tmp_db_filename = "./data/tmp_database.db"
+
+
+    # Create the session manager
+    session_manager = SessionManager()
+    # Create the login dashboard object
+    login_dashboard = LoginDashboard(session_manager, db_filename)
+    user_id = session_manager.current_user.user_id if session_manager.current_user is not None else None
+    logging.debug(f"session_manager.current_user_id: {user_id}")
+    # Run the login dashboard
+    login_dashboard.run()
+
 
     # Check if the database file exists
-    if not os.path.isfile(db_filename):
-        # If the database file doesn't exist, create a database object
-        database = Database(db_filename)
-        # Open the database connection
-        database.open_connection()
-        # Initialize the database
-        database.initialize_database("./database/schema.sql")
-    else:
+    if os.path.isfile(db_filename):
         # If the database file exists, create a database object
-        database = Database(db_filename)
+        database = Database(session_manager, db_filename)
+        # # Open the database connection
+        # database.db_connection.open_connection()
+    else:
+        # If the database file doesn't exist, create a database object
+        database = Database(session_manager, db_filename)
         # Open the database connection
-        database.open_connection()
+        database.db_connection.open_connection()
+        # Initialize the database
+        database.db_schema.initialize_database("./database/schema.sql")
+        # Close the database connection
+        database.db_connection.close_connection()
+
 
     # Check if the temporary database file exists
     if os.path.isfile(tmp_db_filename):
@@ -69,21 +76,23 @@ def main():
                 # After discarding the temporary database, create a new one
                 shutil.copy2(db_filename, tmp_db_filename)
     else:
-        # If the tmp_database file doesn't exist, create a temporary copy
+        # If the tmp_database file doesn't exist, create a tmp_database file
         shutil.copy2(db_filename, tmp_db_filename)
 
-    # Create a temporary database object
-    tmp_database = Database(tmp_db_filename)
-    # Open the temporary database connection
-    tmp_database.open_connection()
+    # Create a tmp_database object
+    tmp_database = Database(session_manager, tmp_db_filename)
+    # Open the tmp_database connection
+    tmp_database.db_connection.open_connection()
 
-    # Open the database connection if it is not already open
-    if tmp_database.connection is None:
-        tmp_database.open_connection()
 
-    # Start the dashboard
-    dashboard = Dashboard(tmp_database)
-    dashboard.run()
+    while session_manager.login_db_is_running():
+        # Start the main dashboard
+        user_id = session_manager.current_user.user_id if session_manager.current_user is not None else None
+        if user_id is not None:
+            # User is authenticated, instantiate the MainDashboard object
+            main_dashboard = MainDashboard(session_manager, login_dashboard.login_manager, tmp_database)
+            main_dashboard.run()
+
 
     # User decides to save the changes
     # TODO - Make sure if program quits unexpectedly, the tmp_database file is opened and the user is prompted to save the changes
@@ -100,8 +109,8 @@ def main():
 
 
     # Close the database connections
-    database.close_connection()
-    tmp_database.close_connection()
+    database.db_connection.close_connection()
+    tmp_database.db_connection.close_connection()
 
 
 if __name__ == "__main__":
