@@ -1,4 +1,4 @@
-# Purpose: Database Schema class for creating and initializing the database schema.
+# Purpose: Database Schema module for creating and initializing the database schema.
 
 # Standard Libraries
 
@@ -13,7 +13,7 @@ from config import configure_logging
 configure_logging()
 
 
-# DatabaseSchema class
+# DatabaseSchema class for creating and initializing the database schema
 class DatabaseSchema:
     def __init__(self, db_connection: DatabaseConnection):
         self.db_connection = db_connection
@@ -29,5 +29,9 @@ class DatabaseSchema:
                 # Execute the schema SQL statements
                 cursor.executescript(schema_sql)
 
-                logging.debug("Database schema initialized successfully.")
+                logging.info("Database initialized using the Database schema.")
                 # Perform additional operations if needed
+
+
+if __name__ == "__main__":
+    pass

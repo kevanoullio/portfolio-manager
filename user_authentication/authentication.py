@@ -1,7 +1,6 @@
 # Purpose: Authentication module for authenticating users and managing user accounts.
 
 # Standard Libraries
-
 import re
 
 # Third-party Libraries
@@ -17,15 +16,13 @@ import logging
 from config import configure_logging
 configure_logging()
 
-# Start using logging
-logging.debug("This is a debug message.")
-
 
 # UserAuthentication class for managing user authentication
 class UserAuthentication:
     def __init__(self, session_manager: SessionManager, query_executor: QueryExecutor):
         self.session_manager = session_manager
         self.query_executor = query_executor
+        logging.info("UserAuthentication initialized.")
 
 
     def authenticate_user(self, provided_username: str, provided_password_hash: bytes) -> bool:

@@ -12,9 +12,6 @@ import logging
 from config import configure_logging
 configure_logging()
 
-# Start using logging
-logging.debug("This is a debug message.")
-
 
 # EmailAccount class for managing email account-related functionality
 class EmailAccount:
@@ -39,6 +36,7 @@ class User:
         self.username = username
         self.password_hash = password_hash
         self.email_accounts = email_accounts or []
+        logging.info(f"User initialized successfully. Username: {self.username}, User ID: {self.user_id}")
 
 
     def verify_password(self, provided_password_hash: bytes) -> bool:

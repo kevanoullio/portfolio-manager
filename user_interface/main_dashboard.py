@@ -5,9 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from data_management.database import Database
 from session.session_manager import SessionManager
-from user_authentication.authentication import UserAuthentication
 from user_interface.login_dashboard import LoginManager
 
 # Configure logging
@@ -15,17 +13,13 @@ import logging
 from config import configure_logging
 configure_logging()
 
-# Start using logging
-logging.debug("This is a debug message.")
-
 
 # Dashboard class for managing the user interface
 class MainDashboard:
-    def __init__(self, session_manager: SessionManager, login_manager: LoginManager, database: Database) -> None:
+    def __init__(self, session_manager: SessionManager, login_manager: LoginManager) -> None:
         self.session_manager = session_manager
-        self.database = database
+        self.database = self.session_manager.database
         self.login_manager = login_manager
-        self.user_authentication = UserAuthentication(self.session_manager, self.database.query_executor)
         self.portfolio_manager = False
         self.view_portfolio = False
         self.manage_portfolio = False
@@ -53,7 +47,8 @@ class MainDashboard:
 
 
     def run(self):
-        self.session_manager.set_main_db_is_running(True)
+        logging.info("Main Dashboard has started running.")
+        self.session_manager.main_db_is_running = True
         self.handle_main_menu()
 
 
@@ -101,6 +96,7 @@ class MainDashboard:
                 self.handle_help_menu()
             elif choice == 0:
                 # Log out the user
+                self.session_manager.main_db_is_running = False
                 self.login_manager.logout()
 
 

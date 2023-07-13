@@ -14,9 +14,6 @@ import logging
 from config import configure_logging
 configure_logging()
 
-# Start using logging
-logging.debug("This is a debug message.")
-
 
 # DatabaseQueryError class  with Exception as base class for custom error handling
 class DatabaseQueryError(Exception):
@@ -55,6 +52,7 @@ class DatabaseQueryExecutionError(Exception):
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection):
         self.db_connection = db_connection
+        logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
 
     def __find_query_by_title(self, queries: str, query_title: str):
@@ -540,9 +538,12 @@ class QueryExecutor:
             with self.db_connection.cursor() as cursor:
                 cursor.execute(get_user_by_username_query, params)
                 result = cursor.fetchall()
-                user_id = result[0][0]
-                found_username = result[0][1]
-                password_hash = result[0][2]
+                if result is not None and len(result) > 0:
+                    user_id = result[0][0]
+                    found_username = result[0][1]
+                    password_hash = result[0][2]
+                else:
+                    return None
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
@@ -720,3 +721,7 @@ class QueryExecutor:
                 return result[0]
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+
+if __name__ == "__main__":
+    pass

@@ -22,6 +22,7 @@ class LoginManager:
     def __init__(self, session_manager: SessionManager, user_authentication: UserAuthentication) -> None:
         self.session_manager = session_manager
         self.user_authentication = user_authentication
+        logging.info("Login Manager initialized.")
 
 
     def __sanitize_input(self, input: str) -> str:
@@ -133,7 +134,7 @@ class LoginManager:
             print("Username does not exist. Account login failed. Please try again")
             return None
         else:
-            print(f"Logging in as {user.username}...")
+            print(f"Logging in as '{user.username}'...")
 
         # Get the password from the user
         provided_password_hash = self.__password_input()
@@ -147,7 +148,7 @@ class LoginManager:
         if self.user_authentication.authenticate_user(provided_username, provided_password_hash):
             # Load the user into the session manager
             self.session_manager.user_logging_in(user)
-            user = self.session_manager.get_current_user()
+            user = self.session_manager.current_user
             if user:
                 print("You are now logged in.")
                 logging.debug(f"User logged in. User ID: {user.user_id}")
@@ -176,3 +177,7 @@ class LoginManager:
     # def redirect_to_dashboard(self, session_token):
     #     # Redirect the user to the dashboard page with the session token
     #     pass
+
+
+if __name__ == "__main__":
+    pass

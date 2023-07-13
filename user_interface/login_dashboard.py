@@ -5,7 +5,6 @@
 # Third-party Libraries
 
 # Local Modules
-from data_management.database import Database
 from session.session_manager import SessionManager
 from user_authentication.authentication import UserAuthentication
 from user_authentication.login_manager import LoginManager
@@ -18,15 +17,14 @@ configure_logging()
 
 # LoginDashboard class for managing the login process
 class LoginDashboard:
-    def __init__(self, session_manager: SessionManager, db_filename: str) -> None:
+    def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-        self.db_filename = db_filename
-        self.database = Database(self.session_manager, self.db_filename)
+        self.database = self.session_manager.database
         self.user_auth = UserAuthentication(self.session_manager, self.database.query_executor)
         self.login_manager = LoginManager(self.session_manager, self.user_auth)
     
 
-    def valid_input(self, choice: str, min_choice: int, max_choice: int) -> bool:
+    def __valid_input(self, choice: str, min_choice: int, max_choice: int) -> bool:
         if not choice.isdigit() or int(choice) < min_choice or int(choice) > max_choice:
             return False
         return True
@@ -44,12 +42,11 @@ class LoginDashboard:
 
 
     def __handle_login_menu(self):
-        while self.session_manager.login_db_is_running():
-            logging.info("Login Dashboard is running.")
+        while self.session_manager.login_db_is_running:
             self.__print_login_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
-            while not self.valid_input(choice, 0, 2):
+            while not self.__valid_input(choice, 0, 2):
                 print("Invalid input. Please try again: ", end="")
                 choice = input()
 
@@ -57,22 +54,21 @@ class LoginDashboard:
             if choice == 1:
                 self.login_manager.create_account()
                 if self.session_manager.current_user is not None:
-                    self.session_manager.set_main_db_is_running(True)
+                    self.session_manager.main_db_is_running = True
             elif choice == 2:
                 self.login_manager.login()
                 if self.session_manager.current_user is not None:
-                    self.session_manager.set_main_db_is_running(True)
+                    self.session_manager.main_db_is_running = True
             elif choice == 0:
-                self.login_manager.logout()
-                if self.session_manager.current_user is None:
-                    self.session_manager.set_login_db_is_running(False)
+                self.session_manager.login_db_is_running = False
+                logging.info("Login Dashboard has stopped running.")
 
 
     def run(self) -> None:
-        self.session_manager.set_login_db_is_running(True)
+        self.session_manager.login_db_is_running = True
+        logging.info("Login Dashboard has started running.")
         self.__handle_login_menu()
 
 
-    def show_error_message(self) -> None:
-        # Logic to display an error message for failed authentication
-        pass
+if __name__ == "__main__":
+    pass

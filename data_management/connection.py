@@ -39,6 +39,7 @@ class DatabaseConnection:
     def __init__(self, db_filename):
         self.db_filename = db_filename
         self.connection = None
+        logging.info(f"Database connection initialized. Database: {self.db_filename}")
 
 
     def __enter__(self):
@@ -189,3 +190,6 @@ class DatabaseConnection:
 # # Close all connections in the pool when no longer needed
 # pool.close_all_connections()
 
+
+if __name__ == "__main__":
+    pass

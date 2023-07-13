@@ -10,16 +10,15 @@ import logging
 
 # Logging configuration
 DEBUG_MODE = True
-LOGGING_LEVEL = logging.DEBUG
-LOGGING_FORMAT = "[%(levelname)s] %(asctime)s %(name)s %(message)s"
+LOGGING_LEVEL = logging.INFO
+LOGGING_FORMAT = "[%(levelname)s] %(asctime)s (%(name)s) %(module)s - %(message)s"
 LOGGING_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOGGING_FILENAME = "portfolio-manager.log"
+LOGGING_FILENAME = "portfolio_manager.log"
 
 def configure_logging():
     logging.basicConfig(
-        level=LOGGING_LEVEL,
+        level=logging.DEBUG if DEBUG_MODE else LOGGING_LEVEL,
         format=LOGGING_FORMAT,
         datefmt=LOGGING_DATE_FORMAT,
         filename=LOGGING_FILENAME
     )
-    logging.info("Logging configured")
