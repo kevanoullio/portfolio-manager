@@ -514,7 +514,7 @@ class QueryExecutor:
                 email_usage_id = row[2]
                 email_usage = self.get_email_usage(email_usage_id)
                 email_accounts.append(EmailAccount(email_usage, email_address, password_hash))
-                logging.debug(f"Email address: {email_address}, password hash: {password_hash}, usage: {email_usage}")
+                logging.debug(f"Email address: {email_address}, usage: {email_usage}")
 
         return email_accounts
 

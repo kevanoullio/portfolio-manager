@@ -1,0 +1,117 @@
+
+[INFO] 2023-07-13 04:33:10 (root) connection - Database connection initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:33:10 (root) queries - Query executor initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:33:10 (root) database - Database initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:33:13 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 04:33:13 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:33:13 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:33:13 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:33:13 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 04:33:13 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 04:33:13 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 04:33:13 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 04:33:13 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 04:33:16 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:33:16 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:33:18 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:33:18 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:33:18 (root) login_manager - User logged in. User ID: 1
+[DEBUG] 2023-07-13 04:33:18 (root) login_dashboard - Current user: <user_authentication.user.User object at 0x7fa3fbc7c510>
+[INFO] 2023-07-13 04:33:19 (root) login_dashboard - Login Dashboard has stopped running.
+[INFO] 2023-07-13 04:33:19 (root) connection - Database connection initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:33:19 (root) queries - Query executor initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:33:19 (root) database - Database initialized. Database: ./data/tmp_database.db
+[INFO] 2023-07-13 04:39:38 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 04:39:38 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:39:38 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:39:38 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:39:38 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 04:39:38 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 04:39:38 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 04:39:38 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 04:39:38 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 04:39:41 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:39:41 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:39:43 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:39:43 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:39:43 (root) login_manager - User logged in. User ID: 1
+[DEBUG] 2023-07-13 04:39:43 (root) login_dashboard - Current user: kevano
+[INFO] 2023-07-13 04:42:06 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 04:42:06 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:42:06 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:42:06 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:42:06 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 04:42:06 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 04:42:06 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 04:42:06 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 04:42:06 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 04:42:09 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:42:09 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:42:10 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:42:10 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:42:10 (root) login_manager - User logged in. User ID: 1
+[DEBUG] 2023-07-13 04:42:10 (root) login_dashboard - Current user: kevano
+[INFO] 2023-07-13 04:47:27 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 04:47:27 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:47:27 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:47:27 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 04:47:27 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 04:47:27 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 04:47:27 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 04:47:27 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 04:47:27 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 04:47:31 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:47:31 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:47:33 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 04:47:33 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 04:47:33 (root) login_manager - User logged in. User ID: 1
+[DEBUG] 2023-07-13 04:47:33 (root) login_dashboard - Current user: kevano
+[INFO] 2023-07-13 05:22:00 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 05:22:00 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:22:00 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:22:00 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:22:00 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 05:22:00 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 05:22:00 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 05:22:00 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 05:22:00 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 05:22:05 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 05:22:05 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 05:22:07 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 05:22:07 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[INFO] 2023-07-13 05:41:58 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 05:41:58 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:41:58 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:41:58 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 05:41:58 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 05:41:58 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 05:41:58 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 05:41:58 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 05:41:58 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 05:42:47 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 05:42:47 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 05:42:49 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 05:42:49 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[INFO] 2023-07-13 06:24:59 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 06:24:59 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 06:24:59 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 06:24:59 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 06:24:59 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 06:24:59 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 06:24:59 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 06:24:59 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 06:24:59 (root) login_dashboard - Login Dashboard has started running.
+[INFO] 2023-07-13 06:25:03 (root) login_dashboard - Login Dashboard has stopped running.
+[INFO] 2023-07-13 09:18:33 (root) portfolio_manager - Starting the portfolio manager application.
+[INFO] 2023-07-13 09:18:33 (root) connection - Database connection initialized. Database: ./data/database.db
+[INFO] 2023-07-13 09:18:33 (root) queries - Query executor initialized. Database: ./data/database.db
+[INFO] 2023-07-13 09:18:33 (root) database - Database initialized. Database: ./data/database.db
+[INFO] 2023-07-13 09:18:33 (root) session_manager - Session Manager has been initialized.
+[INFO] 2023-07-13 09:18:33 (root) authentication - UserAuthentication initialized.
+[INFO] 2023-07-13 09:18:33 (root) login_manager - Login Manager initialized.
+[DEBUG] 2023-07-13 09:18:33 (root) portfolio_manager - User ID check prior to dashboard running: None
+[INFO] 2023-07-13 09:18:33 (root) login_dashboard - Login Dashboard has started running.
+[DEBUG] 2023-07-13 09:18:42 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 09:18:42 (root) user - User initialized successfully. Username: kevano, User ID: 1
+[DEBUG] 2023-07-13 09:19:03 (root) queries - Email address: kevanoullio@outlook.com, usage: import_email_account
+[INFO] 2023-07-13 09:19:03 (root) user - User initialized successfully. Username: kevano, User ID: 1

@@ -1,15 +1,13 @@
-# Purpose: Login Manager module for managing the login process.
+# Purpose: Login Manager module for managing the user interface for the login process and the login process itself.
 
 # Standard Libraries
-from getpass import getpass
-import re
 
 # Third-party Libraries
-import bcrypt
 
 # Local Modules
 from session.session_manager import SessionManager
 from user_authentication.authentication import UserAuthentication
+from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -22,111 +20,59 @@ class LoginManager:
     def __init__(self, session_manager: SessionManager, user_authentication: UserAuthentication) -> None:
         self.session_manager = session_manager
         self.user_authentication = user_authentication
+        self.user_input = UserInput()
         logging.info("Login Manager initialized.")
-
-
-    def __sanitize_input(self, input: str) -> str:
-        # Remove any potentially dangerous characters
-        sanitized_input = input.translate(str.maketrans('', '', '\'"<>;'))
-        return sanitized_input
     
-
-    def __username_input(self, prompt: str = "Enter your username: ",) -> str:
-        # Get the username from the user
-        username = input(prompt)
-
-        # Check if the username is valid
-        while not re.match("^[a-zA-Z0-9_]*$", username):
-            print("Invalid username. Only alphanumeric characters and underscores are allowed.")
-            username = input("Please try again: ")
-
-        # Sanitize the username
-        username = self.__sanitize_input(username)
-
-        return username
-
-
-    def __password_input(self, prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes | None:
-        # Get the password from the user
-        password = getpass(prompt)
-
-        # Confirm the password if confirm is True
-        if confirm:
-            confirm_password = getpass(confirm_prompt)
-
-            # Check if the password and confirm_password match
-            if password != confirm_password:
-                print("Passwords do not match. Please try again.")
-                return None
-        
-        # Convert the password to bytes
-        password = password.encode()
-
-        if confirm:
-            # If confirm is True, hash the password (bytes) and return it as bytes
-            return self.__hash_password(password)
-        else:
-            # If confirm is False, return the password as bytes
-            return password
-
-
-    def __hash_password(self, password: bytes) -> bytes:
-        # Salt the password for extra security
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password, salt)
-        return hashed_password
-
 
     def create_account(self) -> None:
         print("Creating a new account...")
 
         # Get the username from the user
-        username = self.__username_input()
+        provided_username = self.user_input.username_prompt()
 
-        if username is None:
+        if provided_username is None:
             print("No username entered. Account creation failed. Please try again")
             return None
         
         # Check if the username already exists
-        if self.user_authentication.query_executor.get_user_by_username(username):
+        if self.user_authentication.query_executor.get_user_by_username(provided_username):
             print("Username already exists. Account creation failed. Please try again")
             return None
 
         # Get the password from the user
-        password = self.__password_input(confirm=True)
+        provided_password = self.user_input.password_prompt(confirm=True)
 
         # Check if the password is valid
-        if password is None:
+        if provided_password is None:
             print("No password entered. Account creation failed. Please try again")
             return None
 
         # Create the account
-        self.user_authentication.query_executor.store_username_and_password(username, password)
+        self.user_authentication.query_executor.store_username_and_password(provided_username, provided_password)
 
         # Check if the account was created successfully
-        user = self.user_authentication.query_executor.get_user_by_username(username)
+        user = self.user_authentication.query_executor.get_user_by_username(provided_username)
         if user:
-            self.session_manager.user_logging_in(user)
+            # Load the user into the session manager
+            self.session_manager.current_user = user
+            self.session_manager.logged_in = True
+            self.session_manager.generate_session_token()
+            self.session_manager.start_session()
+            print("You are now logged in.")
             print("Account created successfully!")
             print("You are now logged in.")
             logging.debug(f"User created and logged in. User ID: {user.user_id}")
             # self.redirect_to_dashboard(session_token)
         else:
-            print("Account creation failed.")
-            logging.debug(f"Account creation failed. No user ID.")
-            return None
+            print("Account creation failed. Please try again")
+            logging.info(f"Account creation '{provided_username}' failed. No user ID.")
 
 
     def login(self) -> None:
         print("Logging in...")
 
         # Get the username from the user, sanitize it, and store it
-        provided_username = self.__username_input()
-
-        # Check if the username exists
-        if provided_username is None:
-            print("No username enterred. Account login failed. Please try again")
-            return None
+        provided_username = self.user_input.username_prompt()
 
         # Check if the username exists
         user = self.user_authentication.query_executor.get_user_by_username(provided_username)
@@ -137,46 +83,39 @@ class LoginManager:
             print(f"Logging in as '{user.username}'...")
 
         # Get the password from the user
-        provided_password_hash = self.__password_input()
-
-        # Check if the password is valid
-        if provided_password_hash is None:
-            print("No password enterred. Account login failed. Please try again")
-            return None
+        provided_password_hash = self.user_input.password_prompt(confirm=False)
 
         # Verify the username and password
         if self.user_authentication.authenticate_user(provided_username, provided_password_hash):
-            # Load the user into the session manager
-            self.session_manager.user_logging_in(user)
-            user = self.session_manager.current_user
-            if user:
+            if self.session_manager.current_user is None:
+                # Load the user into the session manager
+                self.session_manager.current_user = user
+                self.session_manager.logged_in = True
+                self.session_manager.generate_session_token()
+                self.session_manager.start_session()
                 print("You are now logged in.")
-                logging.debug(f"User logged in. User ID: {user.user_id}")
-                # session_token = self.user_authentication.generate_session_token(user_id)
-                # self.redirect_to_dashboard(session_token)
+                logging.info(f"User '{user}' user_id '{user.user_id}' logged in with session token: {self.session_manager.session_token}")
             else:
-                print("Account login failed.")
-                logging.debug(f"Account login failed. No user ID.")
-                return None
+                print("You are already logged in.")
+                logging.info(f"User '{user}' user_id '{user.user_id}' is already logged in with session token: {self.session_manager.session_token}")
+        else:
+            print("Username or password is incorrect. Account login failed. Please try again")
+            logging.info(f"User '{user}' user_id '{user.user_id}' failed to log in with session token: {self.session_manager.session_token}")
 
 
     def logout(self, session_token: str | None = None) -> None:
         print("Logging out...")
-        self.session_manager.user_logging_out()
-        if self.session_manager.current_user:
-            print("User still logged in.")
-            logging.debug(f"User still logged in. User ID: {self.session_manager.current_user.user_id}")
+        if self.session_manager.current_user is None:
+            print("No user is currently logged in.")
+            logging.info(f"No user is currently logged in. Session token: {session_token}")
         else:
+            username = self.session_manager.current_user.username
+            user_id = self.session_manager.current_user.user_id
+            self.session_manager.current_user = None
+            self.session_manager.logged_in = False
+            self.session_manager.exit_session()
             print("User logged out.")
-            # Perform additional logout actions
-            # # Logout the user
-            # self.user_authentication.logout_user(session_token)
-            logging.info(f"User logged out with session token: {session_token}")
-
-
-    # def redirect_to_dashboard(self, session_token):
-    #     # Redirect the user to the dashboard page with the session token
-    #     pass
+            logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
 
 
 if __name__ == "__main__":

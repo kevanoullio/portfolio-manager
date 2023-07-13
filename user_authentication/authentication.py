@@ -1,15 +1,17 @@
 # Purpose: Authentication module for authenticating users and managing user accounts.
 
 # Standard Libraries
+from getpass import getpass
 import re
 
 # Third-party Libraries
 import bcrypt
 
 # Local Modules
-from user_authentication.user import EmailAccount, User
 from data_management.queries import QueryExecutor
 from session.session_manager import SessionManager
+from user_authentication.user import EmailAccount, User
+from user_interface.user_input import UsernameValidator, PasswordValidator, EmailValidator
 
 # Configure logging
 import logging

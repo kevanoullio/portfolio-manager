@@ -57,19 +57,18 @@ class MainDashboard:
         print("----------")
         print("1. Portfolio Manager")
         print("2. Account Settings")
-        print("3. Save Changes")
-        print("4. Discard Changes")
-        print("5. Log out")
-        print("6. Help")
-        print("0. Exit")
+        print("3. Help and Information")
+        print("4. Save Changes")
+        print("5. Discard Changes")
+        print("0. Log out")
 
 
     def handle_main_menu(self):
-        while self.session_manager.logged_in:
+        while self.session_manager.main_db_is_running:
             self.print_main_menu()
             choice = input("\nPlease enter your choice: ")
             # Check if the input is valid
-            while not self.valid_input(choice, 0, 6):
+            while not self.valid_input(choice, 0, 5):
                 print("Invalid input. Please try again: ", end="")
                 choice = input()
             
@@ -83,21 +82,20 @@ class MainDashboard:
                 self.account_settings = True
                 self.handle_account_settings_menu()
             elif choice == 3:
-                # Code for saving changes
-                print("Portfolio saved!")
-            elif choice == 4:
-                # Code for discarding changes
-                print("Most recent Portfolio changes discarded!")
-            elif choice == 5:
-                # Log out the user
-                self.login_manager.logout()
-            elif choice == 6:
+                # Display help menu
                 self.help = True
                 self.handle_help_menu()
+            elif choice == 4:
+                # Save changes
+                self.session_manager.save_changes()
+            elif choice == 5:
+                # Discard changes
+                self.session_manager.discard_changes()
             elif choice == 0:
-                # Log out the user
+                # Log out the user and exit
+                self.session_manager.exit_session()
+                self.login_manager.logout(self.session_manager.session_token)
                 self.session_manager.main_db_is_running = False
-                self.login_manager.logout()
 
 
     def print_portfolio_manager_menu(self):
