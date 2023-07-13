@@ -77,7 +77,7 @@ class EmailValidator(Validator):
         valid_email_form = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_email_form)
     
-    
+        
     def validate_email(self, email: str) -> bool:
         # Validates the provided email address
         if not self.validate(email):
