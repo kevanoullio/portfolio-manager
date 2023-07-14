@@ -162,7 +162,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
 
 
 
-    def import_custom_script(self, menu_options: list) -> None:
+    def import_custom_script(self, menu_options: dict) -> None:
         # Only allow importing python scripts
         print("allowed scripts: [.py]")
         # Prompt the user for the script file path
@@ -184,8 +184,8 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # Format the file name
         script_name = os.path.basename(script_path)
 
-        # Add the script to the menu options
-        menu_options.append(script_name)
+        # # Add the script to the menu options
+        # menu_options.append(script_name)
         print("Script imported successfully.")
 
 

@@ -9,6 +9,7 @@ from session.session_manager import SessionManager
 from user_authentication.authentication import UserAuthentication
 from user_authentication.login_manager import LoginManager
 from user_interface.main_dashboard import MainDashboard
+from user_interface import menu
 
 # Configure logging
 import logging
@@ -22,6 +23,7 @@ class LoginDashboard:
         self.user_authentication = UserAuthentication(self.session_manager, self.database.query_executor)
         self.login_manager = LoginManager(self.session_manager, self.user_authentication)
         self.main_dashboard = MainDashboard(self.session_manager, self.login_manager)
+        self.login_menu = menu.Login(self.session_manager)
     
 
     def __valid_input(self, choice: str, min_choice: int, max_choice: int) -> bool:
@@ -36,21 +38,17 @@ class LoginDashboard:
         self.__handle_login_menu()
 
 
-    def __print_login_menu(self):
+    def __print_welcome_screen(self):
         print("\n====================================")
         print("|| Welcome to 'PORTFOLIO MANAGER' ||")
         print("====================================")
-        print("\nLOGIN MENU")
-        print("-----------")
-        print("1. Create an account")
-        print("2. Log into account")
-        print("0. Exit")
 
 
     def __handle_login_menu(self):
         while self.session_manager.login_db_is_running:
             if not self.session_manager.main_db_is_running:
-                self.__print_login_menu()
+                self.__print_welcome_screen()
+                self.login_menu.print()
                 choice = input("\nPlease enter your choice: ")
                 # Check if the input is valid
                 while not self.__valid_input(choice, 0, 2):

@@ -12,7 +12,7 @@ data/
 
 # Ignore all user generated log files
 logs/
-
+*.log
 
 # Ignore Python related cache files and folders
 **/__pycache__/
