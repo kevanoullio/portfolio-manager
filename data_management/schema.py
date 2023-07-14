@@ -9,8 +9,6 @@ from data_management.connection import DatabaseConnection
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # DatabaseSchema class for creating and initializing the database schema
@@ -34,4 +32,4 @@ class DatabaseSchema:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

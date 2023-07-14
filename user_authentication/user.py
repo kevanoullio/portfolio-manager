@@ -9,8 +9,6 @@ import bcrypt
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # EmailAccount class for managing email account-related functionality
@@ -92,4 +90,4 @@ class User:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

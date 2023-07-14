@@ -11,8 +11,6 @@ import bcrypt
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # Generic Validator class for validating values
@@ -77,7 +75,7 @@ class EmailValidator(Validator):
         valid_email_form = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_email_form)
     
-        
+
     def validate_email(self, email: str) -> bool:
         # Validates the provided email address
         if not self.validate(email):
@@ -148,3 +146,7 @@ class UserInput:
         else:
             # If confirm is False, don't hash the password and return it as bytes
             return encoded_password
+
+
+if __name__ == "__main__":
+    print("This module is not meant to be executed directly.")

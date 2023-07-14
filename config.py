@@ -13,7 +13,7 @@ DEBUG_MODE = True
 LOGGING_LEVEL = logging.INFO
 LOGGING_FORMAT = "[%(levelname)s] %(asctime)s (%(name)s) %(module)s - %(message)s"
 LOGGING_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-LOGGING_FILENAME = "portfolio_manager.log"
+LOGGING_FILENAME = "./logs/portfolio_manager.log"
 
 def configure_logging():
     logging.basicConfig(

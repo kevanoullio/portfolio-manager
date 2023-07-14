@@ -10,8 +10,6 @@ from user_interface.login_dashboard import LoginManager
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # Dashboard class for managing the user interface
@@ -47,8 +45,9 @@ class MainDashboard:
 
 
     def run(self):
-        logging.info("Main Dashboard has started running.")
         self.session_manager.main_db_is_running = True
+        logging.info("Main Dashboard has started running.")
+        self.session_manager.start_session()
         self.handle_main_menu()
 
 
@@ -92,9 +91,10 @@ class MainDashboard:
                 # Discard changes
                 self.session_manager.discard_changes()
             elif choice == 0:
-                # Log out the user and exit
-                self.session_manager.exit_session()
-                self.login_manager.logout(self.session_manager.session_token)
+                # Log out the user and close the session
+                self.login_manager.logout()
+                self.session_manager.close_session()
+                logging.info("Main Dashboard has stopped running.")
                 self.session_manager.main_db_is_running = False
 
 
@@ -302,7 +302,7 @@ class MainDashboard:
             if emails is not None:
                 print("\nCURRENT IMPORTED EMAIL ACCOUNTS:")
                 # print("--------------------------------")
-                for email in emails:
+                for email in emails[0]:
                     print(f"{email}")
                 return len(emails)
             else:
@@ -866,4 +866,4 @@ class MainDashboard:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

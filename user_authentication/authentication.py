@@ -15,8 +15,6 @@ from user_interface.user_input import UsernameValidator, PasswordValidator, Emai
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # UserAuthentication class for managing user authentication
@@ -188,4 +186,4 @@ class UserAuthentication:
     
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

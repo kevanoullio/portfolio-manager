@@ -11,8 +11,6 @@ from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # LoginManager class for managing the login process
@@ -91,32 +89,32 @@ class LoginManager:
                 # Load the user into the session manager
                 self.session_manager.current_user = user
                 self.session_manager.logged_in = True
-                self.session_manager.generate_session_token()
-                self.session_manager.start_session()
                 print("You are now logged in.")
-                logging.info(f"User '{user}' user_id '{user.user_id}' logged in with session token: {self.session_manager.session_token}")
+                logging.info(f"User '{user.username}' user_id '{user.user_id}' logged in with session token: {self.session_manager.session_token}")
             else:
                 print("You are already logged in.")
-                logging.info(f"User '{user}' user_id '{user.user_id}' is already logged in with session token: {self.session_manager.session_token}")
+                logging.info(f"User '{user.username}' user_id '{user.user_id}' is already logged in with session token: {self.session_manager.session_token}")
         else:
             print("Username or password is incorrect. Account login failed. Please try again")
-            logging.info(f"User '{user}' user_id '{user.user_id}' failed to log in with session token: {self.session_manager.session_token}")
+            logging.info(f"User '{user.username}' user_id '{user.user_id}' failed to log in with session token: {self.session_manager.session_token}")
 
 
-    def logout(self, session_token: str | None = None) -> None:
+    def logout(self) -> None:
         print("Logging out...")
+        username = None
+        user_id = None
+        session_token = self.session_manager.session_token
         if self.session_manager.current_user is None:
             print("No user is currently logged in.")
             logging.info(f"No user is currently logged in. Session token: {session_token}")
         else:
             username = self.session_manager.current_user.username
             user_id = self.session_manager.current_user.user_id
-            self.session_manager.current_user = None
-            self.session_manager.logged_in = False
-            self.session_manager.exit_session()
-            print("User logged out.")
-            logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
+        self.session_manager.current_user = None
+        self.session_manager.logged_in = False
+        logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
+        print("User logged out.")
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

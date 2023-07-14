@@ -12,8 +12,6 @@ from user_interface.main_dashboard import MainDashboard
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # LoginDashboard class for managing the login process
@@ -51,7 +49,7 @@ class LoginDashboard:
 
     def __handle_login_menu(self):
         while self.session_manager.login_db_is_running:
-            while not self.session_manager.main_db_is_running:
+            if not self.session_manager.main_db_is_running:
                 self.__print_login_menu()
                 choice = input("\nPlease enter your choice: ")
                 # Check if the input is valid
@@ -63,17 +61,18 @@ class LoginDashboard:
                 if choice == 1:
                     self.login_manager.create_account()
                     if self.session_manager.current_user is not None:
-                        logging.debug(f"Current user: {self.session_manager.current_user.username}")
+                        logging.debug(f"User created and logged in: {self.session_manager.current_user.username}")
                         self.main_dashboard.run()
                 elif choice == 2:
                     self.login_manager.login()
                     if self.session_manager.current_user is not None:
-                        logging.debug(f"Current user: {self.session_manager.current_user.username}")
+                        logging.debug(f"User login: {self.session_manager.current_user.username}")
                         self.main_dashboard.run()
                 elif choice == 0:
-                    self.session_manager.login_db_is_running = False
-                    logging.info("Login Dashboard has stopped running.")
+                    self.session_manager.exit_program()
+
+                    
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

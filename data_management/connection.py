@@ -11,8 +11,6 @@ import sqlite3
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # DatabaseConnectionError class  with Exception as base class for custom error handling
@@ -192,4 +190,4 @@ class DatabaseConnection:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

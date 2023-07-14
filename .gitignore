@@ -8,6 +8,11 @@ old_data
 # Ignore all user generated database files
 data/
 *.db
+*.db.bak
+
+# Ignore all user generated log files
+logs/
+
 
 # Ignore Python related cache files and folders
 **/__pycache__/

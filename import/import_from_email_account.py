@@ -17,11 +17,6 @@ from user_authentication.authentication import User, EmailAccount, UserAuthentic
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
-
-# Start using logging
-logging.debug("This is a debug message.")
 
 
 # Global variables
@@ -419,4 +414,4 @@ def main(database: Database, user: UserAuthentication) -> int:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

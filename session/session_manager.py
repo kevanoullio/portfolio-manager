@@ -13,14 +13,12 @@ from user_authentication.user import User
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # SessionManager class for managing the current user session
 class SessionManager:
     def __init__(self, database: Database) -> None:
-        self.database = database
+        self.database: Database = database
         self.login_db_is_running: bool = False
         self.main_db_is_running: bool = False
         self.current_user: User | None = None
@@ -28,7 +26,7 @@ class SessionManager:
         self.session_token = None
         self.modifications = []
         self.session_history = []
-        logging.info("Session Manager has been initialized.")
+        logging.info("Session Manager initialized.")
 
 
     def generate_session_token(self, length: int = 16) -> None:
@@ -41,8 +39,8 @@ class SessionManager:
     def start_session(self) -> None:
         # Generate a new session ID
         self.session_id = self.generate_session_token()
-        # Add the initial snapshot to session history
-        self.session_history.append(DatabaseSnapshot(self.database))
+        # # Add the initial snapshot to session history
+        # self.session_history.append(DatabaseSnapshot(self.database))
         # Clear the tracked modifications
         self.saved = False
 
@@ -83,7 +81,7 @@ class SessionManager:
             previous_snapshot.rollback()
 
 
-    def exit_session(self) -> None:
+    def close_session(self) -> None:
         if not self.saved and self.modifications:
             # Prompt the user to save or discard changes before exiting
             choice = input("Do you want to save changes? ([y]/n): ").strip().lower()
@@ -105,5 +103,10 @@ class SessionManager:
         self.session_history = []
 
 
+    def exit_program(self) -> None:
+        self.login_db_is_running = False
+        logging.info("Login Dashboard has stopped running.")
+
+
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")

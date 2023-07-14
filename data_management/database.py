@@ -15,8 +15,6 @@ from data_management.schema import DatabaseSchema
 
 # Configure logging
 import logging
-from config import configure_logging
-configure_logging()
 
 
 # Database class for managing the database
@@ -275,4 +273,4 @@ class SnapshotData:
 
 
 if __name__ == "__main__":
-    pass
+    print("This module is not meant to be executed directly.")
