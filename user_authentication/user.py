@@ -15,7 +15,7 @@ import logging
 class EmailAccount:
     def __init__(self, email_type: str, email_address: str, password_hash: bytes | None = None) -> None:
         self.email_type = email_type
-        self.email_address = email_address
+        self.address = email_address
         self.password_hash = password_hash
 
     def import_data(self):
@@ -54,7 +54,7 @@ class User:
 
 
     def remove_email_account(self, email_address: str) -> None:
-        self.email_accounts = [account for account in self.email_accounts if account.email_address != email_address]
+        self.email_accounts = [email_account for email_account in self.email_accounts if email_account.address != email_address]
 
 
     # def deactivate_account(self) -> None:

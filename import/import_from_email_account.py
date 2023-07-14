@@ -13,7 +13,8 @@ from html.parser import HTMLParser
 
 # Local Modules
 from data_management.database import Database
-from user_authentication.authentication import User, EmailAccount, UserAuthentication
+from user_authentication.authentication import UserAuthentication
+from user_authentication.user import EmailAccount, User
 
 # Configure logging
 import logging
@@ -37,33 +38,48 @@ last_uid_cache = None
     
 # Class to handle IMAP connection and login
 class IMAPClient:
-    def __init__(self, email: str, password: bytes) -> None:
-        self.email_account = EmailAccount(email, password)
-        self.password = password
+    def __init__(self, email_account: EmailAccount | None) -> None:
+        self.email_account = email_account
         self.mail = None
+        self.servers = {
+            "outlook": "outlook.office365.com",
+            "gmail": "imap.gmail.com",
+            "yahoo": "imap.mail.yahoo.com",
+            "aol": "imap.aol.com",
+            "icloud": "imap.mail.me.com"
+        }
+
 
     def login(self):
         if self.email_account is None:
             print("Please set email account first.")
             return None
         
-        # Get email address and password from database
+        # Store email address and password into more concise variables
         email_address = self.email_account.email_address
-        password = self.email_account.email_password_hash
+        password = self.email_account.password_hash
 
+        # Need to check if email address and password are None for decode() to work
         if email_address is None or password is None:
             print("Please set email account first.")
             return None
 
-        try:
-            self.mail = imaplib.IMAP4_SSL("outlook.office365.com")
-            self.mail.login(email_address, password.decode())
-            return self.mail
-        except imaplib.IMAP4.error:
-            print("Failed to login. Please check your credentials.")
-            self.mail = None  # Reset the mail object to None upon login failure
+        # Get the email type from the email address
+        email_service = email_address.split("@")[-1].split(".")[0]
+        if email_service not in self.servers:
+            print("Email service provider not supported for import.")
             return None
+        else:
+            try:
+                self.mail = imaplib.IMAP4_SSL(email_service)
+                self.mail.login(email_address, password.decode())
+                return self.mail
+            except imaplib.IMAP4.error:
+                print("Failed to login. Please check your credentials.")
+                self.mail = None  # Reset the mail object to None upon login failure
+                return None
     
+
     # Method to list all folders in the mailbox
     def list_folders(self) -> list:
         if self.mail is not None:
@@ -90,6 +106,7 @@ class IMAPClient:
             print("Please login first.")
             return []
 
+
     # Method to select a folder and check for new emails
     def select_folder(self, folder_name):
         if self.mail is not None:
@@ -106,6 +123,7 @@ class IMAPClient:
         else:
             print("Please login first.")
             return None
+
 
     # Method to search for emails in a folder
     def search_emails(self, search_query) -> list:
@@ -131,9 +149,11 @@ class MyHTMLParser(HTMLParser):
         super().__init__(*args, **kwargs)
         self.text = ""
 
+
     def feed(self, data):
         self.text = ""
         super().feed(data)
+
 
     def handle_data(self, data):
         self.text += data
@@ -225,39 +245,44 @@ def read_last_uid():
     return None
 
 
-def main(database: Database, user: UserAuthentication) -> int:
-    if user.user is None or user.user.user_id is None:
+def main(user: User) -> int:
+    if user is None or user.user_id is None:
         return 1
     
-    # Fetch all email addresses of type "import_email_account" from the database
-    email_addresses = database.query_executor.fetch_email_accounts(user.user.user_id, "import_email_account")
+    # Fetch all email addresses of type "import_email_account" from the user
+    import_email_accounts: list[EmailAccount] = []
+    for email_account in user.email_accounts:
+        if email_account.email_type == "import_email_account":
+            import_email_accounts.append(email_account)
     
     # If no email addresses are found, return
-    if email_addresses is None or len(email_addresses) == 0:
-        print("No email addresses found.")
+    if import_email_accounts is None or len(import_email_accounts) == 0:
+        print("No email accounts found.")
         return 1
     
     # Print the email addresses found
-    print("\nAVAILABLE EMAIL ADDRESSES:")
-    print("--------------------------")
-    for email in email_addresses:
-        print(email)
+    print("\nAVAILABLE EMAIL ACCOUNTS:")
+    print("-------------------------")
+    available_email_addresses: list[str] = []
+    for available_email_account in import_email_accounts:
+        print(available_email_account.address)
+        available_email_addresses.append(available_email_account.address)
 
     # Ask the user to select an email address
-    email = input("\nEnter the email address to import from: ")
-    if email not in email_addresses:
+    selected_email_address = input("\nEnter the email address to import from: ")
+    if selected_email_address not in available_email_addresses:
         print("Invalid email address.")
         return 1
 
     # Get the password for the selected email address
-    password = database.query_executor.get_email_password_hash(user.user.user_id, email)
+    selected_email_account = None
+    for email_account in user.email_accounts:
+        if email_account.address == selected_email_account:
+            selected_email_account = email_account
+            break
 
-    if password is None:
-        print("Failed to get password.")
-        return 1
-
-    # Login to the Outlook IMAP server
-    imap_client = IMAPClient(email, password)
+    # Login to the Outlook IMAP server using the selected email account
+    imap_client = IMAPClient(selected_email_account)
     mail = imap_client.login()
     if mail is None:
         return 1
