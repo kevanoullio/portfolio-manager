@@ -50,17 +50,25 @@ class DatabaseQueryExecutionError(Exception):
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection):
         self.db_connection = db_connection
+        self.sql_queries_file = "./data_management/queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-
-    def __find_query_by_title(self, queries: str, query_title: str):
+    
+    def __find_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
-        for query in individual_queries:
+        for i, query in enumerate(individual_queries):
             query = query.strip()
-            if query.startswith("--"):
-                comment = query[2:].strip()
-                if query_title in comment:
-                    return individual_queries[individual_queries.index(query) + 1]
+            query = query
+            print(f"query: {query}")
+            if query_title in query:
+                print(f"Found query: {individual_queries[i].strip()}")
+                return individual_queries[i].strip()
+            # if query.startswith(" --"):
+            #     comment = query[2:].strip()
+            #     print(f"comment: {comment}")
+            #     if query_title in comment:
+            #         print(f"Found query: {individual_queries[i + 1].strip()}")
+            #         return individual_queries[i + 1].strip()
         return None
 
 
@@ -70,9 +78,9 @@ class QueryExecutor:
         return query
 
 
-    def execute_query_by_title(self, query_title: str, *args: str) -> sqlite3.Cursor:
+    def execute_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
         # Read the queries.sql file
-        with open("queries.sql", "r") as file:
+        with open(self.sql_queries_file, "r") as file:
             queries = file.read()
 
         # Find the selected query by matching the title
@@ -84,7 +92,8 @@ class QueryExecutor:
             # Execute the query
             try:
                 with self.db_connection.cursor() as cursor:
-                    result = cursor.execute(query_with_values)
+                    cursor.execute(query_with_values)
+                    result = cursor.fetchall()  # Fetch all rows of the result
                     return result
             except Exception as e:
                 raise DatabaseQueryExecutionError(self.db_connection, "QUERY BY TITLE", e)

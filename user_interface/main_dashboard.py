@@ -8,6 +8,7 @@
 from session.session_manager import SessionManager
 from user_interface.login_dashboard import LoginManager
 from user_interface import menu
+from user_interface import query_results
 
 # Configure logging
 import logging
@@ -19,6 +20,7 @@ class MainDashboard:
         self.session_manager = session_manager
         self.database = self.session_manager.database
         self.login_manager = login_manager
+        self.query_results = query_results.QueryResults(self.session_manager)
         self.main_menu = menu.Main(self.session_manager)
         self.portfolio_manager_menu = menu.PortfolioManager(self.session_manager)
         self.view_portfolio_menu = menu.ViewPortfolio(self.session_manager)
@@ -141,6 +143,8 @@ class MainDashboard:
             if choice == 1:
                 # Code for viewing current portfolio
                 print("Viewing current portfolio...")
+                results = self.session_manager.database.execute_query_by_title("view_current_portfolio")
+                self.query_results.print(results)
             elif choice == 2:
                 # Code for viewing entire portfolio history
                 print("Viewing entire portfolio history...")
