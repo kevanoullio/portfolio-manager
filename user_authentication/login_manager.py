@@ -5,7 +5,9 @@
 # Third-party Libraries
 
 # Local Modules
+from account_management.accounts import User
 from session.session_manager import SessionManager
+from user_authentication.authentication import Authentication
 from user_interface.user_input import UserInput
 
 # Configure logging
@@ -16,7 +18,7 @@ import logging
 class LoginManager:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-        self.user_authentication = self.session_manager.user_authentication
+        self.user_authentication = Authentication(self.session_manager)
         self.user_input = UserInput()
         logging.info("Login Manager initialized.")
     
@@ -32,7 +34,7 @@ class LoginManager:
             print("Username already exists. Account creation failed. Please try again")
             return None
 
-        # Get the password from the user (password_prompt checks if it's valid)
+        # Get the password from the user (password_prompt checks if it's valid), confirm it with a second prompt
         provided_password = self.user_input.password_prompt(confirm=True)
 
         # Create the account
@@ -41,14 +43,10 @@ class LoginManager:
         # Check if the account was created successfully
         user = self.session_manager.database.query_executor.get_user_by_username(provided_username)
         if user:
-            # Load the user into the session manager
-            self.session_manager.current_user = user
-            self.session_manager.logged_in = True
-            self.session_manager.generate_session_token()
-            self.session_manager.start_session()
-            print("You are now logged in.")
-            print("Account created successfully!")
-            print("You are now logged in.")
+            # Run the login_management function to log the user in
+            self.login_management(user)
+            # Print the success message
+            self.account_creation_success_message(user.username)
             logging.debug(f"User created and logged in. User ID: {user.user_id}")
             # self.redirect_to_dashboard(session_token)
         else:
@@ -71,15 +69,15 @@ class LoginManager:
             print(f"Logging in as '{user.username}'...")
 
         # Get the password from the user (password_prompt checks if it's valid)
-        provided_password_hash = self.user_input.password_prompt(confirm=False)
+        provided_password_hash = self.user_input.password_prompt()
 
         # Verify the username and password
         if self.user_authentication.authenticate_user(provided_username, provided_password_hash):
             if self.session_manager.current_user is None:
-                # Load the user into the session manager
-                self.session_manager.current_user = user
-                self.session_manager.logged_in = True
-                print("You are now logged in.")
+                # Run the login_management function to log the user in
+                self.login_management(user)
+                # Print the success message
+                self.login_success_message(user.username)
                 logging.info(f"User '{user.username}' user_id '{user.user_id}' logged in with session token: {self.session_manager.session_token}")
             else:
                 print("You are already logged in.")
@@ -100,10 +98,45 @@ class LoginManager:
         else:
             username = self.session_manager.current_user.username
             user_id = self.session_manager.current_user.user_id
-        self.session_manager.current_user = None
-        self.session_manager.logged_in = False
+        # Run the logout_management function to log the user out
+        self.logout_management()
+        # Print the success message
+        self.logout_success_message(f"{username}")
         logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
         print("User logged out.")
+
+
+    def login_management(self, user: User) -> None:
+        # Load the user into the session manager
+        self.session_manager.current_user = user
+        self.session_manager.logged_in = True
+        # Generate a session token and start the session
+        self.user_authentication.generate_session_token()
+        self.session_manager.start_session()
+
+    
+    def logout_management(self) -> None:
+        # Unload the user from the session manager
+        self.session_manager.current_user = None
+        self.session_manager.logged_in = False
+        # Clear the session token and close the session
+        self.user_authentication.clear_session_token()
+        self.session_manager.close_session()
+
+
+    def account_creation_success_message(self, username: str) -> None:
+        print("Account creation successful!")
+        print(f"You are now logged in as '{username}'")
+
+
+    def login_success_message(self, username: str) -> None:
+        print("Login successful!")
+        print(f"You are now logged in as '{username}'")
+    
+
+    def logout_success_message(self, username: str) -> None:
+        print("Logout successful!")
+        print(f"User '{username}' is now logged out.")
 
 
 if __name__ == "__main__":

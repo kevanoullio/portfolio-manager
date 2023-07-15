@@ -13,8 +13,8 @@ from html.parser import HTMLParser
 
 # Local Modules
 from data_management.database import Database
-from user_authentication.authentication import UserAuthentication
-from user_authentication.user import EmailAccount, User
+from user_authentication.authentication import Authentication
+from user_authentication.account_management import EmailAccount, User
 
 # Configure logging
 import logging

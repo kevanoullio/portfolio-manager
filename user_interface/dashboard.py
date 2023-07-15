@@ -6,7 +6,7 @@
 
 # Local Modules
 from session.session_manager import SessionManager
-from user_authentication.authentication import UserAuthentication
+from user_authentication.authentication import Authentication
 from user_authentication.login_manager import LoginManager
 
 # Configure logging
@@ -17,9 +17,8 @@ import logging
 class Dashboard:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-        self.database = self.session_manager.database
-        self.user_authentication = UserAuthentication(self.session_manager, self.database.query_executor)
-        self.login_manager = LoginManager(self.session_manager, self.user_authentication)
+        self.user_authentication = Authentication(self.session_manager)
+        self.login_manager = LoginManager(self.session_manager)
     
 
     def __print_welcome_screen(self):

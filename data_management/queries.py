@@ -6,8 +6,10 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
+from account_management.email_account import EmailAccount
+from account_management.user_account import User
 from data_management.connection import DatabaseConnection
-from user_authentication.user import EmailAccount, User
+from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -50,6 +52,7 @@ class DatabaseQueryExecutionError(Exception):
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection):
         self.db_connection = db_connection
+        self.user_input = UserInput()
         self.sql_queries_file = "./data_management/queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
@@ -477,11 +480,36 @@ class QueryExecutor:
 
 
 
-    def get_email_usage(self, email_usage_id: int) -> str:
+
+
+    def get_user_by_username(self, provided_username: str) -> User | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_user_by_username_query = f"{query_type} * FROM user WHERE username = ?"
+        params = (provided_username,)
+        # Execute the query
+        try:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute(get_user_by_username_query, params)
+                result = cursor.fetchall()
+                if result is not None and len(result) > 0:
+                    return User(result[0][0], result[0][1], result[0][2])
+                else:
+                    return None
+        except Exception as e:
+            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+
+
+
+
+
+
+    def get_email_usage_by_id(self, email_usage_id: int) -> str:
+        # Define the query parameters
         query_type = "SELECT"
         get_email_usage_query = f"{query_type} usage FROM email_usage WHERE id = ?"
         params = (email_usage_id,)
-
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
@@ -492,76 +520,110 @@ class QueryExecutor:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
 
-    def get_email_accounts(self, user_id: int) -> list[EmailAccount] | None:
+    def get_email_usage_id_by_name(self, email_usage: str) -> int | None:
+        # Define the query parameters
         query_type = "SELECT"
-        get_email_accounts_query = f"{query_type} email_address, password_hash, email_usage_id FROM email WHERE user_id = ?"
-        params = (user_id,)
-
-        # Initialize the variables
-        email_accounts = []
-        email_address = None
-        password_hash = None
-        email_usage_id = None
-        email_usage = None
-
+        get_email_usage_id_query = f"{query_type} id FROM email_usage WHERE usage = ?"
+        params = (email_usage,)
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_accounts_query, params)
-                result = cursor.fetchall()
+                cursor.execute(get_email_usage_id_query, params)
+                result = cursor.fetchone()
+                return result[0]
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-        # Check if the user has any email accounts
-        if result is not None:
-            # Get the user's email accounts
-            for row in result:
-                email_address = row[0]
-                password_hash = row[1]
-                email_usage_id = row[2]
-                email_usage = self.get_email_usage(email_usage_id)
-                email_accounts.append(EmailAccount(email_usage, email_address, password_hash))
-                logging.debug(f"Email address: {email_address}, usage: {email_usage}")
 
-        return email_accounts
-
-
-    def get_user_by_username(self, username: str) -> User | None:
-        # Sanitize the input to avoid SQL injection
-        username = self.__sanitize_input(username)
-        
+    def get_email_account_by_email_address(self, provided_email_address: str) -> EmailAccount | None:
+        # Define the query parameters
         query_type = "SELECT"
-        get_user_by_username_query = f"{query_type} * FROM user WHERE username = ?"
-        params = (username,)
-
-        # Initialize the variables
-        user_id = None
-        found_username = None
-        password_hash = None
-        email_accounts = None
-
+        get_email_account_by_email_address_query = f"{query_type} * FROM email WHERE email_address = ?"
+        params = (provided_email_address,)
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
-                cursor.execute(get_user_by_username_query, params)
+                cursor.execute(get_email_account_by_email_address_query, params)
                 result = cursor.fetchall()
                 if result is not None and len(result) > 0:
-                    user_id = result[0][0]
-                    found_username = result[0][1]
-                    password_hash = result[0][2]
+                    return EmailAccount(result[0][2], result[0][3], result[0][4])
                 else:
                     return None
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        
 
-        # Check if the user was found
-        if found_username is not None:
-            # Get the user's email accounts
-            email_accounts = self.get_email_accounts(user_id)
-            # Create the user object
-            user = User(user_id, found_username, password_hash, email_accounts)
-            return user
 
+    # def get_email_accounts(self, user_id: int) -> list[EmailAccount] | None:
+    #     query_type = "SELECT"
+    #     get_email_accounts_query = f"{query_type} email_address, password_hash, email_usage_id FROM email WHERE user_id = ?"
+    #     params = (user_id,)
+
+    #     # Initialize the variables
+    #     email_accounts = []
+    #     email_address = None
+    #     password_hash = None
+    #     email_usage_id = None
+    #     email_usage = None
+
+    #     # Execute the query
+    #     try:
+    #         with self.db_connection.cursor() as cursor:
+    #             cursor.execute(get_email_accounts_query, params)
+    #             result = cursor.fetchall()
+    #     except Exception as e:
+    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+    #     # Check if the user has any email accounts
+    #     if result is not None:
+    #         # Get the user's email accounts
+    #         for row in result:
+    #             email_address = row[0]
+    #             password_hash = row[1]
+    #             email_usage_id = row[2]
+    #             email_usage = self.get_email_usage(email_usage_id)
+    #             email_accounts.append(EmailAccount(email_usage, email_address, password_hash))
+    #             logging.debug(f"Email address: {email_address}, usage: {email_usage}")
+
+    #     return email_accounts
+
+
+    # def fetch_email_accounts(self, user_id: int, email_usage: str) -> list | None:
+    #     query_type = "SELECT"
+    #     # Get the email usage id
+    #     email_usage_id = self.get_email_usage_id(email_usage)
+    #     # Define the SQL query, ensure only emails associated with currently logged in user are displayed
+    #     fetch_email_accounts_query = f"{query_type} email_address FROM email WHERE user_id = ? AND email_usage_id = ?"
+
+    #     # Set the query parameters
+    #     params = (user_id, email_usage_id)
+
+    #     # Execute the query
+    #     try:
+    #         with self.db_connection.cursor() as cursor:
+    #             cursor.execute(fetch_email_accounts_query, params)
+    #             result = cursor.fetchall()
+    #             return result
+    #     except Exception as e:
+    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+
+    # def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:
+    #     query_type = "SELECT"
+    #     # SQL query to get the password for an email address
+    #     get_email_password_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
+    #     # Set the query parameters
+    #     params = (user_id, email_address)
+
+    #     # Execute the query
+    #     try:
+    #         with self.db_connection.cursor() as cursor:
+    #             cursor.execute(get_email_password_query, params)
+    #             result = cursor.fetchone()
+    #             return result[0]
+    #     except Exception as e:
+    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        
 
 
 
@@ -652,61 +714,6 @@ class QueryExecutor:
 
 
 
-
-
-
-    def get_email_usage_id(self, email_usage: str) -> int | None:
-        query_type = "SELECT"
-        # SQL query to get the email usage id
-        get_email_usage_id_query = f"{query_type} id FROM email_usage WHERE usage = ?"
-        # Set the query parameters
-        params = (email_usage,)
-
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_usage_id_query, params)
-                result = cursor.fetchone()
-                return result[0]
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
-
-    def fetch_email_accounts(self, user_id: int, email_usage: str) -> list | None:
-        query_type = "SELECT"
-        # Get the email usage id
-        email_usage_id = self.get_email_usage_id(email_usage)
-        # Define the SQL query, ensure only emails associated with currently logged in user are displayed
-        fetch_email_accounts_query = f"{query_type} email_address FROM email WHERE user_id = ? AND email_usage_id = ?"
-
-        # Set the query parameters
-        params = (user_id, email_usage_id)
-
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(fetch_email_accounts_query, params)
-                result = cursor.fetchall()
-                return result
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-    
-
-    def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:
-        query_type = "SELECT"
-        # SQL query to get the password for an email address
-        get_email_password_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
-        # Set the query parameters
-        params = (user_id, email_address)
-
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_password_query, params)
-                result = cursor.fetchone()
-                return result[0]
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
 
 

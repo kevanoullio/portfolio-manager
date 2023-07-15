@@ -1,23 +1,22 @@
-# Purpose: Authentication module for authenticating users and managing user accounts.
+# Purpose: Authentication module for authenticating user and validating credentials of various types
 
 # Standard Libraries
-from getpass import getpass
-import re
+import secrets
+import string
 
 # Third-party Libraries
 import bcrypt
 
 # Local Modules
 from session.session_manager import SessionManager
-from user_authentication.user import EmailAccount, User
 from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
 
 
-# UserAuthentication class for managing user authentication
-class UserAuthentication:
+# Authentication class for authenticating user and validating credentials of various types
+class Authentication:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
         self.query_executor = self.session_manager.database.query_executor
@@ -28,8 +27,6 @@ class UserAuthentication:
     def authenticate_user(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Check if the provided credentials are valid
         if self.validate_user_credentials(provided_username, provided_password_hash):
-            # Perform additional checks or actions if needed
-            print("Login successful!")
             return True
         else:
             print("Account login failed. Please try again.")
@@ -40,164 +37,83 @@ class UserAuthentication:
         # Get a User class based on the username
         user = self.query_executor.get_user_by_username(provided_username)
         # Check if the user exists and the password matches
-        if user and user.verify_user_password(provided_password_hash):
+        if user and self.verify_password(provided_password_hash, user.password_hash):
             return True
         else:
             print("Invalid user credentials.")
             return False
     
 
-    def validate_email_credentials(self, provided_email: str, provided_password_hash: bytes) -> bool:
-        # Check if the user exists
-        if self.session_manager.current_user is None:
-            print("No user is logged in.")
-            return False
-        # Check if the email account exists
-        email_account = self.session_manager.current_user.get_email_account(provided_email)
-        if email_account and email_account.verify_password(provided_password_hash):
-            return True
+    def validate_email_credentials(self, provided_email_address: str, provided_password_hash: bytes) -> bool | None:
+        # Get an EmailAccount class based on the email
+        email_account = self.query_executor.get_email_account_by_email_address(provided_email_address)
+        # Check if the email account exists.
+        if email_account:
+            if email_account.password_hash is None:
+            # If the email account was only added for notification purposes, the password hash will be None
+                return None
+            elif self.verify_password(provided_password_hash, email_account.password_hash):
+                return True
         else:
             print("Invalid email credentials.")
             return False
 
 
-    def get_user_by_username(self, provided_username: str) -> User | None:
-        user = self.query_executor.get_user_by_username(provided_username)
-        return user
+    def verify_password(self, provided_password_hash: bytes, stored_password_hash: bytes) -> bool:
+        # Verify if the provided password matches the user's stored password
+        result = bcrypt.checkpw(provided_password_hash, stored_password_hash)
+        return result
 
 
-    def generate_session_token(self, user_id):
-        # Generate a session token for the user
-        # This can involve creating a unique token, associating it with the user ID,
-        # and storing it in the database or an in-memory cache
-        # Return the generated session token
-        pass
+    def generate_session_token(self, length: int = 16) -> None:
+        # Generates a random session token of the specified length
+        characters = string.ascii_letters + string.digits
+        session_token = ''.join(secrets.choice(characters) for _ in range(length))
+        self.session_manager.session_token = session_token
 
-    def verify_session_token(self, session_token):
-        # Verify the validity of the session token
-        # Check if the session token is present in the database or cache
-        # Return True if the token is valid, False otherwise
-        pass
 
-    def clear_session_token(self, session_token):
+    def verify_session_token(self, provided_session_token: str) -> bool:
+        # TODO - utilize token verification for every transaction on the database
+        # Get the session token from the database or cache
+        current_session_token = self.session_manager.session_token
+        # Check if the session token is present and matches the stored token
+        if current_session_token and provided_session_token == current_session_token:
+            # TODO - Add additional checks such as token expiration
+            # Return True if the token is valid
+            return True
+        # Return False if the token is invalid or not present
+        return False
+
+
+    def clear_session_token(self) -> None:
         # Remove the session token from the database or cache
-        pass
+        self.session_manager.session_token = None
 
 
 
+# To verify the session token, you typically perform the verification step at the beginning of each protected or restricted operation within your application. Here are some guidelines on when and where to verify the session token:
 
+# 1. Authorization Middleware/Decorator: In many web frameworks, you can create middleware or decorators that intercept requests before they reach the protected routes or endpoints. Within this middleware or decorator, you can verify the session token. If the token is valid, the request is allowed to proceed to the corresponding route or endpoint. Otherwise, you can return an appropriate error response or redirect the user to the login page.
 
-    # def modify_account(self):
-    #     print("Modifying the account...")
-    #     # Code for modifying the account
-    #     # Example: Use a third-party library or API to modify the account
-    #     print("Account modification successful.")
+# 2. Protected Route/Endpoint: If you don't use middleware or decorators, you can directly verify the session token within the handler function of each protected route or endpoint. Perform the verification at the beginning of the function, and if the token is valid, allow the execution of the rest of the code. Otherwise, handle the unauthorized access appropriately.
 
+# The session token used for verification should typically be obtained from the client's request. The token can be passed as a part of the request, usually in the form of an HTTP header, query parameter, or cookie. In your code, you can retrieve the session token from the request object provided by the web framework or from any other mechanism you use for session management.
 
-    # def delete_account(self):
-    #     print("Deleting the account...")
-    #     # Code for deleting the account
-    #     # Example: Use a third-party library or API to delete the account
-    #     print("Account deletion successful.")
-    #     # Unload the user id of the deleted account
+# For example, in a Flask web application, you can retrieve the session token from the `request` object like this:
 
+# ```python
+# from flask import request
 
+# class Authentication:
+#     def verify_session_token(self):
+#         session_token = request.headers.get('Authorization')
+#         # Perform token verification logic here
+# ```
 
-    def import_email_account(self, email_usage: str) -> int:
-        if self.session_manager.current_user is None:
-            print("You are not logged in.")
-            return 1
+# Remember to adapt the code based on the specific web framework or session management mechanism you are using.
 
-        # Get the email address from the user (email_prompt checks if it's valid)
-        provided_email = self.user_input.email_prompt()
+# By verifying the session token at the appropriate entry points within your application, you ensure that only authenticated and authorized users can access protected functionality.
 
-        # Get the email_usage_id from the database
-        email_usage_id = self.query_executor.get_email_usage_id(email_usage)
-
-        # Check if the email address is already in the database
-        if self.query_executor.entry_exists("email",
-                f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
-                self.session_manager.current_user.user_id):
-            print("Email address already in the database.")
-            return 2
-        
-        # Only get the email password if the email usage is not "notification"
-        if email_usage is "notification":
-            provided_password = None
-            # Prep the email information for insertion into the database
-            columns = ("email_address", "email_usage_id")
-            values = (provided_email, email_usage_id)
-        else:
-            # Get the password from the user (password_prompt checks if it's valid)
-            provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
-            # Prep the email information for insertion into the database
-            columns = ("email_address", "password_hash", "email_usage_id")
-            values = (provided_email, provided_password, email_usage_id)
-        
-        # Insert the entry into the database
-        try:
-            self.query_executor.insert_entry("email", columns, values, self.session_manager.current_user.user_id)
-            # Add the email account to the current user
-            self.session_manager.current_user.add_email_account(EmailAccount(email_usage, provided_email, provided_password))
-        except Exception as e:
-            print("Error inserting email account into the database.")
-            logging.warning(e)
-            return 3
-
-        print("Email account import successful.")
-        return 0
-
-
-    def remove_email_account(self, email_usage: str) -> int:
-        if self.session_manager.current_user is None:
-            print("You are not logged in.")
-            return 1
-        # if self.session_manager.current_user.user_id is None:
-        #     print("User id is None. Cannot remove email account.")
-        #     return 1
-    
-        # Get the email address from the user (email_prompt checks if it's valid)
-        provided_email = self.user_input.email_prompt()
-
-        # Get the email_usage_id from the database
-        email_usage_id = self.query_executor.get_email_usage_id(email_usage)
-
-        # Check that the email address is in the database
-        if not self.query_executor.entry_exists("email",
-                f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
-                self.session_manager.current_user.user_id):
-            print("Email address is not in the database.")
-            return 2
-
-        # Only get the email password if the email usage is not "notification"
-        if email_usage is "notification":
-            provided_password = None
-            # Prep the email information for insertion into the database
-            columns = ("email_address", "email_usage_id")
-            values = (provided_email, email_usage_id)
-        else:
-            # Get the password from the user (password_prompt checks if it's valid)
-            provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
-            # Verify the email password
-            if not self.validate_email_credentials(provided_email, provided_password):
-                print("Invalid email credentials.")
-                return 2
-            # Prep the email information for insertion into the database
-            columns = ("email_address", "password_hash", "email_usage_id")
-            values = (provided_email, provided_password, email_usage_id)
-        
-        # Delete the entry from the database
-        try:
-            self.query_executor.delete_entry("email", columns, values, self.session_manager.current_user.user_id)
-            # Remove the email account from the current user
-            self.session_manager.current_user.remove_email_account(EmailAccount(email_usage, provided_email, provided_password))
-        except Exception as e:
-            print("Error deleting email account from the database.")
-            logging.warning(e)
-            return 3
-        
-        print("Email account successfully removed.")
-        return 0
     
 
 if __name__ == "__main__":

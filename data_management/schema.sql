@@ -22,9 +22,9 @@ INSERT OR IGNORE INTO email_usage (usage) VALUES ('notification');
 CREATE TABLE IF NOT EXISTS email (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    [address] VARCHAR(255) NOT NULL,
-    password_hash BLOB NOT NULL,
     email_usage_id INTEGER NOT NULL,
+    [address] VARCHAR(255) NOT NULL,
+    password_hash BLOB,
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (email_usage_id) REFERENCES email_usage (id)
 );

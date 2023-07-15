@@ -96,7 +96,7 @@ class UserInput:
         return hashed_password
 
 
-    def username_prompt(self, prompt: str="Enter your username: ") -> str:
+    def username_prompt(self, prompt: str = "Enter your username: ") -> str:
         # Get the username from the user
         provided_username = input(prompt)
 
@@ -117,7 +117,19 @@ class UserInput:
         return provided_username
 
 
-    def password_prompt(self, prompt: str="Enter your password: ", confirm: bool=False, confirm_prompt: str="Confirm your password: ") -> bytes:
+    def password_prompt(self, prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
+        """
+        This function prompts the user for a password and ensures that it is a valid password format.
+
+        Args:
+            prompt: The desired prompt to display to the user.
+            confirm: Whether or not to confirm the provided password with a second prompt.
+            confirm_prompt: The desired prompt to display to the user for confirming the password.
+
+        Returns:
+            If confirm is set to False, this function returns the hashed password as bytes, otherwise it returns the provided password as bytes without hashing.
+        """
+        
         # Get the password from the user
         provided_password = getpass(prompt)
 
@@ -155,7 +167,7 @@ class UserInput:
             return encoded_password
 
 
-    def email_prompt(self, prompt: str="Enter your email address: ") -> str:
+    def email_address_prompt(self, prompt: str="Enter your email address: ") -> str:
         # Get the email address from the user
         provided_email = input(prompt)
 

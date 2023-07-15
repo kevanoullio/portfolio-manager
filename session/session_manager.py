@@ -1,15 +1,13 @@
 # Purpose: Session Manager module for managing the current session state.
 
 # Standard Libraries
-import random
-import secrets
-import string
+
 
 # Third-party Libraries
 
 # Local Modules
+from account_management.accounts import User
 from data_management.database import Database, DatabaseSnapshot
-from user_authentication.user import User
 
 # Configure logging
 import logging
@@ -22,22 +20,13 @@ class SessionManager:
         # self.db_is_running: bool = False
         self.current_user: User | None = None
         self.logged_in: bool = False
-        self.session_token = None
+        self.session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
 
 
-    def generate_session_token(self, length: int = 16) -> None:
-        # Generates a random session token of the specified length
-        characters = string.ascii_letters + string.digits
-        session_token = ''.join(secrets.choice(characters) for _ in range(length))
-        self.session_token = session_token
-
-
     def start_session(self) -> None:
-        # Generate a new session ID
-        self.session_id = self.generate_session_token()
         # # Add the initial snapshot to session history
         # self.session_history.append(DatabaseSnapshot(self.database))
         # Clear the tracked modifications
