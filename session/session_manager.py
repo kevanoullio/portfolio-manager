@@ -19,7 +19,7 @@ import logging
 class SessionManager:
     def __init__(self, database: Database) -> None:
         self.database = database
-        self.db_is_running: bool = False
+        # self.db_is_running: bool = False
         self.current_user: User | None = None
         self.logged_in: bool = False
         self.session_token = None

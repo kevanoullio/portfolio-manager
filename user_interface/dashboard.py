@@ -29,23 +29,29 @@ class Dashboard:
 
 
     def run(self):
+        # Start the session
         self.session_manager.start_session()
+
+        # Import the Login menu here to avoid circular import
         from user_interface.menu import Login
         self.current_menu = Login(self)
         # self.session_manager.db_is_running = True
         logging.info("Login Dashboard has started running.")
         self.__print_welcome_screen()
+
+        # Main loop for the dashboard
         while self.current_menu:
             self.current_menu.print_options()
             choice = self.current_menu.get_valid_input()
 
             next_menu = self.current_menu.menu_logic.get(choice)
             if next_menu:
-                # Run the logic to execute user's choice
+                # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
                 if self.session_manager.logged_in:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else:
+                    self.current_menu = Login(self)
                     continue
             else:
                 self.current_menu = None

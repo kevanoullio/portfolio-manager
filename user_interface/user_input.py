@@ -22,65 +22,57 @@ class Validator:
         self.valid_form = valid_form
 
 
-    def __is_valid_length(self, value: str) -> bool:
+    def is_valid_length(self, value: str) -> bool:
         return self.minimum_length <= len(value) <= self.maximum_length
 
 
-    def __is_valid_characters(self, value: str) -> bool:
+    def is_valid_characters(self, value: str) -> bool:
         return re.match(f"^[{self.allowed_characters}]*$", value) is not None
     
 
-    def __is_valid_form(self, value: str) -> bool:
+    def is_valid_form(self, value: str) -> bool:
         return re.match(self.valid_form, value) is not None
 
 
-    def validate(self, value: str) -> bool:
-        return self.__is_valid_length(value) and self.__is_valid_characters(value) and self.__is_valid_form(value)
+    def validate(self, value: str) -> int:
+        # Validate the length of the provided username
+        if not self.is_valid_length(value):
+            return 1
+        
+        # Validate the characters of the provided username
+        if not self.is_valid_characters(value):
+            return 2
+        
+        # Validate the form of the provided username
+        if not self.is_valid_form(value):
+            return 3
+
+        # All checks completed, provided username is valid
+        return 0
 
 
 # UsernameValidator class for validating usernames
 class UsernameValidator(Validator):
-    def __init__(self, minimum_length: int = 4, maximum_length: int = 32) -> None:
+    def __init__(self, minimum_length: int = 3, maximum_length: int = 32) -> None:
         allowed_characters = r"a-zA-Z0-9_"
         valid_username_form = r"^[a-zA-Z0-9_]*$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_username_form)
-
-
-    def validate_username(self, username: str) -> bool:
-        # Validates the provided username
-        if not self.validate(username):
-            return False
-        return True
     
 
 # PasswordValidator class for validating passwords
 class PasswordValidator(Validator):
-    def __init__(self, minimum_length: int = 3, maximum_length: int = 64):
+    def __init__(self, minimum_length: int = 3, maximum_length: int = 64) -> None:
         allowed_characters = r"a-zA-Z0-9_"
         valid_password_form = r"^[a-zA-Z0-9_]*$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_password_form)
 
 
-    def validate_password(self, password: str) -> bool:
-        # Validates the provided password
-        if not self.validate(password):
-            return False
-        return True
-
-
 # EmailValidator class for validating emails
 class EmailValidator(Validator):
-    def __init__(self, minimum_length: int = 6, maximum_length: int = 254):
+    def __init__(self, minimum_length: int = 6, maximum_length: int = 254) -> None:
         allowed_characters = r"a-zA-Z0-9_@.-"
         valid_email_form = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_email_form)
-    
-
-    def validate_email(self, email: str) -> bool:
-        # Validates the provided email address
-        if not self.validate(email):
-            return False
-        return True
 
 
 # UserInput class for sanitizing and validating all user input
@@ -97,22 +89,27 @@ class UserInput:
         return sanitized_input
 
 
-    def __hash_password(self, password: bytes) -> bytes:
-        # Salt the password for extra security
+    def __hash_password(self, provided_password: bytes) -> bytes:
+        # Salt the provided password for extra security
         salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password, salt)
+        hashed_password = bcrypt.hashpw(provided_password, salt)
         return hashed_password
 
 
-    def username_prompt(self, prompt: str="Enter your username: ", creation: bool=False) -> str:
+    def username_prompt(self, prompt: str="Enter your username: ") -> str:
         # Get the username from the user
         provided_username = input(prompt)
 
-        # If the username is being created, check if the provided username is valid
-        if creation:
-            while not self.username_validator.validate_username(provided_username):
-                print("Invalid username. Only alphanumeric characters and underscores are allowed.")
-                provided_username = input("Please try again: ")
+        # Check if the provided username is valid
+        while self.username_validator.validate(provided_username) != 0:
+            print("Invalid username. ", end="")
+            if self.username_validator.validate(provided_username) == 1:
+                print(f"Must be between {self.username_validator.minimum_length} and {self.username_validator.maximum_length} characters long.")
+            elif self.username_validator.validate(provided_username) == 2:
+                print("Only alphanumeric characters and underscores are allowed.")
+            elif self.username_validator.validate(provided_username) == 3:
+                print("Must only contain alphanumeric characters and underscores with no separations.")
+            provided_username = input("Please try again: ")
 
         # Sanitize the provided username
         provided_username = self.__sanitize_input(provided_username)
@@ -125,9 +122,15 @@ class UserInput:
         provided_password = getpass(prompt)
 
         # Check if the provided password is valid
-        while not self.password_validator.validate_password(provided_password):
-            print("Invalid password. Only alphanumeric characters and underscores are allowed.")
-            provided_password = getpass("Please try again: ")
+        while self.username_validator.validate(provided_password) != 0:
+            print("Invalid password. ", end="")
+            if self.username_validator.validate(provided_password) == 1:
+                print(f"Must be between {self.password_validator.minimum_length} and {self.password_validator.maximum_length} characters long.")
+            elif self.username_validator.validate(provided_password) == 2:
+                print("Only alphanumeric characters and underscores are allowed.")
+            elif self.username_validator.validate(provided_password) == 3:
+                print("Must only contain alphanumeric characters and underscores with no separations.")
+            provided_password = input("Please try again: ")
 
         # Confirm the provided password if confirm was set to True
         if confirm:
@@ -138,6 +141,9 @@ class UserInput:
                     continue
                 break
         
+        # Sanitize the provided password
+        provided_password = self.__sanitize_input(provided_password)
+
         # Convert the password to bytes
         encoded_password = provided_password.encode()
 
@@ -147,6 +153,26 @@ class UserInput:
         else:
             # If confirm is False, don't hash the password and return it as bytes
             return encoded_password
+
+
+    def email_prompt(self, prompt: str="Enter your email address: ") -> str:
+        # Get the email address from the user
+        provided_email = input(prompt)
+
+        # Check if the provided email address is valid
+        while self.email_validator.validate(provided_email) != 0:
+            print("Invalid email address. ", end="")
+            if self.email_validator.validate(provided_email) == 1:
+                print(f"Must be between {self.email_validator.minimum_length} and {self.email_validator.maximum_length} characters long.")
+            elif self.email_validator.validate(provided_email) == 2:
+                print("Only alphanumeric characters, underscores, periods, hyphens, and @ symbols are allowed.")
+            elif self.email_validator.validate(provided_email) == 3:
+                print("Must be in the form of a standard email address, i.e. 'email@service.something'")
+
+        # Sanitize the provided email address
+        provided_email = self.__sanitize_input(provided_email)
+
+        return provided_email
 
 
 if __name__ == "__main__":
