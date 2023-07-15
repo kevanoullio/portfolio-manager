@@ -9,7 +9,7 @@ import os
 from data_management.backup import BackupManager
 from data_management.database import Database, DatabaseConnection, DatabaseSchema
 from session.session_manager import SessionManager
-from user_interface.login_dashboard import LoginDashboard
+from user_interface.dashboard import Dashboard
 
 # Configure logging
 import logging
@@ -79,11 +79,10 @@ def main():
     # Create the session manager
     session_manager = SessionManager(database)
 
-
-    # Create the login dashboard object
-    login_dashboard = LoginDashboard(session_manager)
-    # Run the login dashboard
-    login_dashboard.run()
+    # Create a dashboard object
+    dashboard = Dashboard(session_manager)
+    # Run the dashboard
+    dashboard.run()
 
 
     # Close the database connections

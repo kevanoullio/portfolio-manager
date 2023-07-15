@@ -18,9 +18,8 @@ import logging
 # SessionManager class for managing the current user session
 class SessionManager:
     def __init__(self, database: Database) -> None:
-        self.database: Database = database
-        self.login_db_is_running: bool = False
-        self.main_db_is_running: bool = False
+        self.database = database
+        self.db_is_running: bool = False
         self.current_user: User | None = None
         self.logged_in: bool = False
         self.session_token = None
@@ -104,7 +103,7 @@ class SessionManager:
 
 
     def exit_program(self) -> None:
-        self.login_db_is_running = False
+        self.db_is_running = False
         logging.info("Login Dashboard has stopped running.")
 
 
