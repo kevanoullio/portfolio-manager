@@ -29,6 +29,7 @@ class Dashboard:
 
 
     def run(self):
+        self.session_manager.start_session()
         from user_interface.menu import Login
         self.current_menu = Login(self)
         # self.session_manager.db_is_running = True
@@ -40,10 +41,18 @@ class Dashboard:
 
             next_menu = self.current_menu.menu_logic.get(choice)
             if next_menu:
+                # Run the logic to execute user's choice
                 next_menu()
-                self.current_menu = self.current_menu.get_next_menu(choice)
+                if self.session_manager.logged_in:
+                    self.current_menu = self.current_menu.get_next_menu(choice)
+                else:
+                    continue
             else:
                 self.current_menu = None
+
+
+    def previous_menu(self):
+        pass
 
 
     def create_account(self):
@@ -86,8 +95,10 @@ class Dashboard:
         print("Discard Changes logic goes here...")
     
 
-    def log_out(self):
-        print("Log Out logic goes here...")
+    def logout(self):
+        self.login_manager.logout()
+        self.session_manager.close_session()
+        logging.info("Main Dashboard has stopped running.")
 
 
     def view_portfolio(self):

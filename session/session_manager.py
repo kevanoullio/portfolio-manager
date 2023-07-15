@@ -103,7 +103,7 @@ class SessionManager:
 
 
     def exit_program(self) -> None:
-        self.db_is_running = False
+        # self.db_is_running = False
         logging.info("Login Dashboard has stopped running.")
 
 

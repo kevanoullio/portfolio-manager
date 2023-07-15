@@ -6,7 +6,7 @@
 
 # Local Modules
 from session.session_manager import SessionManager
-from user_interface.login_dashboard import LoginManager
+from user_authentication.login_manager import LoginManager
 from user_interface import menu
 from user_interface import query_results
 

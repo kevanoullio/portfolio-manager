@@ -104,14 +104,15 @@ class UserInput:
         return hashed_password
 
 
-    def username_prompt(self, prompt: str = "Enter your username: ",) -> str:
+    def username_prompt(self, prompt: str="Enter your username: ", creation: bool=False) -> str:
         # Get the username from the user
         provided_username = input(prompt)
 
-        # Check if the provided username is valid
-        while not self.username_validator.validate_username(provided_username):
-            print("Invalid username. Only alphanumeric characters and underscores are allowed.")
-            provided_username = input("Please try again: ")
+        # If the username is being created, check if the provided username is valid
+        if creation:
+            while not self.username_validator.validate_username(provided_username):
+                print("Invalid username. Only alphanumeric characters and underscores are allowed.")
+                provided_username = input("Please try again: ")
 
         # Sanitize the provided username
         provided_username = self.__sanitize_input(provided_username)
@@ -119,7 +120,7 @@ class UserInput:
         return provided_username
 
 
-    def password_prompt(self, prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
+    def password_prompt(self, prompt: str="Enter your password: ", confirm: bool=False, confirm_prompt: str="Confirm your password: ") -> bytes:
         # Get the password from the user
         provided_password = getpass(prompt)
 

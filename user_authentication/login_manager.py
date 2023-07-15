@@ -26,7 +26,7 @@ class LoginManager:
         print("Creating a new account...")
 
         # Get the username from the user
-        provided_username = self.user_input.username_prompt()
+        provided_username = self.user_input.username_prompt(creation=True)
 
         if provided_username is None:
             print("No username entered. Account creation failed. Please try again")
