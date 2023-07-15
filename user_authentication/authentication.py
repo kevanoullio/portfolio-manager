@@ -8,10 +8,9 @@ import re
 import bcrypt
 
 # Local Modules
-from data_management.queries import QueryExecutor
 from session.session_manager import SessionManager
 from user_authentication.user import EmailAccount, User
-from user_interface.user_input import UsernameValidator, PasswordValidator, EmailValidator
+from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -19,15 +18,16 @@ import logging
 
 # UserAuthentication class for managing user authentication
 class UserAuthentication:
-    def __init__(self, session_manager: SessionManager, query_executor: QueryExecutor):
+    def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-        self.query_executor = query_executor
+        self.query_executor = self.session_manager.database.query_executor
+        self.user_input = UserInput()
         logging.info("UserAuthentication initialized.")
 
 
     def authenticate_user(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Check if the provided credentials are valid
-        if self.validate_credentials(provided_username, provided_password_hash):
+        if self.validate_user_credentials(provided_username, provided_password_hash):
             # Perform additional checks or actions if needed
             print("Login successful!")
             return True
@@ -36,14 +36,28 @@ class UserAuthentication:
             return False
 
 
-    def validate_credentials(self, provided_username: str, provided_password_hash: bytes) -> bool:
+    def validate_user_credentials(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Get a User class based on the username
         user = self.query_executor.get_user_by_username(provided_username)
         # Check if the user exists and the password matches
-        if user and user.verify_password(provided_password_hash):
+        if user and user.verify_user_password(provided_password_hash):
             return True
         else:
-            print("Invalid credentials.")
+            print("Invalid user credentials.")
+            return False
+    
+
+    def validate_email_credentials(self, provided_email: str, provided_password_hash: bytes) -> bool:
+        # Check if the user exists
+        if self.session_manager.current_user is None:
+            print("No user is logged in.")
+            return False
+        # Check if the email account exists
+        email_account = self.session_manager.current_user.get_email_account(provided_email)
+        if email_account and email_account.verify_password(provided_password_hash):
+            return True
+        else:
+            print("Invalid email credentials.")
             return False
 
 
@@ -73,12 +87,6 @@ class UserAuthentication:
 
 
 
-
-
-
-
-
-
     # def modify_account(self):
     #     print("Modifying the account...")
     #     # Code for modifying the account
@@ -95,94 +103,101 @@ class UserAuthentication:
 
 
 
-    # def import_email_account(self, database: Database, email_usage: str) -> int:
-    #     if self.session_manager.current_user is None:
-    #         print("You are not logged in.")
-    #         return 1
-    #     if self.session_manager.current_user.user_id is None:
-    #         print("User id is None. Cannot import email account.")
-    #         return 1
+    def import_email_account(self, email_usage: str) -> int:
+        if self.session_manager.current_user is None:
+            print("You are not logged in.")
+            return 1
 
-    #     # Get the email address from the user
-    #     email = input("Please enter the email address: ")
-    #     # TODO - Check if the email is valid using third-party service?
-    #     while not self.is_valid_email(email):
-    #         print("Invalid email address, please try again. ", end="")
-    #         email = input()
+        # Get the email address from the user (email_prompt checks if it's valid)
+        provided_email = self.user_input.email_prompt()
 
-    #     # Sanitize the email address
-    #     email = self.__sanitize_input(email)
+        # Get the email_usage_id from the database
+        email_usage_id = self.query_executor.get_email_usage_id(email_usage)
 
-    #     # Get the email_usage_id from the database
-    #     email_usage_id = database.query_executor.get_email_usage_id(email_usage)
-
-    #     # Check if the email address is already in the database
-    #     if database.query_executor.entry_exists("email",
-    #             f"email_address='{email}' AND email_usage_id='{email_usage_id}'",
-    #             self.session_manager.current_user.user_id):
-    #         print("Email address already in database.")
-    #         return 2
+        # Check if the email address is already in the database
+        if self.query_executor.entry_exists("email",
+                f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
+                self.session_manager.current_user.user_id):
+            print("Email address already in the database.")
+            return 2
         
-    #     # Get the password from the user
-    #     password = self.__password_input("Please enter the email password: ")
-
-    #     if password is None:
-    #         print("Account login failed. Password is None.")
-    #         return 3
-
-    #     # Add all the information to the database
-    #     columns = ("email_address", "password_hash", "email_usage_id")
-    #     values = (email, password, email_usage_id)
+        # Only get the email password if the email usage is not "notification"
+        if email_usage is "notification":
+            provided_password = None
+            # Prep the email information for insertion into the database
+            columns = ("email_address", "email_usage_id")
+            values = (provided_email, email_usage_id)
+        else:
+            # Get the password from the user (password_prompt checks if it's valid)
+            provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
+            # Prep the email information for insertion into the database
+            columns = ("email_address", "password_hash", "email_usage_id")
+            values = (provided_email, provided_password, email_usage_id)
         
-    #     # Insert the entry into the database
-    #     database.insert_entry("email", columns, values, self.session_manager.current_user.user_id)
-    #     print("Email account import successful.")
-    #     return 0
+        # Insert the entry into the database
+        try:
+            self.query_executor.insert_entry("email", columns, values, self.session_manager.current_user.user_id)
+            # Add the email account to the current user
+            self.session_manager.current_user.add_email_account(EmailAccount(email_usage, provided_email, provided_password))
+        except Exception as e:
+            print("Error inserting email account into the database.")
+            logging.warning(e)
+            return 3
+
+        print("Email account import successful.")
+        return 0
 
 
-    # def remove_email_account(self, database: Database, email_usage: str) -> int:
-    #     if self.session_manager.current_user is None:
-    #         print("You are not logged in.")
-    #         return 1
-    #     if self.session_manager.current_user.user_id is None:
-    #         print("User id is None. Cannot remove email account.")
-    #         return 1
+    def remove_email_account(self, email_usage: str) -> int:
+        if self.session_manager.current_user is None:
+            print("You are not logged in.")
+            return 1
+        # if self.session_manager.current_user.user_id is None:
+        #     print("User id is None. Cannot remove email account.")
+        #     return 1
     
-    #     # Get the email address from the user
-    #     email = input("Please enter the email address you want to remove: ")
-    #     # TODO - Check if the email is valid using third-party service?
-    #     while not self.is_valid_email(email):
-    #         print("Invalid email address, please try again. ", end="")
-    #         email = input()
+        # Get the email address from the user (email_prompt checks if it's valid)
+        provided_email = self.user_input.email_prompt()
 
-    #     # Sanitize the email address
-    #     email = self.__sanitize_input(email)
+        # Get the email_usage_id from the database
+        email_usage_id = self.query_executor.get_email_usage_id(email_usage)
 
-    #     # Get the email_usage_id from the database
-    #     email_usage_id = database.query_executor.get_email_usage_id(email_usage)
+        # Check that the email address is in the database
+        if not self.query_executor.entry_exists("email",
+                f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
+                self.session_manager.current_user.user_id):
+            print("Email address is not in the database.")
+            return 2
 
-    #     # Check if the email address is already in the database
-    #     if not database.query_executor.entry_exists("email",
-    #             f"email_address='{email}' AND email_usage_id='{email_usage_id}'",
-    #             self.session_manager.current_user.user_id):
-    #         print("Email address already in database.")
-    #         return 2
-
-    #     # Add all the information to the database
-    #     columns = ("email_address", "email_usage_id")
-    #     values = (email, email_usage_id)
+        # Only get the email password if the email usage is not "notification"
+        if email_usage is "notification":
+            provided_password = None
+            # Prep the email information for insertion into the database
+            columns = ("email_address", "email_usage_id")
+            values = (provided_email, email_usage_id)
+        else:
+            # Get the password from the user (password_prompt checks if it's valid)
+            provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
+            # Verify the email password
+            if not self.validate_email_credentials(provided_email, provided_password):
+                print("Invalid email credentials.")
+                return 2
+            # Prep the email information for insertion into the database
+            columns = ("email_address", "password_hash", "email_usage_id")
+            values = (provided_email, provided_password, email_usage_id)
         
-    #     # Insert the entry into the database
-    #     database.delete_entry("email", columns, values, self.session_manager.current_user.user_id)
-    #     print("Email account successfully removed.")
-    #     return 0
-
-
-    # def is_valid_email(self, email: str) -> bool:
-    #     # Check if the email is valid
-    #     pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-    #     return re.match(pattern, email) is not None
-
+        # Delete the entry from the database
+        try:
+            self.query_executor.delete_entry("email", columns, values, self.session_manager.current_user.user_id)
+            # Remove the email account from the current user
+            self.session_manager.current_user.remove_email_account(EmailAccount(email_usage, provided_email, provided_password))
+        except Exception as e:
+            print("Error deleting email account from the database.")
+            logging.warning(e)
+            return 3
+        
+        print("Email account successfully removed.")
+        return 0
     
 
 if __name__ == "__main__":

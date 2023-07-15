@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS email_usage (
 );
 
 -- Insert default email usage
-INSERT OR IGNORE INTO email_usage (usage) VALUES ('import_email_account');
-INSERT OR IGNORE INTO email_usage (usage) VALUES ('email_notification');
+INSERT OR IGNORE INTO email_usage (usage) VALUES ('import');
+INSERT OR IGNORE INTO email_usage (usage) VALUES ('notification');
 
 -- Create table for user email accounts
 CREATE TABLE IF NOT EXISTS email (
