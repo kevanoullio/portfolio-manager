@@ -6,8 +6,8 @@
 
 # Local Modules
 from session.session_manager import SessionManager
-from user_authentication.authentication import Authentication
 from user_authentication.login_manager import LoginManager
+from user_interface.query_results import QueryResults
 
 # Configure logging
 import logging
@@ -17,8 +17,8 @@ import logging
 class Dashboard:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-        self.user_authentication = Authentication(self.session_manager)
         self.login_manager = LoginManager(self.session_manager)
+        self.query_results = QueryResults(self.session_manager)
     
 
     def __print_welcome_screen(self):
@@ -54,6 +54,7 @@ class Dashboard:
                     continue
             else:
                 self.current_menu = None
+                logging.info("Dashboard has stopped running.")
 
 
     def previous_menu(self):
@@ -143,7 +144,8 @@ class Dashboard:
 
     
     def view_current_portfolio(self):
-        print("View Current Portfolio logic goes here...")
+        results = self.session_manager.database.execute_query_by_title("view_current_portfolio")
+        self.query_results.print(results)
     
 
     def view_entire_portfolio_history(self):
@@ -155,7 +157,13 @@ class Dashboard:
 
 
     def search_for_investment_in_portfolio_history(self):
-        print("Search for Investment in Portfolio History logic goes here...")
+        # Get the ticker symbol of the investment to search for, ensure it's alphanumeric
+        ticker = input("Enter the ticker symbol of the investment you would like to search for: ")
+        while not ticker.isalnum():
+            print("Invalid ticker symbol. Please try again: ", end="")
+            ticker = input()
+        # Execute the query to search for an investment in portfolio history
+        self.session_manager.database.execute_query_by_title("query_net_ticker_summary", ticker)
 
 
     def build_portfolio_from_data_set(self):
@@ -199,7 +207,11 @@ class Dashboard:
 
 
     def import_existing_portfolio_from_database_file(self):
-        print("Import Existing Portfolio from Database File logic goes here...")
+        if self.session_manager.current_user is not None:
+            if self.session_manager.current_user.user_id is not None:
+                self.session_manager.database.import_file(self.session_manager.current_user.user_id, "database", [".db"])
+        else:
+            print("You must be logged in to import from a database file.")
 
     
     def import_existing_portfolio_from_email_account(self):

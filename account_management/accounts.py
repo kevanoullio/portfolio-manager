@@ -11,7 +11,7 @@ import logging
 
 
 # User class for defining user account type
-class User:
+class UserAccount:
     def __init__(self, user_id: int, username: str, password_hash: bytes) -> None:
         self.user_id = user_id
         self.username = username
@@ -19,14 +19,14 @@ class User:
         logging.info(f"User initialized successfully. Username: {self.username}, User ID: {self.user_id}")
 
 
-    def update_username(self, new_username: str) -> None:
-        # Update the user's username to the new username
-        self.username = new_username
+    # def update_username(self, new_username: str) -> None:
+    #     # Update the user's username to the new username
+    #     self.username = new_username
 
 
-    def update_password(self, new_password_hash: bytes) -> None:
-        # Update the user's password to the new password
-        self.password_hash = new_password_hash
+    # def update_password(self, new_password_hash: bytes) -> None:
+    #     # Update the user's password to the new password
+    #     self.password_hash = new_password_hash
 
 
     # def deactivate_account(self) -> None:

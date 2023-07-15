@@ -5,7 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import User
+from account_management.accounts import UserAccount
 from session.session_manager import SessionManager
 from user_authentication.authentication import Authentication
 from user_interface.user_input import UserInput
@@ -106,7 +106,7 @@ class LoginManager:
         print("User logged out.")
 
 
-    def login_management(self, user: User) -> None:
+    def login_management(self, user: UserAccount) -> None:
         # Load the user into the session manager
         self.session_manager.current_user = user
         self.session_manager.logged_in = True

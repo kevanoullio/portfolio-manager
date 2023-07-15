@@ -6,7 +6,7 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import User
+from account_management.accounts import UserAccount
 from data_management.database import Database, DatabaseSnapshot
 
 # Configure logging
@@ -18,7 +18,7 @@ class SessionManager:
     def __init__(self, database: Database) -> None:
         self.database = database
         # self.db_is_running: bool = False
-        self.current_user: User | None = None
+        self.current_user: UserAccount | None = None
         self.logged_in: bool = False
         self.session_token: str | None = None
         self.modifications = []

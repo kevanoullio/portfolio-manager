@@ -6,8 +6,8 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
-from account_management.email_account import EmailAccount
-from account_management.user_account import User
+from account_management.accounts import EmailAccount
+from account_management.accounts import UserAccount
 from data_management.connection import DatabaseConnection
 from user_interface.user_input import UserInput
 
@@ -482,7 +482,7 @@ class QueryExecutor:
 
 
 
-    def get_user_by_username(self, provided_username: str) -> User | None:
+    def get_user_by_username(self, provided_username: str) -> UserAccount | None:
         # Define the query parameters
         query_type = "SELECT"
         get_user_by_username_query = f"{query_type} * FROM user WHERE username = ?"
@@ -493,7 +493,7 @@ class QueryExecutor:
                 cursor.execute(get_user_by_username_query, params)
                 result = cursor.fetchall()
                 if result is not None and len(result) > 0:
-                    return User(result[0][0], result[0][1], result[0][2])
+                    return UserAccount(result[0][0], result[0][1], result[0][2])
                 else:
                     return None
         except Exception as e:

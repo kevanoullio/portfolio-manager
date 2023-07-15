@@ -8,8 +8,8 @@ import string
 import bcrypt
 
 # Local Modules
+from account_management.accounts import EmailAccount, UserAccount
 from session.session_manager import SessionManager
-from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -20,7 +20,6 @@ class Authentication:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
         self.query_executor = self.session_manager.database.query_executor
-        self.user_input = UserInput()
         logging.info("UserAuthentication initialized.")
 
 
@@ -35,7 +34,7 @@ class Authentication:
 
     def validate_user_credentials(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Get a User class based on the username
-        user = self.query_executor.get_user_by_username(provided_username)
+        user: UserAccount | None = self.query_executor.get_user_by_username(provided_username)
         # Check if the user exists and the password matches
         if user and self.verify_password(provided_password_hash, user.password_hash):
             return True
@@ -46,7 +45,7 @@ class Authentication:
 
     def validate_email_credentials(self, provided_email_address: str, provided_password_hash: bytes) -> bool | None:
         # Get an EmailAccount class based on the email
-        email_account = self.query_executor.get_email_account_by_email_address(provided_email_address)
+        email_account: EmailAccount | None = self.query_executor.get_email_account_by_email_address(provided_email_address)
         # Check if the email account exists.
         if email_account:
             if email_account.password_hash is None:

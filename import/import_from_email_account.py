@@ -13,8 +13,7 @@ from html.parser import HTMLParser
 
 # Local Modules
 from data_management.database import Database
-from user_authentication.authentication import Authentication
-from user_authentication.account_management import EmailAccount, User
+from account_management.accounts import EmailAccount, UserAccount
 
 # Configure logging
 import logging
@@ -245,7 +244,7 @@ def read_last_uid():
     return None
 
 
-def main(user: User) -> int:
+def main(user: UserAccount) -> int:
     if user is None or user.user_id is None:
         return 1
     
