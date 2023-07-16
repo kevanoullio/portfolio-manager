@@ -90,7 +90,6 @@ def main():
     logging.info(f"Database {db_filename} connection closed.")
 
     # Exit the program gracefully
-    print("Exiting the program...")
     logging.info("Exiting the portfolio manager application.")
 
     exit(0)

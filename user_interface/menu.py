@@ -18,19 +18,27 @@ class Menu:
         self.is_active = False
         self.title = ""
         self.previous_menu = None
-        self.next_menu_mapping = None
-        self.options = {
-            0: {"verb": "Return", "connector": "to", "subject": "Previous Menu"} if self.previous_menu is None else
-               {"verb": "Return", "connector": "to", "subject": f"{self.previous_menu.title.title()} Menu"}
-        }
+        self.menu_mapping = {}
+        self.options = {}
         self.option_count = len(self.options)
+
+
+    def format_return_to_previous_menu_option(self) -> None:
+        # Format the return to previous menu option
+        if isinstance(self, Login):
+            self.options[0] = {"verb": "Exit", "connector": "the", "subject": "Program"}
+        elif isinstance(self, Main):
+            self.options[0] = {"verb": "Log", "subject": "out"}
+        else:
+            if self.previous_menu is None:
+                self.options[0] = {"verb": "Return", "connector": "to", "subject": "Previous Menu"}
+            else:
+                self.options[0] = {"verb": "Return", "connector": "to", "subject": f"{self.previous_menu.title.title()} Menu"}
 
 
     def sort_options(self) -> list[int]:
         # Sort the keys excluding 0
         options_sorted = sorted([key for key in self.options.keys() if isinstance(key, int) and key != 0])
-        # Sort the alphabetical keys and append them to the options list
-        options_sorted.extend(sorted([key for key in self.options.keys() if isinstance(key, str)]))
         # Append 0 to the end of the options list
         options_sorted.append(0)
         return options_sorted
@@ -41,7 +49,9 @@ class Menu:
         print(f"\n{self.title.upper()}")
         print("-" * len(self.title))
         # Get the sorted options
+        logging.debug(f"Options: {self.options}")
         options_sorted = self.sort_options()
+        logging.debug(f"Sorted Options: {options_sorted}")
         # Print the sorted options
         for option in options_sorted:
             option_text = f"{option}: "
@@ -54,22 +64,47 @@ class Menu:
             print(option_text)
 
 
-    def format_verb_to_past_tense(self, verb: str) -> str:
-        # Define all vowels
-        vowels = ["a", "e", "i", "o", "u"]
-        # Format verb that end in 'e' and 'y' to past tense
-        if verb.endswith("e") or verb.endswith("y"):
-            return f"{verb[:-1]}ing"
-        # Format verb that end in consonants to past tense by doubling the consonant
-        elif verb[-1] not in vowels:
-            return f"{verb + verb[-1]}ing"
-        return f"{verb}ing"
+    def present_to_participle(self, present_verb: str) -> str:
+        # Define irregular verbs found in the program
+        irregular_verbs = {
+            "exit": "exiting",
+            "import": "importing"
+        }
+
+        # Check if the verb ends in "e"
+        if present_verb.endswith("e"):
+            formatted_verb = present_verb[:-1] + "ing"
+        # Check if the verb is one syllable and ends in a consonant-vowel-consonant pattern
+        elif (len(present_verb) == 3 and
+            present_verb[-3] not in "aeiou" and
+            present_verb[-2] in "aeiou" and
+            present_verb[-1] not in "aeiou"):
+            formatted_verb = present_verb + present_verb[-1] + "ing"
+        # Check if the verb is one syllable and ends with a single consonant preceded by a single vowel
+        elif (len(present_verb) == 2 and
+            present_verb[-1] not in "aeiou" and
+            present_verb[-2] in "aeiou"):
+            formatted_verb = present_verb + present_verb[-1] + "ing"
+        # Check if the verb is irregular
+        elif present_verb in irregular_verbs:
+            formatted_verb = irregular_verbs[present_verb]
+        # Otherwise, add "ing" to the end of the verb
+        else:
+            formatted_verb = present_verb + "ing"
+
+        # Preserve the original case of the verb
+        if present_verb.isupper():
+            return formatted_verb.upper()
+        elif present_verb.istitle():
+            return formatted_verb.title()
+        else:
+            return formatted_verb
 
 
     def print_choice_msg(self, option: int | str) -> None:
         if option in self.options:
             verb = self.options[option].get('verb', '')
-            formatted_verb = self.format_verb_to_past_tense(verb) if verb else ''
+            formatted_verb = self.present_to_participle(verb) if verb else ''
             
             connector = self.options[option].get('connector', '')
             subject = self.options[option].get('subject', '')
@@ -96,8 +131,8 @@ class Menu:
             new_option["connector"] = connector
         if subject:
             new_option["subject"] = subject
-        self.options[self.option_count] = new_option
         self.option_count += 1
+        self.options[self.option_count] = new_option
         logging.debug(f"Option {self.option_count} has been added to {self.title} menu.")
 
 
@@ -143,7 +178,7 @@ class Menu:
             # Check if the input is within the valid range
             logging.debug(f"Choice: {choice}")
             logging.debug(f"Option count: {self.option_count}")
-            if choice < 0 or choice >= self.option_count:
+            if choice < 0 or choice > self.option_count:
                 print("Invalid input. Please enter a valid option.")
                 continue
 
@@ -151,10 +186,10 @@ class Menu:
 
 
     def get_next_menu(self, choice: int):
-        if self.next_menu_mapping is None:
+        if self.menu_mapping is None:
             return None
         else:
-            next_menu = self.next_menu_mapping.get(choice)
+            next_menu = self.menu_mapping.get(choice)
             if next_menu:
                 return next_menu(self.dashboard)
             return None
@@ -164,14 +199,13 @@ class Menu:
 class Login(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
-        self.title = "LOGIN MENU"
+        self.title = "LOGIN"
         # Add new menu options
         self.add_option(verb="Create", connector="a", subject="New Account")
         self.add_option(verb="Log", connector="into", subject="Account")
-        # Update existing menu option for 0
-        self.update_option(0, verb="Exit", subject="Program")
-        # self.option_count = len(self.options)
-        self.next_menu_mapping = {
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: Main,
             2: Main,
             0: None
@@ -187,23 +221,23 @@ class Login(Menu):
 class Main(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
-        self.title = "MAIN MENU"
-        self.previous_menu = Login
-        # Add new menu options
+        self.title = "MAIN"
+        self.previous_menu = Login(dashboard)
+        # Add menu options
         self.add_option(subject="Portfolio Manager")
         self.add_option(subject="Account Settings")
         self.add_option(subject="Help and Information")
         self.add_option(subject="Save Changes")
         self.add_option(subject="Discard Changes")
-        # Update existing option for 0
-        self.update_option(0, verb="Log", subject="Out")
-        self.next_menu_mapping = {
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: PortfolioManager,
             2: AccountSettings,
             3: HelpAndInformation,
             4: None,
             5: None,
-            0: self.previous_menu
+            0: Login
         }
         self.menu_logic = {
             1: self.dashboard.portfolio_manager,
@@ -219,9 +253,9 @@ class Main(Menu):
 class PortfolioManager(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
-        self.previous_menu = Main
+        self.previous_menu = Main(dashboard)
         self.title = "PORTFOLIO MANAGER"
-        # Add new menu options
+        # Add menu options
         self.add_option(verb="View", subject="Portfolio")
         self.add_option(verb="Manage", subject="Portfolio")
         self.add_option(subject="Market Data")
@@ -231,7 +265,9 @@ class PortfolioManager(Menu):
         self.add_option(subject="Export Data")
         self.add_option(subject="Automation")
         self.add_option(subject="Notifications")
-        self.next_menu_mapping = {
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewPortfolio,
             2: ManagePortfolio,
             3: None,
@@ -241,7 +277,7 @@ class PortfolioManager(Menu):
             7: None,
             8: None,
             9: None,
-            0: self.previous_menu
+            0: Main
         }
         self.menu_logic = {
             1: self.dashboard.view_portfolio,
@@ -253,7 +289,7 @@ class PortfolioManager(Menu):
             7: self.dashboard.export_data,
             8: self.dashboard.automation,
             9: self.dashboard.notifications,
-            0: self.print_choice_msg
+            0: self.dashboard.previous_menu
         }
 
 
@@ -262,19 +298,20 @@ class ViewPortfolio(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW PORTFOLIO"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "View", "subject": "Current Portfolio"},
-            2: {"verb": "View", "subject": "Entire Portfolio History"},
-            3: {"verb": "Search", "subject": "for Current Investment"},
-            4: {"verb": "Search", "subject": "for Investment in Portfolio History"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Portfolio")
+        self.add_option(verb="View", subject="Entire Portfolio History")
+        self.add_option(verb="Search", subject="for Current Investment")
+        self.add_option(verb="Search", subject="for Investment in Portfolio History")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: None,
             2: None,
             3: None,
             4: None,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.view_current_portfolio,
@@ -290,23 +327,24 @@ class ManagePortfolio(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MANAGE PORTFOLIO"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "Build", "subject": "Portfolio from Data Set(s)"},
-            2: {"verb": "Import", "subject": "Existing Portfolio Data Set"},
-            3: {"verb": "Delete", "subject": "Existing Portfolio Data Set"},
-            4: {"verb": "Manage", "subject": "Custom Import Scripts"},
-            5: {"verb": "Add", "subject": "Investment Manually"},
-            6: {"verb": "Modify", "subject": "Investment Entry"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="Build", subject="Portfolio from Data Set(s)")
+        self.add_option(verb="Import", subject="Existing Portfolio Data Set")
+        self.add_option(verb="Delete", subject="Existing Portfolio Data Set")
+        self.add_option(verb="Manage", subject="Custom Import Scripts")
+        self.add_option(verb="Add", subject="Investment Manually")
+        self.add_option(verb="Modify", subject="Investment Entry")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: BuildPortfolio,
             2: ImportExistingPortfolio,
             3: None,
             4: None,
             5: None,
             6: None,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.build_portfolio_from_data_set,
@@ -324,7 +362,8 @@ class BuildPortfolio(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "BUILD PORTFOLIO"
-        self.previous_menu = ManagePortfolio
+        self.previous_menu = ManagePortfolio(dashboard)
+        # Add menu options
         self.options = {
             1: {}
         }
@@ -336,23 +375,24 @@ class ImportExistingPortfolio(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT EXISTING PORTFOLIO"
-        self.previous_menu = ManagePortfolio
-        self.options = {
-            1: {"verb": "Import", "subject": "Existing Portfolio from Brokerage Account"},
-            2: {"verb": "Import", "subject": "Existing Portfolio from CSV File"},
-            3: {"verb": "Import", "subject": "Existing Portfolio from Excel File"},
-            4: {"verb": "Import", "subject": "Existing Portfolio from PDF file"},
-            5: {"verb": "Import", "subject": "Existing Portfolio from Database file"},
-            6: {"verb": "Import", "subject": "Existing Portfolio from Email Account"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = ManagePortfolio(dashboard)
+        # Add menu options
+        self.add_option(verb="Import", subject="Existing Portfolio from Brokerage Account")
+        self.add_option(verb="Import", subject="Existing Portfolio from CSV File")
+        self.add_option(verb="Import", subject="Existing Portfolio from Excel File")
+        self.add_option(verb="Import", subject="Existing Portfolio from PDF file")
+        self.add_option(verb="Import", subject="Existing Portfolio from Database file")
+        self.add_option(verb="Import", subject="Existing Portfolio from Email Account")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ImportFromBrokerageAccount,
             2: ImportFromCSVFile,
             3: ImportFromExcelFile,
             4: ImportFromPDFFile,
             5: ImportFromDatabaseFile,
             6: ImportFromEmail,
-            0: self.previous_menu
+            0: ManagePortfolio
         }
         self.menu_logic = {
             1: self.dashboard.import_existing_portfolio_from_brokerage_account,
@@ -370,7 +410,8 @@ class ImportFromBrokerageAccount(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT FROM BROKERAGE ACCOUNT"
-        self.previous_menu = ImportExistingPortfolio
+        self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of brokerage accounts to choose from
         # TODO - finish this menu
 
@@ -380,7 +421,8 @@ class ImportFromCSVFile(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT FROM CSV FILE"
-        self.previous_menu = ImportExistingPortfolio
+        self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of CSV files to choose from
         # TODO - finish this menu
 
@@ -390,7 +432,8 @@ class ImportFromExcelFile(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT FROM EXCEL FILE"
-        self.previous_menu = ImportExistingPortfolio
+        self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of Excel files to choose from
         # TODO - finish this menu
 
@@ -401,6 +444,7 @@ class ImportFromPDFFile(Menu):
         super().__init__(dashboard)
         self.title = "IMPORT FROM PDF FILE"
         self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of PDF files to choose from
         # TODO - finish this menu
 
@@ -410,7 +454,8 @@ class ImportFromDatabaseFile(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT FROM DATABASE FILE"
-        self.previous_menu = ImportExistingPortfolio
+        self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of database files to choose from
         # TODO - finish this menu
 
@@ -420,7 +465,8 @@ class ImportFromEmail(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT FROM EMAIL ACCOUNT"
-        self.previous_menu = ImportExistingPortfolio
+        self.previous_menu = ImportExistingPortfolio(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of emails to choose from
         # TODO - finish this menu
 
@@ -430,17 +476,18 @@ class ManageCustomImportScripts(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MANAGE CUSTOM IMPORT SCRIPTS"
-        self.previous_menu = ManagePortfolio
-        self.options = {
-            1: {"verb": "View", "subject": "Custom Import Scripts"},
-            2: {"verb": "Add", "subject": "Custom Import Script"},
-            3: {"verb": "Remove", "subject": "Custom Import Script"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = ManagePortfolio(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Custom Import Scripts")
+        self.add_option(verb="Add", subject="Custom Import Script")
+        self.add_option(verb="Remove", subject="Custom Import Script")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: CustomImportScripts,
             2: AddCustomImportScript,
             3: RemoveCustomImportScript,
-            0: self.previous_menu
+            0: ManagePortfolio
         }
         self.menu_logic = {
             1: self.dashboard.view_custom_import_scripts,
@@ -455,7 +502,8 @@ class AddCustomImportScript(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD CUSTOM IMPORT SCRIPT"
-        self.previous_menu = ManageCustomImportScripts
+        self.previous_menu = ManageCustomImportScripts(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of scripts to choose from
         # TODO - finish this menu
 
@@ -465,7 +513,8 @@ class RemoveCustomImportScript(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE CUSTOM IMPORT SCRIPT"
-        self.previous_menu = ManageCustomImportScripts
+        self.previous_menu = ManageCustomImportScripts(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of scripts to choose from
         # TODO - finish this menu
 
@@ -483,21 +532,22 @@ class ManageMarketData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MANAGE MARKET DATA"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "Import", "subject": "Market Data from CSV"},
-            2: {"verb": "Import", "subject": "Market Data from Excel"},
-            3: {"verb": "Import", "subject": "Market Data from an API"},
-            4: {"verb": "Import", "subject": "Market Data from Online Source"},
-            6: {"verb": "Modify", "subject": "Market Data Entry"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="Import", subject="Market Data from CSV")
+        self.add_option(verb="Import", subject="Market Data from Excel")
+        self.add_option(verb="Import", subject="Market Data from an API")
+        self.add_option(verb="Import", subject="Market Data from Online Source")
+        self.add_option(verb="Modify", subject="Market Data Entry")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ImportMarketDataFromCSV,
             2: ImportMarketDataFromExcel,
             3: ImportMarketDataFromAPI,
             4: ImportMarketDataFromOnlineSource,
             5: ModifyMarketDataEntry,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.import_market_data_from_csv,
@@ -514,7 +564,8 @@ class ImportMarketDataFromCSV(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM CSV"
-        self.previous_menu = ManageMarketData
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of CSV files to choose from
         # TODO - finish this menu
 
@@ -524,7 +575,8 @@ class ImportMarketDataFromExcel(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM EXCEL"
-        self.previous_menu = ManageMarketData
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of Excel files to choose from
         # TODO - finish this menu
 
@@ -534,7 +586,8 @@ class ImportMarketDataFromAPI(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM API"
-        self.previous_menu = ManageMarketData
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of APIs to choose from
         # TODO - finish this menu
 
@@ -544,7 +597,8 @@ class ImportMarketDataFromOnlineSource(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM ONLINE SOURCE"
-        self.previous_menu = ManageMarketData
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of online sources to choose from
         # TODO - finish this menu
 
@@ -554,7 +608,8 @@ class ModifyMarketDataEntry(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MODIFY MARKET DATA ENTRY"
-        self.previous_menu = PortfolioManager
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of market data to choose from
         # TODO - finish this menu
 
@@ -564,19 +619,20 @@ class StatisticalAnalysis(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "STATISTICAL ANALYSIS"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"subject": "Portfolio Overview"}, # Basic overview of all statistics
-            2: {"subject": "Performance Analysis"}, # CAGR, Annualized Return, Annualized Volatility, Annualized Sharpe Ratio, Annualized Sortino Ratio, Annualized Treynor Ratio, Annualized Jensen's Alpha, Annualized Information Ratio, Annualized Tracking Error, Annualized Value at Risk, Annualized Conditional Value at Risk
-            3: {"subject": "Risk Analysis"}, # Beta, Alpha, R-Squared, Sharpe Ratio, Sortino Ratio, Treynor Ratio, Jensen's Alpha, Information Ratio, Tracking Error, Value at Risk, Conditional Value at Risk
-            4: {"subject": "Correlation Analysis"}, # Correlation Matrix
-            5: {"subject": "Portfolio Optimization"}, # Markowitz
-            6: {"subject": "Portfolio Backtesting"}, # Sharpe Ratio
-            7: {"subject": "Portfolio Simulation"}, # Monte Carlo Simulation
-            8: {"subject": "Portfolio Forecasting"}, # ARIMA
-            9: {"subject": "Portfolio Stress Testing"} # VaR
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(subject="Portfolio Overview")
+        self.add_option(subject="Performance Analysis")
+        self.add_option(subject="Risk Analysis")
+        self.add_option(subject="Correlation Analysis")
+        self.add_option(subject="Portfolio Optimization")
+        self.add_option(subject="Portfolio Backtesting")
+        self.add_option(subject="Portfolio Simulation")
+        self.add_option(subject="Portfolio Forecasting")
+        self.add_option(subject="Portfolio Stress Testing")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: PortfolioOverview,
             2: PerformanceAnalysis,
             3: RiskAnalysis,
@@ -586,7 +642,7 @@ class StatisticalAnalysis(Menu):
             7: PortfolioSimulation,
             8: PortfolioForecasting,
             9: PortfolioStressTesting,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.portfolio_overview,
@@ -607,7 +663,8 @@ class PortfolioOverview(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO OVERVIEW"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -617,7 +674,8 @@ class PerformanceAnalysis(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PERFORMANCE ANALYSIS"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -627,7 +685,8 @@ class RiskAnalysis(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "RISK ANALYSIS"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -637,7 +696,8 @@ class CorrelationAnalysis(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CORRELATION ANALYSIS"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -647,7 +707,8 @@ class PortfolioOptimization(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO OPTIMIZATION"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -657,7 +718,8 @@ class PortfolioBacktesting(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO BACKTESTING"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -667,7 +729,8 @@ class PortfolioSimulation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO SIMULATION"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -677,7 +740,8 @@ class PortfolioForecasting(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO FORECASTING"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -687,7 +751,8 @@ class PortfolioStressTesting(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "PORTFOLIO STRESS TESTING"
-        self.previous_menu = StatisticalAnalysis
+        self.previous_menu = StatisticalAnalysis(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of investments to choose from
         # TODO - finish this menu
 
@@ -697,19 +762,20 @@ class TradingStrategies(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "TRADING STRATEGIES"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "View", "subject": "Current Trading Strategies"},
-            2: {"verb": "Add", "subject": "Trading Strategy"},
-            3: {"verb": "Modify", "subject": "Trading Strategy"},
-            4: {"verb": "Remove", "subject": "Trading Strategy"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Trading Strategies")
+        self.add_option(verb="Add", subject="Trading Strategy")
+        self.add_option(verb="Modify", subject="Trading Strategy")
+        self.add_option(verb="Remove", subject="Trading Strategy")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: CurrentTradingStrategies,
             2: AddTradingStrategy,
             3: ModifyTradingStrategy,
             4: RemoveTradingStrategy,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.current_trading_strategies,
@@ -725,7 +791,8 @@ class CurrentTradingStrategies(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CURRENT TRADING STRATEGIES"
-        self.previous_menu = TradingStrategies
+        self.previous_menu = TradingStrategies(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of trading strategies to choose from
         # TODO - finish this menu
 
@@ -735,7 +802,8 @@ class AddTradingStrategy(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD TRADING STRATEGY"
-        self.previous_menu = TradingStrategies
+        self.previous_menu = TradingStrategies(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of trading strategies to choose from
         # TODO - finish this menu
 
@@ -745,7 +813,8 @@ class ModifyTradingStrategy(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MODIFY TRADING STRATEGY"
-        self.previous_menu = TradingStrategies
+        self.previous_menu = TradingStrategies(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of trading strategies to choose from
         # TODO - finish this menu
 
@@ -755,7 +824,8 @@ class RemoveTradingStrategy(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE TRADING STRATEGY"
-        self.previous_menu = TradingStrategies
+        self.previous_menu = TradingStrategies(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of trading strategies to choose from
         # TODO - finish this menu
 
@@ -765,19 +835,20 @@ class Reports(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REPORTS"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "View", "subject": "Current Reports"},
-            2: {"verb": "Add", "subject": "Report"},
-            3: {"verb": "Modify", "subject": "Report"},
-            4: {"verb": "Remove", "subject": "Report"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Reports")
+        self.add_option(verb="Add", subject="Report")
+        self.add_option(verb="Modify", subject="Report")
+        self.add_option(verb="Remove", subject="Report")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewCurrentReports,
             2: AddReport,
             3: ModifyReport,
             4: RemoveReport,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.view_current_reports,
@@ -793,7 +864,8 @@ class ViewCurrentReports(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW CURRENT REPORTS"
-        self.previous_menu = Reports
+        self.previous_menu = Reports(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -803,7 +875,8 @@ class AddReport(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD REPORT"
-        self.previous_menu = Reports
+        self.previous_menu = Reports(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -813,7 +886,8 @@ class ModifyReport(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MODIFY REPORT"
-        self.previous_menu = Reports
+        self.previous_menu = Reports(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -823,7 +897,8 @@ class RemoveReport(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE REPORT"
-        self.previous_menu = Reports
+        self.previous_menu = Reports(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -833,21 +908,22 @@ class ExportData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT DATA"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "Export", "subject": "Portfolio Data"},
-            2: {"verb": "Export", "subject": "Market Data"},
-            3: {"verb": "Export", "subject": "Statistical Analysis"},
-            4: {"verb": "Export", "subject": "Trading Strategies"},
-            5: {"verb": "Export", "subject": "Reports"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="Export", subject="Portfolio Data")
+        self.add_option(verb="Export", subject="Market Data")
+        self.add_option(verb="Export", subject="Statistical Analysis")
+        self.add_option(verb="Export", subject="Trading Strategies")
+        self.add_option(verb="Export", subject="Reports")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ExportPortfolioData,
             2: ExportMarketData,
             3: ExportStatisticalAnalysis,
             4: ExportTradingStrategies,
             5: ExportReports,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.export_portfolio_data,
@@ -864,7 +940,8 @@ class ExportPortfolioData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT PORTFOLIO DATA"
-        self.previous_menu = ExportData
+        self.previous_menu = ExportData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -874,7 +951,8 @@ class ExportMarketData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT MARKET DATA"
-        self.previous_menu = ExportData
+        self.previous_menu = ExportData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -884,7 +962,8 @@ class ExportStatisticalAnalysis(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT STATISTICAL ANALYSIS"
-        self.previous_menu = ExportData
+        self.previous_menu = ExportData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -894,7 +973,8 @@ class ExportTradingStrategies(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT TRADING STRATEGIES"
-        self.previous_menu = ExportData
+        self.previous_menu = ExportData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -904,7 +984,8 @@ class ExportReports(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "EXPORT REPORTS"
-        self.previous_menu = ExportData
+        self.previous_menu = ExportData(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of reports to choose from
         # TODO - finish this menu
 
@@ -914,19 +995,20 @@ class Automation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "AUTOMATION"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "View", "subject": "Current Automations"},
-            2: {"verb": "Add", "subject": "Automation"},
-            3: {"verb": "Modify", "subject": "Automation"},
-            4: {"verb": "Remove", "subject": "Automation"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Automations")
+        self.add_option(verb="Add", subject="Automation")
+        self.add_option(verb="Modify", subject="Automation")
+        self.add_option(verb="Remove", subject="Automation")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewAutomations,
             2: AddAutomation,
             3: ModifyAutomation,
             4: RemoveAutomation,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.view_automations,
@@ -942,7 +1024,8 @@ class ViewAutomations(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW AUTOMATIONS"
-        self.previous_menu = Automation
+        self.previous_menu = Automation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of automations to choose from
         # TODO - finish this menu
 
@@ -952,7 +1035,8 @@ class AddAutomation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD AUTOMATION"
-        self.previous_menu = Automation
+        self.previous_menu = Automation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of automations to choose from
         # TODO - finish this menu
 
@@ -962,7 +1046,8 @@ class ModifyAutomation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MODIFY AUTOMATION"
-        self.previous_menu = Automation
+        self.previous_menu = Automation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of automations to choose from
         # TODO - finish this menu
 
@@ -972,7 +1057,8 @@ class RemoveAutomation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE AUTOMATION"
-        self.previous_menu = Automation
+        self.previous_menu = Automation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of automations to choose from
         # TODO - finish this menu
 
@@ -982,19 +1068,20 @@ class Notifications(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "NOTIFICATIONS"
-        self.previous_menu = PortfolioManager
-        self.options = {
-            1: {"verb": "View", "subject": "Current Notifications"},
-            2: {"verb": "Add", "subject": "Notification"},
-            3: {"verb": "Modify", "subject": "Notification"},
-            4: {"verb": "Remove", "subject": "Notification"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Notifications")
+        self.add_option(verb="Add", subject="Notification")
+        self.add_option(verb="Modify", subject="Notification")
+        self.add_option(verb="Remove", subject="Notification")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewNotifications,
             2: AddNotification,
             3: ModifyNotification,
             4: RemoveNotification,
-            0: self.previous_menu
+            0: PortfolioManager
         }
         self.menu_logic = {
             1: self.dashboard.view_notifications,
@@ -1010,7 +1097,8 @@ class ViewNotifications(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW NOTIFICATIONS"
-        self.previous_menu = Notifications
+        self.previous_menu = Notifications(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of notifications to choose from
         # TODO - finish this menu
 
@@ -1020,7 +1108,8 @@ class AddNotification(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD NOTIFICATION"
-        self.previous_menu = Notifications
+        self.previous_menu = Notifications(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of notifications to choose from
         # TODO - finish this menu
 
@@ -1030,7 +1119,8 @@ class ModifyNotification(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MODIFY NOTIFICATION"
-        self.previous_menu = Notifications
+        self.previous_menu = Notifications(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of notifications to choose from
         # TODO - finish this menu
 
@@ -1040,7 +1130,8 @@ class RemoveNotification(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE NOTIFICATION"
-        self.previous_menu = Notifications
+        self.previous_menu = Notifications(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of notifications to choose from
         # TODO - finish this menu
 
@@ -1050,21 +1141,22 @@ class AccountSettings(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ACCOUNT SETTINGS"
-        self.previous_menu = Main
-        self.options = {
-            1: {"verb": "View", "subject": "User Details"},
-            2: {"verb": "Manage", "subject": "Email Accounts"},
-            3: {"verb": "Change", "subject": "Account Username"},
-            4: {"verb": "Change", "subject": "Account Password"},
-            5: {"verb": "Delete", "subject": "Account"},
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = Main(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="User Details")
+        self.add_option(verb="Manage", subject="Email Accounts")
+        self.add_option(verb="Change", subject="Account Username")
+        self.add_option(verb="Change", subject="Account Password")
+        self.add_option(verb="Delete", subject="Account")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewUserDetails,
             2: ManageEmailAccounts,
             3: ChangeAccountUsername,
             4: ChangeAccountPassword,
             5: DeleteAccount,
-            0: self.previous_menu
+            0: Main
         }
         self.menu_logic = {
             1: self.dashboard.view_user_details,
@@ -1081,7 +1173,8 @@ class ViewUserDetails(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW USER DETAILS"
-        self.previous_menu = AccountSettings
+        self.previous_menu = AccountSettings(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of user details to choose from
         # TODO - finish this menu
 
@@ -1091,17 +1184,18 @@ class ManageEmailAccounts(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "MANAGE EMAIL ACCOUNTS"
-        self.previous_menu = AccountSettings
-        self.options = {
-            1: {"verb": "View", "subject": "Current Email Accounts"},
-            2: {"verb": "Add", "subject": "Email Account"},
-            3: {"verb": "Remove", "subject": "Email Account"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = AccountSettings(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Current Email Accounts")
+        self.add_option(verb="Add", subject="Email Account")
+        self.add_option(verb="Remove", subject="Email Account")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: CurrentEmailAccounts,
             2: AddEmailAccount,
             3: RemoveEmailAccount,
-            0: self.previous_menu
+            0: AccountSettings
         }
         self.menu_logic = {
             1: self.dashboard.view_current_email_accounts,
@@ -1116,7 +1210,8 @@ class AddEmailAccount(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ADD EMAIL ACCOUNT"
-        self.previous_menu = ManageEmailAccounts
+        self.previous_menu = ManageEmailAccounts(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
         # TODO - finish this menu
 
@@ -1126,7 +1221,8 @@ class RemoveEmailAccount(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REMOVE EMAIL ACCOUNT"
-        self.previous_menu = ManageEmailAccounts
+        self.previous_menu = ManageEmailAccounts(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
         # TODO - finish this menu
 
@@ -1136,7 +1232,8 @@ class ChangeAccountUsername(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CHANGE ACCOUNT USERNAME"
-        self.previous_menu = AccountSettings
+        self.previous_menu = AccountSettings(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
         # TODO - finish this menu
 
@@ -1146,7 +1243,8 @@ class ChangeAccountPassword(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CHANGE ACCOUNT PASSWORD"
-        self.previous_menu = AccountSettings
+        self.previous_menu = AccountSettings(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
         # TODO - finish this menu
 
@@ -1156,7 +1254,8 @@ class DeleteAccount(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "DELETE ACCOUNT"
-        self.previous_menu = AccountSettings
+        self.previous_menu = AccountSettings(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
         # TODO - finish this menu
 
@@ -1166,7 +1265,8 @@ class CurrentEmailAccounts(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CURRENT EMAIL ACCOUNTS"
-        self.previous_menu = ManageEmailAccounts
+        self.previous_menu = ManageEmailAccounts(dashboard)
+        # Add menu options
         self.options = {} # TODO - Populate user's current email accounts
         # TODO - finish this menu
 
@@ -1176,18 +1276,19 @@ class HelpAndInformation(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "HELP AND INFORMATION"
-        self.previous_menu = Main
-        self.options = {
-            1: {"verb": "View", "subject": "User Manual"},
-            2: {"verb": "View", "subject": "FAQ"},
-            3: {"verb": "View", "subject": "Glossary"},
-            4: {"subject": "About"},
-            5: {"subject": "Contact Us"},
-            6: {"verb": "Report", "subject": "a Bug"},
-            7: {"verb": "Request", "subject": "a Feature"},
-            8: {"verb": "View", "subject": "the License"}
-        }
-        self.next_menu_mapping = {
+        self.previous_menu = Main(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="User Manual")
+        self.add_option(verb="View", subject="FAQ")
+        self.add_option(verb="View", subject="Glossary")
+        self.add_option(subject="About")
+        self.add_option(subject="Contact Us")
+        self.add_option(verb="Report", subject="a Bug")
+        self.add_option(verb="Request", subject="a Feature")
+        self.add_option(verb="View", subject="the License")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
             1: ViewUserManual,
             2: ViewFAQ,
             3: ViewGlossary,
@@ -1196,7 +1297,7 @@ class HelpAndInformation(Menu):
             6: ReportBug,
             7: RequestFeature,
             8: ViewLicense,
-            0: self.previous_menu
+            0: Main
         }
         self.menu_logic = {
             1: self.dashboard.view_user_manual,
@@ -1216,7 +1317,8 @@ class ViewUserManual(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW USER MANUAL"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of user manual pages to choose from
         # TODO - finish this menu
 
@@ -1226,7 +1328,8 @@ class ViewFAQ(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW FAQ"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of FAQ pages to choose from
         # TODO - finish this menu
 
@@ -1236,7 +1339,8 @@ class ViewGlossary(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW GLOSSARY"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of glossary pages to choose from
         # TODO - finish this menu
 
@@ -1246,7 +1350,8 @@ class About(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "ABOUT"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of about pages to choose from
         # TODO - finish this menu
 
@@ -1256,7 +1361,8 @@ class ContactUs(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "CONTACT US"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of contact us pages to choose from
         # TODO - finish this menu
 
@@ -1266,7 +1372,8 @@ class ReportBug(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REPORT A BUG"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of report bug pages to choose from
         # TODO - finish this menu
 
@@ -1276,7 +1383,8 @@ class RequestFeature(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "REQUEST A FEATURE"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of request feature pages to choose from
         # TODO - finish this menu
 
@@ -1286,7 +1394,8 @@ class ViewLicense(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW LICENSE"
-        self.previous_menu = HelpAndInformation
+        self.previous_menu = HelpAndInformation(dashboard)
+        # Add menu options
         self.options = {} # TODO - Add dynamic list of license pages to choose from
         # TODO - finish this menu
 
