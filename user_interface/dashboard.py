@@ -19,6 +19,7 @@ class Dashboard:
         self.session_manager = session_manager
         self.login_manager = LoginManager(self.session_manager)
         self.query_results = QueryResults(self.session_manager)
+        self.is_running = False
     
 
     def __print_welcome_screen(self):
@@ -28,20 +29,24 @@ class Dashboard:
 
 
     def run(self):
-        # Start the session
-        self.session_manager.start_session()
+        # Start the Program
+        self.start_program()
+        # Print the welcome screen
+        self.__print_welcome_screen()
 
         # Import the Login menu here to avoid circular import
         from user_interface.menu import Login
         self.current_menu = Login(self)
-        # self.session_manager.db_is_running = True
         logging.info("Login Dashboard has started running.")
-        self.__print_welcome_screen()
 
         # Main loop for the dashboard
-        while self.current_menu:
+        while self.current_menu and self.is_running:
+            # Print the menu options
             self.current_menu.print_options()
+            # Get the user's choice
             choice = self.current_menu.get_valid_input()
+            # Print the choice message
+            self.current_menu.print_choice_msg(choice)
 
             next_menu = self.current_menu.menu_logic.get(choice)
             if next_menu:
@@ -49,18 +54,19 @@ class Dashboard:
                 next_menu()
                 if self.session_manager.logged_in:
                     self.current_menu = self.current_menu.get_next_menu(choice)
-                else:
+                else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
                     continue
             else:
                 self.current_menu = None
-                logging.info("Dashboard has stopped running.")
+                
 
-
+    # menu_logic is a list of functions that are executed based on the user's choice
+    # Without this function, instead of going back to the previous menu, the program would exit
     def previous_menu(self):
         pass
 
-
+    # Login Menu Functions
     def create_account(self):
         self.login_manager.create_account()
         if self.session_manager.current_user is not None:
@@ -77,10 +83,19 @@ class Dashboard:
             logging.debug("User login failed.")
 
 
+    def start_program(self):
+        # Start the Dashboard
+        self.is_running = True
+        logging.info("Dashboard has started running.")
+
+
     def exit_program(self):
-        self.session_manager.exit_program()
+        # Stop the Dashboard
+        self.is_running = False
+        logging.info("Dashboard has stopped running.")
 
 
+    # Main Menu Functions
     def portfolio_manager(self):
         print("Portfolio Manager logic goes here...")
 
@@ -103,8 +118,6 @@ class Dashboard:
 
     def logout(self):
         self.login_manager.logout()
-        self.session_manager.close_session()
-        logging.info("Main Dashboard has stopped running.")
 
 
     def view_portfolio(self):
@@ -144,6 +157,7 @@ class Dashboard:
 
     
     def view_current_portfolio(self):
+        # TODO - review and finish this function
         results = self.session_manager.database.execute_query_by_title("view_current_portfolio")
         self.query_results.print(results)
     
@@ -157,6 +171,7 @@ class Dashboard:
 
 
     def search_for_investment_in_portfolio_history(self):
+        # TODO - review and finish this function
         # Get the ticker symbol of the investment to search for, ensure it's alphanumeric
         ticker = input("Enter the ticker symbol of the investment you would like to search for: ")
         while not ticker.isalnum():
@@ -207,6 +222,7 @@ class Dashboard:
 
 
     def import_existing_portfolio_from_database_file(self):
+        # TODO - fix and finish this function
         if self.session_manager.current_user is not None:
             if self.session_manager.current_user.user_id is not None:
                 self.session_manager.database.import_file(self.session_manager.current_user.user_id, "database", [".db"])

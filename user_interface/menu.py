@@ -15,7 +15,7 @@ import logging
 class Menu:
     def __init__(self, dashboard: Dashboard) -> None:
         self.dashboard = dashboard
-        # self.is_active = False
+        self.is_active = False
         self.title = ""
         self.previous_menu = None
         self.next_menu_mapping = None
@@ -54,14 +54,36 @@ class Menu:
             print(option_text)
 
 
+    def format_verb_to_past_tense(self, verb: str) -> str:
+        # Define all vowels
+        vowels = ["a", "e", "i", "o", "u"]
+        # Format verb that end in 'e' and 'y' to past tense
+        if verb.endswith("e") or verb.endswith("y"):
+            return f"{verb[:-1]}ing"
+        # Format verb that end in consonants to past tense by doubling the consonant
+        elif verb[-1] not in vowels:
+            return f"{verb + verb[-1]}ing"
+        return f"{verb}ing"
+
+
     def print_choice_msg(self, option: int | str) -> None:
         if option in self.options:
-            # TODO - account for verbs that end in 'e' and 'y'
-            choice_msg = f"{self.options[option].get('verb', '').lower() + 'ing ' if 'verb' in self.options[option] else ''}" \
-                        f"{self.options[option].get('connector', '').lower() + ' ' if 'connector' in self.options[option] else ''}" \
-                        f"{self.options[option].get('subject', '').lower() + ' ' if 'subject' in self.options[option] else ''}..." \
-                        .capitalize()
-            print(f"{option}: {choice_msg}")
+            verb = self.options[option].get('verb', '')
+            formatted_verb = self.format_verb_to_past_tense(verb) if verb else ''
+            
+            connector = self.options[option].get('connector', '')
+            subject = self.options[option].get('subject', '')
+            
+            choice_parts = []
+            if formatted_verb:
+                choice_parts.append(formatted_verb.lower())
+            if connector:
+                choice_parts.append(connector.lower())
+            if subject:
+                choice_parts.append(subject.lower())
+            
+            choice_msg = ' '.join(choice_parts)
+            print(f"{choice_msg.capitalize()}...")
         else:
             print(f"Option {option} does not exist.")
 
@@ -231,7 +253,7 @@ class PortfolioManager(Menu):
             7: self.dashboard.export_data,
             8: self.dashboard.automation,
             9: self.dashboard.notifications,
-            0: self.dashboard.previous_menu
+            0: self.print_choice_msg
         }
 
 

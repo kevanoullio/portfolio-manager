@@ -24,8 +24,6 @@ class LoginManager:
     
 
     def create_account(self) -> None:
-        print("Creating a new account...")
-
         # Get the username from the user (username_prompt checks if it's valid)
         provided_username = self.user_input.username_prompt()
         
@@ -55,8 +53,6 @@ class LoginManager:
 
 
     def login(self) -> None:
-        print("Logging in...")
-
         # Get the username from the user, sanitize it, and store it
         provided_username = self.user_input.username_prompt()
 
@@ -88,7 +84,6 @@ class LoginManager:
 
 
     def logout(self) -> None:
-        print("Logging out...")
         username = None
         user_id = None
         session_token = self.session_manager.session_token
@@ -103,7 +98,6 @@ class LoginManager:
         # Print the success message
         self.logout_success_message(f"{username}")
         logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
-        print("User logged out.")
 
 
     def login_management(self, user: UserAccount) -> None:
