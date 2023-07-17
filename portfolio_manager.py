@@ -71,6 +71,11 @@ def main():
                 print("Failed to create a new database.")
                 # Handle the error or exit the program as necessary
 
+    # Create a session manager object
+    session_manager = SessionManager(db_filename)
+
+    # The session manager creates a database object
+
 
     # Create a database object
     database = Database(db_filename)

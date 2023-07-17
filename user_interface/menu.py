@@ -36,31 +36,40 @@ class Menu:
                 self.options[0] = {"verb": "Return", "connector": "to", "subject": f"{self.previous_menu.title.title()} Menu"}
 
 
-    def sort_options(self) -> list[int]:
-        # Sort the keys excluding 0
-        options_sorted = sorted([key for key in self.options.keys() if isinstance(key, int) and key != 0])
-        # Append 0 to the end of the options list
-        options_sorted.append(0)
-        return options_sorted
+    # def sort_options(self) -> list[int]:
+    #     # Sort the keys excluding 0
+    #     options_sorted = sorted([key for key in self.options.keys() if isinstance(key, int) and key != 0])
+    #     # Append 0 to the end of the options list
+    #     options_sorted.append(0)
+    #     return options_sorted
 
 
     def print_options(self) -> None:
         # Print the menu title
         print(f"\n{self.title.upper()}")
         print("-" * len(self.title))
-        # Get the sorted options
-        logging.debug(f"Options: {self.options}")
-        options_sorted = self.sort_options()
-        logging.debug(f"Sorted Options: {options_sorted}")
-        # Print the sorted options
-        for option in options_sorted:
+
+        # Collect the options for logging purposes
+        debug_options = []
+        for key, inner_dict in self.options.items():
+            debug_options.append(key)
+            value_tmp = ""
+            for value in inner_dict.values():
+                value_tmp += f"{value} "
+            debug_options.append(value_tmp)
+        logging.info(f"Options: {debug_options}")
+
+        # Print the sorted options to the console
+        for option, option_dict in self.options.items():
             option_text = f"{option}: "
-            if "verb" in self.options[option]:
-                option_text += f"{self.options[option]['verb']} "
-            if "connector" in self.options[option]:
-                option_text += f"{self.options[option]['connector']} "
-            if "subject" in self.options[option]:
-                option_text += f"{self.options[option]['subject']}"
+            
+            if "verb" in option_dict:
+                option_text += f"{option_dict['verb']} "
+            if "connector" in option_dict:
+                option_text += f"{option_dict['connector']} "
+            if "subject" in option_dict:
+                option_text += f"{option_dict['subject']}"
+            
             print(option_text)
 
 
@@ -133,7 +142,7 @@ class Menu:
             new_option["subject"] = subject
         self.option_count += 1
         self.options[self.option_count] = new_option
-        logging.debug(f"Option {self.option_count} has been added to {self.title} menu.")
+        logging.debug(f"Option {self.option_count} '{verb} {connector} {subject}' has been added to {self.title} menu.")
 
 
     def update_option(self, option_id: int, **kwargs) -> None:
@@ -469,6 +478,38 @@ class ImportFromEmail(Menu):
         # Add menu options
         self.options = {} # TODO - Add dynamic list of emails to choose from
         # TODO - finish this menu
+
+
+class AvailableEmailAccounts(Menu): # TODO - finish this menu
+    def __init__(self, dashboard: Dashboard):
+        super().__init__()
+        self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
+        self.previous_menu = ImportFromEmail(dashboard)
+        self.menu_options = {}
+        email_accounts = dashboard.get_available_email_accounts()
+        for i in range(len(email_accounts)):
+            self.menu_options[i] = email_accounts[i].address
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {}
+        self.menu_logic = {}
+        # for i in enumerate(email_accounts):
+        #     self.menu_options[i[0]] = i[1].address
+
+
+class AvailableEmailFolders(Menu): # TODO - finish this menu
+    def __init__(self, dashboard: Dashboard):
+        super().__init__()
+        self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
+        self.previous_menu = ImportFromEmail(dashboard)
+        self.menu_options = {}
+        email_accounts = dashboard.get_available_email_accounts()
+        for i in range(len(email_accounts)):
+            self.menu_options[i] = email_accounts[i].address
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {}
+        self.menu_logic = {}
+        # for i in enumerate(email_accounts):
+        #     self.menu_options[i[0]] = i[1].address
 
 
 # ManageCustomImportScripts Menu class for managing the manage custom import scripts menu

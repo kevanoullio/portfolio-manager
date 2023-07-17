@@ -9,7 +9,6 @@ import sqlite3
 from account_management.accounts import EmailAccount
 from account_management.accounts import UserAccount
 from data_management.connection import DatabaseConnection
-from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -52,7 +51,6 @@ class DatabaseQueryExecutionError(Exception):
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection):
         self.db_connection = db_connection
-        self.user_input = UserInput()
         self.sql_queries_file = "./data_management/queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
@@ -554,58 +552,32 @@ class QueryExecutor:
         
 
 
-    # def get_email_accounts(self, user_id: int) -> list[EmailAccount] | None:
-    #     query_type = "SELECT"
-    #     get_email_accounts_query = f"{query_type} email_address, password_hash, email_usage_id FROM email WHERE user_id = ?"
-    #     params = (user_id,)
+    def get_all_user_email_accounts(self, current_user_id: int) -> list[EmailAccount] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_email_accounts_query = f"{query_type} email_usage_id, email_address, password_hash FROM email WHERE user_id = ?"
+        params = (current_user_id,)
+        # Execute the query
+        try:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute(get_email_accounts_query, params)
+                result = cursor.fetchall()
+        except Exception as e:
+            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-    #     # Initialize the variables
-    #     email_accounts = []
-    #     email_address = None
-    #     password_hash = None
-    #     email_usage_id = None
-    #     email_usage = None
+        email_accounts: list[EmailAccount] = []
+        # Check if the user has any email accounts
+        if result is not None:
+            # Replace the email usage id with the email usage name
+            for row in result:
+                result[row][0] = self.get_email_usage_by_id(result[row][0])
+                usage = result[row][0]
+                address = result[row][1]
+                password_hash = result[row][2]
+                email_accounts.append(EmailAccount(usage, address, password_hash))
+                logging.debug(f"Email address: {address}, usage: {usage}")
 
-    #     # Execute the query
-    #     try:
-    #         with self.db_connection.cursor() as cursor:
-    #             cursor.execute(get_email_accounts_query, params)
-    #             result = cursor.fetchall()
-    #     except Exception as e:
-    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-
-    #     # Check if the user has any email accounts
-    #     if result is not None:
-    #         # Get the user's email accounts
-    #         for row in result:
-    #             email_address = row[0]
-    #             password_hash = row[1]
-    #             email_usage_id = row[2]
-    #             email_usage = self.get_email_usage(email_usage_id)
-    #             email_accounts.append(EmailAccount(email_usage, email_address, password_hash))
-    #             logging.debug(f"Email address: {email_address}, usage: {email_usage}")
-
-    #     return email_accounts
-
-
-    # def fetch_email_accounts(self, user_id: int, email_usage: str) -> list | None:
-    #     query_type = "SELECT"
-    #     # Get the email usage id
-    #     email_usage_id = self.get_email_usage_id(email_usage)
-    #     # Define the SQL query, ensure only emails associated with currently logged in user are displayed
-    #     fetch_email_accounts_query = f"{query_type} email_address FROM email WHERE user_id = ? AND email_usage_id = ?"
-
-    #     # Set the query parameters
-    #     params = (user_id, email_usage_id)
-
-    #     # Execute the query
-    #     try:
-    #         with self.db_connection.cursor() as cursor:
-    #             cursor.execute(fetch_email_accounts_query, params)
-    #             result = cursor.fetchall()
-    #             return result
-    #     except Exception as e:
-    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        return email_accounts
 
 
     # def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:

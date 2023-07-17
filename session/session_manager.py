@@ -5,9 +5,7 @@
 
 # Third-party Libraries
 
-# Local Modules
-from account_management.accounts import UserAccount
-from data_management.database import Database, DatabaseSnapshot
+# Import all local modules using lazy imports to avoid circular importing
 
 # Configure logging
 import logging
@@ -15,14 +13,36 @@ import logging
 
 # SessionManager class for managing the current user session
 class SessionManager:
-    def __init__(self, database: Database) -> None:
-        self.database = database
-        self.current_user: UserAccount | None = None
+    def __init__(self, db_filename):
+        self.db_filename = db_filename
+        self.database = None
+        self.query_executor = None
+        self.current_user = None
         self.logged_in: bool = False
         self.session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
+
+
+    def initialize(self):
+        # Import all local modules here to avoid circular importing
+        from account_management.accounts import UserAccount
+        from data_management.database import Database, DatabaseSnapshot
+        from data_management.queries import QueryExecutor
+
+        self.database = Database(self.db_filename)
+        self.query_executor = QueryExecutor()
+        self.query_executor.set_session_manager(self)
+# class SessionManager:
+#     def __init__(self, database: Database) -> None:
+#         self.database = database
+#         self.current_user: UserAccount | None = None
+#         self.logged_in: bool = False
+#         self.session_token: str | None = None
+#         self.modifications = []
+#         self.session_history = []
+#         logging.info("Session Manager initialized.")
 
 
     def start_session(self) -> None:

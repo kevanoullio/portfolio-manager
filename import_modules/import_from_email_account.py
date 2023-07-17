@@ -2,18 +2,18 @@
 
 # Standard Libraries
 import csv
-from dataclasses import dataclass
 import email
 import imaplib
 import os
-from typing import Optional
 
 # Third-party Libraries
 from html.parser import HTMLParser
 
 # Local Modules
-from data_management.database import Database
 from account_management.accounts import EmailAccount, UserAccount
+from import_modules.csv_file_handler import CSVFileHandler
+from import_modules.uid_handler import UIDHandler
+from session.session_manager import SessionManager
 
 # Configure logging
 import logging
@@ -21,18 +21,6 @@ import logging
 
 # Global variables
 last_uid_cache = None
-
-
-# # EmailAccount class
-# @dataclass
-# class EmailAccount:
-#     email_address: str
-#     email_password: bytes
-
-# # ImportEmailAccount class
-# class ImportEmailAccount:
-#     def __init__(self, database: Database):
-#         self.__database = database
 
     
 # Class to handle IMAP connection and login
@@ -55,11 +43,11 @@ class IMAPClient:
             return None
         
         # Store email address and password into more concise variables
-        email_address = self.email_account.email_address
-        password = self.email_account.password_hash
+        email_address = self.email_account.address
+        password_hash = self.email_account.password_hash
 
         # Need to check if email address and password are None for decode() to work
-        if email_address is None or password is None:
+        if email_address is None or password_hash is None:
             print("Please set email account first.")
             return None
 
@@ -71,7 +59,7 @@ class IMAPClient:
         else:
             try:
                 self.mail = imaplib.IMAP4_SSL(email_service)
-                self.mail.login(email_address, password.decode())
+                self.mail.login(email_address, password_hash.decode())
                 return self.mail
             except imaplib.IMAP4.error:
                 print("Failed to login. Please check your credentials.")
@@ -158,6 +146,9 @@ class MyHTMLParser(HTMLParser):
         self.text += data
 
 
+
+
+
 # Function to extract the data from the email body
 def extract_from_email(data: dict, email_body) -> dict:
     email_body_split = email_body.splitlines()
@@ -202,63 +193,39 @@ def extract_from_email(data: dict, email_body) -> dict:
     return data
 
 
-# Function for opening a CSV file
-def open_csv_file(csv_file, mode, fieldnames=None):
-    if not os.path.exists(csv_file):
-        with open(csv_file, "w") as f:
-            if fieldnames:
-                writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
-                writer.writeheader()
-    return open(csv_file, mode)
 
 
-# Function for writing to a CSV file
-def write_to_csv(data: dict, csv_file) -> None:
-    with open_csv_file(csv_file, "a", fieldnames=data.keys()) as f:
-        writer = csv.DictWriter(f, fieldnames=data.keys(), lineterminator="\n")
-        writer.writerow(data)
 
 
-# Function for saving the UID of the last processed email to a file
-def save_last_uid(uid):
-    try:
-        with open("./data/last_uid.txt", "w") as f:
-            f.write(str(uid))
-    except Exception as e:
-        print(f"Error saving last UID: {e}")
-
-    
-# Define a function to read the UID of the last processed email from a file
-def read_last_uid():
-    global last_uid_cache
-    if last_uid_cache is not None:
-        return last_uid_cache
-    if os.path.isfile("./data/last_uid.txt") and os.path.getsize("./data/last_uid.txt") > 0:
-        try:
-            with open("./data/last_uid.txt", "r") as f:
-                last_uid = f.read()
-                last_uid_cache = last_uid
-                return last_uid
-        except Exception as e:
-            print(f"Error reading last UID: {e}")
-    return None
 
 
-def main(user: UserAccount) -> int:
-    if user is None or user.user_id is None:
+# TODO - make this function a class object?
+def import_from_email_account(session_manager: SessionManager) -> int:
+    if session_manager.current_user is None or session_manager.current_user.user_id is None:
         return 1
     
-    # Fetch all email addresses of type "import_email_account" from the user
-    import_email_accounts: list[EmailAccount] = []
-    for email_account in user.email_accounts:
-        if email_account.email_type == "import_email_account":
+    # Fetch all email addresses of usage "import" from the user
+    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager.current_user.user_id)
+    import_email_accounts = []
+
+    # Check if any email addresses are found
+    if user_email_accounts is None or len(user_email_accounts) == 0:
+        print("No email accounts found.")
+        return 2
+    
+    # Filter the email addresses by usage "import"
+    for email_account in user_email_accounts:
+        if email_account.usage == "import":
             import_email_accounts.append(email_account)
     
-    # If no email addresses are found, return
+    # Check if any import email addresses are found
     if import_email_accounts is None or len(import_email_accounts) == 0:
         print("No email accounts found.")
-        return 1
-    
+        return 2
+
+
+
+    # TODO - Use AvailableEmailAccount class instead of EmailAccount class
     # Print the email addresses found
     print("\nAVAILABLE EMAIL ACCOUNTS:")
     print("-------------------------")
@@ -269,13 +236,15 @@ def main(user: UserAccount) -> int:
 
     # Ask the user to select an email address
     selected_email_address = input("\nEnter the email address to import from: ")
-    if selected_email_address not in available_email_addresses:
-        print("Invalid email address.")
-        return 1
+    while selected_email_address not in available_email_addresses:
+        selected_email_address = input("Invalid email address. Please try again: ")
 
-    # Get the password for the selected email address
+
+
+
+    # Get the selected email account
     selected_email_account = None
-    for email_account in user.email_accounts:
+    for email_account in import_email_accounts:
         if email_account.address == selected_email_account:
             selected_email_account = email_account
             break
@@ -284,7 +253,7 @@ def main(user: UserAccount) -> int:
     imap_client = IMAPClient(selected_email_account)
     mail = imap_client.login()
     if mail is None:
-        return 1
+        return 3
 
     # List available folders
     folder_list = imap_client.list_folders()
@@ -302,13 +271,14 @@ def main(user: UserAccount) -> int:
         print(f"Failed to select folder: {folder_name}")
         return 1
     
+    # TODO - change from .csv to directly into the database
     # Set the names of the CSV files to save the data to
     csv_file_sec = "./data/ws-securities.csv"
     csv_file_divs = "./data/ws-divs.csv"
     csv_file_crypto = "./data/ws-crypto.csv"
 
     # Read the UID of the last processed email from the file
-    last_uid = read_last_uid()
+    last_uid = UIDHandler.read_last_uid()
 
     # Search for emails with a UID greater than the last processed email in the selected folder
     if last_uid is not None:
@@ -422,11 +392,11 @@ def main(user: UserAccount) -> int:
         else:
             # Write to csv
             print(data)
-            write_to_csv(data, csv_file)
+            CSVFileHandler.write_to_csv(data, csv_file)
 
         # Save the UID of the last processed email to a file
         last_uid = num.decode("utf-8")
-        save_last_uid(last_uid)
+        UIDHandler.save_last_uid(last_uid)
 
     print("No new emails to process")
 

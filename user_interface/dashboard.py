@@ -17,6 +17,8 @@ import logging
 class Dashboard:
     def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
+        self.database = self.session_manager.database
+        self.query_executor = self.database.query_executor
         self.login_manager = LoginManager(self.session_manager)
         self.query_results = QueryResults(self.session_manager)
         self.is_running = False
@@ -97,7 +99,7 @@ class Dashboard:
 
     # Main Menu Functions
     def portfolio_manager(self):
-        print("Portfolio Manager logic goes here...")
+        logging.info("Portfolio manager...")
 
 
     def account_settings(self):
@@ -125,7 +127,7 @@ class Dashboard:
 
     
     def manage_portfolio(self):
-        print("Manage Portfolio logic goes here...")
+        logging.info("Managing portfolio...")
 
 
     def market_data(self):
@@ -186,7 +188,7 @@ class Dashboard:
     
 
     def import_existing_portfolio_data_set(self):
-        print("Import Existing Portfolio Data Set logic goes here...")
+        logging.info("Importing existing portfolio data set...")
 
     
     def delete_existing_portfolio_data_set(self):
@@ -230,12 +232,54 @@ class Dashboard:
             print("You must be logged in to import from a database file.")
 
     
+    def get_available_email_accounts(self) -> list[EmailAccount] | None:
+        result = None
+        if self.session_manager.current_user is not None:
+            if self.session_manager.current_user.user_id is not None:
+                current_user_id = self.session_manager.current_user.user_id
+                result = self.query_executor.get_all_user_email_accounts(current_user_id)
+        return result
+
+
     def import_existing_portfolio_from_email_account(self):
-        print("Import Existing Portfolio from Email Account logic goes here...")
+        logging.info("Importing existing portfolio from email account...")
+        # TODO - finish this function
+
+
 
 
     def view_custom_import_scripts(self):
         print("View Custom Import Scripts logic goes here...")
+        # If you want to allow users to dynamically import and execute scripts in your program without hardcoding the import statements, you can use the `importlib` module in Python. This module provides functions to dynamically import modules at runtime. Here's an example of how you can use `importlib` to achieve this:
+
+        # ```python
+        # import importlib
+
+        # # Get the name of the script to import (assuming it's provided by the user)
+        # script_name = "external_script"
+
+        # # Import the script dynamically
+        # try:
+        #     imported_module = importlib.import_module(script_name)
+        # except ModuleNotFoundError:
+        #     print(f"Script '{script_name}' not found.")
+        #     return
+
+        # # Access functions and classes from the imported module
+        # if hasattr(imported_module, "my_function"):
+        #     imported_module.my_function()
+
+        # if hasattr(imported_module, "MyClass"):
+        #     obj = imported_module.MyClass()
+
+        # # Call the main function if it exists
+        # if hasattr(imported_module, "main"):
+        #     imported_module.main()
+        # ```
+
+        # In this example, `importlib.import_module()` is used to dynamically import the script specified by the user. The `script_name` variable holds the name of the script (without the `.py` extension). If the script is found, you can access its functions and classes using `hasattr()` to check if they exist before using them.
+
+        # Note that dynamically importing and executing user-provided scripts can introduce security risks. Ensure that you validate and sanitize user input to prevent potential code injection attacks or other malicious activities.
 
     
     def add_custom_import_script(self):

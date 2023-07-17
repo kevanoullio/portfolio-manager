@@ -193,7 +193,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
 
     def import_file(self, user_id: int, file_type: str, file_extensions: list[str]) -> None:
         # Only allow importing .db database files
-        print(f"allowed file types: {file_extensions}")
+        print(f"Allowed file types: {file_extensions}")
         # Prompt the user for the file path
         filepath = input(f"Enter the path to the {file_type} file: ")
 
