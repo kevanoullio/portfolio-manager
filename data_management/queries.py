@@ -54,7 +54,11 @@ class QueryExecutor:
         self.sql_queries_file = "./data_management/queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    
+
+    def set_session_manager(self, session_manager):
+        self.session_manager = session_manager
+
+
     def __find_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
         for i, query in enumerate(individual_queries):
@@ -552,11 +556,11 @@ class QueryExecutor:
         
 
 
-    def get_all_user_email_accounts(self, current_user_id: int) -> list[EmailAccount] | None:
+    def get_all_user_email_accounts(self) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_accounts_query = f"{query_type} email_usage_id, email_address, password_hash FROM email WHERE user_id = ?"
-        params = (current_user_id,)
+        get_email_accounts_query = f"{query_type} email_usage_id, [address], password_hash FROM email WHERE user_id = ?"
+        params = (self.session_manager.current_user_id,)
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
@@ -574,6 +578,33 @@ class QueryExecutor:
                 usage = result[row][0]
                 address = result[row][1]
                 password_hash = result[row][2]
+                email_accounts.append(EmailAccount(usage, address, password_hash))
+                logging.debug(f"Email address: {address}, usage: {usage}")
+
+        return email_accounts
+
+
+    def get_user_email_accounts_by_usage(self, email_usage: str) -> list[EmailAccount] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_email_accounts_query = f"{query_type} [address], password_hash FROM email WHERE user_id = ? AND email_usage_id = ?"
+        params = (self.session_manager.current_user_id, self.get_email_usage_id_by_name(email_usage))
+        # Execute the query
+        try:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute(get_email_accounts_query, params)
+                result = cursor.fetchall()
+        except Exception as e:
+            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+        email_accounts: list[EmailAccount] = []
+        # Check if the user has any email accounts
+        if result is not None:
+            # Replace the email usage id with the email usage name
+            for row in result:
+                usage = email_usage
+                address = row[0]
+                password_hash = row[1]
                 email_accounts.append(EmailAccount(usage, address, password_hash))
                 logging.debug(f"Email address: {address}, usage: {usage}")
 

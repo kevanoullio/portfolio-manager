@@ -5,9 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from session.session_manager import SessionManager
-from user_authentication.login_manager import LoginManager
-from user_interface.query_results import QueryResults
+from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging
@@ -15,14 +13,13 @@ import logging
 
 # Dashboard class for managing the user interface and all menu navigation
 class Dashboard:
-    def __init__(self, session_manager: SessionManager) -> None:
-        self.session_manager = session_manager
-        self.database = self.session_manager.database
-        self.query_executor = self.database.query_executor
-        self.login_manager = LoginManager(self.session_manager)
-        self.query_results = QueryResults(self.session_manager)
+    def __init__(self) -> None:
         self.is_running = False
     
+
+    def set_session_manager(self, session_manager):
+        self.session_manager = session_manager
+ 
 
     def __print_welcome_screen(self):
         print("\n====================================")
@@ -70,7 +67,7 @@ class Dashboard:
 
     # Login Menu Functions
     def create_account(self):
-        self.login_manager.create_account()
+        self.session_manager.login_manager.create_account()
         if self.session_manager.current_user is not None:
             logging.debug(f"User login: {self.session_manager.current_user}")
         else:
@@ -78,7 +75,7 @@ class Dashboard:
 
 
     def login(self):
-        self.login_manager.login()
+        self.session_manager.login_manager.login()
         if self.session_manager.current_user is not None:
             logging.debug(f"User login: {self.session_manager.current_user.username}")
         else:
@@ -119,7 +116,7 @@ class Dashboard:
     
 
     def logout(self):
-        self.login_manager.logout()
+        self.session_manager.login_manager.logout()
 
 
     def view_portfolio(self):
@@ -161,7 +158,7 @@ class Dashboard:
     def view_current_portfolio(self):
         # TODO - review and finish this function
         results = self.session_manager.database.execute_query_by_title("view_current_portfolio")
-        self.query_results.print(results)
+        self.session_manager.query_results.print(results)
     
 
     def view_entire_portfolio_history(self):
@@ -231,21 +228,12 @@ class Dashboard:
         else:
             print("You must be logged in to import from a database file.")
 
-    
-    def get_available_email_accounts(self) -> list[EmailAccount] | None:
-        result = None
-        if self.session_manager.current_user is not None:
-            if self.session_manager.current_user.user_id is not None:
-                current_user_id = self.session_manager.current_user.user_id
-                result = self.query_executor.get_all_user_email_accounts(current_user_id)
-        return result
-
 
     def import_existing_portfolio_from_email_account(self):
         logging.info("Importing existing portfolio from email account...")
         # TODO - finish this function
-
-
+        # Get the user's email accounts
+        email_accounts: list[EmailAccount] | None = self.session_manager.database.query_executor.get_user_email_accounts_by_usage("import")
 
 
     def view_custom_import_scripts(self):
@@ -404,7 +392,11 @@ class Dashboard:
 
     def add_automation(self):
         print("Add Automation logic goes here...")
-    
+        # TODO - Tradingview automated watchlist via Selenium and AutoIt Python packages
+        # OR jur auto export a watchlist text file of my current portfolio
+        # choose between daily/wkly/mthly and diff the text, if different update and delete old watchlist text file
+        # can import into tradingview manually whenver I'm ready to analyze the portfolio 
+        # Use ###Stock (section), NASDAQ:GOOGL, NEO:GOOG, etc for portfolio watchlist
 
     def modify_automation(self):
         print("Modify Automation logic goes here...")

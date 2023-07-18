@@ -7,9 +7,8 @@ import os
 
 # Local Modules
 from data_management.backup import BackupManager
-from data_management.database import Database, DatabaseConnection, DatabaseSchema
-from session.session_manager import SessionManager
-from user_interface.dashboard import Dashboard
+from data_management.database import Database
+from session_management.session_manager import SessionManager
 
 # Configure logging
 import logging
@@ -50,13 +49,12 @@ def main():
                 # Handle the error or exit the program as necessary
         else:
             # Create a new database file by opening and closing a connection
-            db_connection = DatabaseConnection(db_filename)
-            db_connection.open_connection()
+            database = Database(db_filename)
+            database.db_connection.open_connection()
             # Initialize the database using the schema file
-            db_schema = DatabaseSchema(db_connection)
-            db_schema.initialize_database(db_schema_filename)
+            database.initialize(db_schema_filename)
             # Close the database connection
-            db_connection.close_connection()
+            database.db_connection.close_connection()
             logging.info("Database file created and initialized successfully.")
     else:
         # Check if the backup file exists
@@ -73,30 +71,28 @@ def main():
 
     # Create a session manager object
     session_manager = SessionManager(db_filename)
+    logging.info("Session Manager created.")
+    # Initialize all modules via the session manager
+    session_manager.initialize_modules()
+    logging.info("Session Manager initialized.")
+    # Set the session manager for all modules
+    session_manager.set_session_manager(session_manager)
+    logging.info("Session Manager set for all modules.")
 
-    # The session manager creates a database object
 
-
-    # Create a database object
-    database = Database(db_filename)
-    # Open the database connection
-    database.db_connection.open_connection()
-    # Create the session manager
-    session_manager = SessionManager(database)
-
-    # Create a dashboard object
-    dashboard = Dashboard(session_manager)
+    # Open the connection to the database
+    session_manager.database.db_connection.open_connection()
+    logging.info(f"Database {db_filename} connection opened.")
     # Run the dashboard
-    dashboard.run()
+    session_manager.dashboard.run()
+    logging.info("Dashboard started.")
 
 
     # Close the database connections
-    database.db_connection.close_connection()
+    session_manager.database.db_connection.close_connection()
     logging.info(f"Database {db_filename} connection closed.")
-
     # Exit the program gracefully
     logging.info("Exiting the portfolio manager application.")
-
     exit(0)
 
 

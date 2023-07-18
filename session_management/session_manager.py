@@ -5,7 +5,9 @@
 
 # Third-party Libraries
 
-# Import all local modules using lazy imports to avoid circular importing
+# Local Modules
+from account_management.accounts import UserAccount
+# Import all remaining local modules using lazy imports to avoid circular importing
 
 # Configure logging
 import logging
@@ -15,9 +17,7 @@ import logging
 class SessionManager:
     def __init__(self, db_filename):
         self.db_filename = db_filename
-        self.database = None
-        self.query_executor = None
-        self.current_user = None
+        self.current_user: UserAccount | None = None
         self.logged_in: bool = False
         self.session_token: str | None = None
         self.modifications = []
@@ -25,24 +25,28 @@ class SessionManager:
         logging.info("Session Manager initialized.")
 
 
-    def initialize(self):
+    def initialize_modules(self):
         # Import all local modules here to avoid circular importing
-        from account_management.accounts import UserAccount
         from data_management.database import Database, DatabaseSnapshot
-        from data_management.queries import QueryExecutor
+        from user_interface.dashboard import Dashboard
+        from access_management.login_manager import LoginManager
+        from access_management.account_authenticator import AccountAuthenticator
+        from session_management.token_manager import SessionTokenManager
+
 
         self.database = Database(self.db_filename)
-        self.query_executor = QueryExecutor()
-        self.query_executor.set_session_manager(self)
-# class SessionManager:
-#     def __init__(self, database: Database) -> None:
-#         self.database = database
-#         self.current_user: UserAccount | None = None
-#         self.logged_in: bool = False
-#         self.session_token: str | None = None
-#         self.modifications = []
-#         self.session_history = []
-#         logging.info("Session Manager initialized.")
+        self.dashboard = Dashboard()
+        self.login_manager = LoginManager()
+        self.authentication = AccountAuthenticator()
+        self.session_token_manager = SessionTokenManager()
+
+
+    def set_session_manager(self, session_manager):
+        self.database.set_session_manager(session_manager)
+        self.dashboard.set_session_manager(session_manager)
+        self.login_manager.set_session_manager(session_manager)
+        self.authentication.set_session_manager(session_manager)
+        self.session_token_manager.set_session_manager(session_manager)
 
 
     def start_session(self) -> None:

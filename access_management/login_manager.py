@@ -6,8 +6,6 @@
 
 # Local Modules
 from account_management.accounts import UserAccount
-from session.session_manager import SessionManager
-from user_authentication.authentication import Authentication
 from user_interface.user_input import UserInput
 
 # Configure logging
@@ -16,12 +14,14 @@ import logging
 
 # LoginManager class for managing the login process
 class LoginManager:
-    def __init__(self, session_manager: SessionManager) -> None:
-        self.session_manager = session_manager
-        self.user_authentication = Authentication(self.session_manager)
+    def __init__(self) -> None:
         self.user_input = UserInput()
         logging.info("Login Manager initialized.")
     
+
+    def set_session_manager(self, session_manager) -> None:
+        self.session_manager = session_manager
+
 
     def create_account(self) -> None:
         # Get the username from the user (username_prompt checks if it's valid)
@@ -68,7 +68,7 @@ class LoginManager:
         provided_password_hash = self.user_input.password_prompt()
 
         # Verify the username and password
-        if self.user_authentication.authenticate_user(provided_username, provided_password_hash):
+        if self.session_manager.account_authentication.authenticate_user(provided_username, provided_password_hash):
             if self.session_manager.current_user is None:
                 # Run the login_management function to log the user in
                 self.login_management(user)
@@ -105,7 +105,7 @@ class LoginManager:
         self.session_manager.current_user = user
         self.session_manager.logged_in = True
         # Generate a session token and start the session
-        self.user_authentication.generate_session_token()
+        self.session_manager.session_token_manager.generate_session_token()
         self.session_manager.start_session()
 
     
@@ -114,7 +114,7 @@ class LoginManager:
         self.session_manager.current_user = None
         self.session_manager.logged_in = False
         # Clear the session token and close the session
-        self.user_authentication.clear_session_token()
+        self.session_manager.session_token_manager.clear_session_token()
         self.session_manager.close_session()
 
 

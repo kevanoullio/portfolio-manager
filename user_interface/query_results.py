@@ -5,7 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from session.session_manager import SessionManager
+
 
 # Configure logging
 import logging
@@ -13,8 +13,8 @@ import logging
 
 
 class QueryResults:
-    def __init__(self, session_manager: SessionManager) -> None:
-        self.session_manager = session_manager
+    def __init__(self) -> None:
+        pass
 
 
     def print(self, query_results) -> None:
@@ -23,3 +23,5 @@ class QueryResults:
             print(*row, sep="\t")
 
 
+if __name__ == "__main__":
+    print("This module is not meant to be executed directly.")

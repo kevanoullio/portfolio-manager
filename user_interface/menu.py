@@ -479,30 +479,47 @@ class ImportFromEmail(Menu):
         self.options = {} # TODO - Add dynamic list of emails to choose from
         # TODO - finish this menu
 
+        # Add menu options
+        self.add_option(verb="Import", subject="Existing Portfolio from Brokerage Account")
+        self.add_option(verb="Import", subject="Existing Portfolio from CSV File")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
+            1: ImportFromBrokerageAccount,
+            2: ImportFromCSVFile,
+            0: ManagePortfolio
+        }
+        self.menu_logic = {
+            1: self.dashboard.import_existing_portfolio_from_brokerage_account,
+            2: self.dashboard.import_existing_portfolio_from_csv_file,
+            0: self.dashboard.previous_menu
+        }
+
 
 class AvailableEmailAccounts(Menu): # TODO - finish this menu
     def __init__(self, dashboard: Dashboard):
-        super().__init__()
+        super().__init__(dashboard)
         self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
         self.previous_menu = ImportFromEmail(dashboard)
         self.menu_options = {}
         email_accounts = dashboard.get_available_email_accounts()
-        for i in range(len(email_accounts)):
-            self.menu_options[i] = email_accounts[i].address
+        if email_accounts is None or len(email_accounts) == 0:
+            self.menu_options[1] = "No Available Email Accounts"
+        else:
+            for _, email_account in enumerate(email_accounts):
+                self.add_option(subject=email_account.address)
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {}
         self.menu_logic = {}
-        # for i in enumerate(email_accounts):
-        #     self.menu_options[i[0]] = i[1].address
 
 
 class AvailableEmailFolders(Menu): # TODO - finish this menu
     def __init__(self, dashboard: Dashboard):
-        super().__init__()
+        super().__init__(dashboard)
         self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
         self.previous_menu = ImportFromEmail(dashboard)
         self.menu_options = {}
-        email_accounts = dashboard.get_available_email_accounts()
+        email_folders = dashboard.get_available_email_folders()
         for i in range(len(email_accounts)):
             self.menu_options[i] = email_accounts[i].address
         self.format_return_to_previous_menu_option()
