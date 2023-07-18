@@ -1,76 +1,31 @@
-# Purpose: Accounts module for defining all account types.
+# Purpose: Email Account module for defining email account data type and its associated functionality.
 
 # Standard Libraries
+from dataclasses import dataclass
 
 # Third-party Libraries
 
 # Local Modules
+from data_management.connection import DatabaseConnection
 
 # Configure logging
 import logging
 
 
-# User class for defining user account type
-class UserAccount:
-    def __init__(self, user_id: int, username: str, password_hash: bytes) -> None:
-        self.user_id = user_id
-        self.username = username
-        self.password_hash = password_hash
-        logging.info(f"User initialized successfully. Username: {self.username}, User ID: {self.user_id}")
-
-
-    # def update_username(self, new_username: str) -> None:
-    #     # Update the user's username to the new username
-    #     self.username = new_username
-
-
-    # def update_password(self, new_password_hash: bytes) -> None:
-    #     # Update the user's password to the new password
-    #     self.password_hash = new_password_hash
-
-
-    # def deactivate_account(self) -> None:
-    #     # Deactivate or disable the user's account
-    #     # Perform any necessary cleanup or disable associated functionality
-    #     pass
-
-
-    # def is_admin(self) -> bool:
-    #     # Check if the user has admin privileges or roles
-    #     # Return True if the user is an admin, False otherwise
-    #     pass
-
-
-    # def get_profile(self) -> dict:
-    #     # Retrieve and return the user's profile information
-    #     # Return a dictionary containing profile data
-    #     pass
-
-
-    # def save_to_database(self) -> None:
-    #     # Save the user's information to the database
-    #     # Perform necessary database interactions to store user data
-    #     pass
-
-
-    # def delete_from_database(self) -> None:
-    #     # Delete the user's information from the database
-    #     # Perform necessary database interactions to remove user data
-    #     pass
-
-
-
-
-
-
-# EmailAccount class for defining email account type
+# EmailAccount class for defining email account data type
+@dataclass
 class EmailAccount:
-    def __init__(self, usage: str, address: str, password_hash: bytes | None = None) -> None:
-        self.usage = usage
-        self.address = address
-        self.password_hash = password_hash
+    usage: str
+    address: str
+    password_hash: bytes | None = None
+
+    def __post_init__(self) -> None:
+        logging.info(f"Email account initialized successfully. Address: {self.address}, Usage: {self.usage}")
 
 
+class EmailAccountService:
+    def __init__(self, database_connection: DatabaseConnection):
+        self.database_connection = database_connection
 
     # def import_data(self):
     #     # Logic to import data from the email account

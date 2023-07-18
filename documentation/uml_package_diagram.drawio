@@ -1,0 +1,162 @@
+<mxfile host="65bd71144e">
+    <diagram id="VcM1Zy7mW6g2TLvUfNcH" name="Page-1">
+        <mxGraphModel dx="1104" dy="1119" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="9" value="Portfolio Manager" style="shape=folder;fontStyle=1;tabWidth=150;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="30" width="1820" height="1120" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" value="Session Management" style="shape=folder;fontStyle=1;tabWidth=160;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="60" y="80" width="390" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="75" value="Session Manager" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="16" vertex="1">
+                    <mxGeometry x="20" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="76" value="Token Manager" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="16" vertex="1">
+                    <mxGeometry x="220" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="User Interface" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="60" y="530" width="390" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="99" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=150;exitDy=67.5;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=67.5;entryPerimeter=0;" parent="18" source="70" target="72" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="Dashboard" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="18" vertex="1">
+                    <mxGeometry x="20" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="98" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=0;exitDy=42.5;exitPerimeter=0;entryX=0;entryY=0;entryDx=150;entryDy=42.5;entryPerimeter=0;" parent="18" source="72" target="70" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="72" value="Menu" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="18" vertex="1">
+                    <mxGeometry x="220" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="73" value="User Input" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="18" vertex="1">
+                    <mxGeometry x="20" y="180" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="74" value="Query Results" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="18" vertex="1">
+                    <mxGeometry x="220" y="180" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="77" value="Trading Strategies" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="50" y="900" width="230" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="81" value="Reports" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="1220" y="900" width="240" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="82" value="Notifications" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="650" y="900" width="230" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="83" value="Import Modules" style="shape=folder;fontStyle=1;tabWidth=130;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="1310" y="610" width="390" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="84" value="Export" style="shape=folder;fontStyle=1;tabWidth=70;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="1530" y="900" width="240" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="86" value="Data Management" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="520" y="530" width="590" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="115" style="edgeStyle=none;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="86" source="87" target="91">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="133" y="160"/>
+                            <mxPoint x="495" y="160"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="87" value="Database" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="86" vertex="1">
+                    <mxGeometry x="20" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="105" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=150;exitDy=55;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=55;entryPerimeter=0;" parent="86" source="87" target="88" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="88" value="Connection" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="86" vertex="1">
+                    <mxGeometry x="220" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="102" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=115;exitDy=30;exitPerimeter=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="86" source="89" target="88" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="89" value="Backup" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="86" vertex="1">
+                    <mxGeometry x="220" y="180" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="104" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=115;exitDy=30;exitPerimeter=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" parent="86" source="90" target="88" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="90" value="Queries" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="86" vertex="1">
+                    <mxGeometry x="20" y="180" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="103" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=0;exitDy=55;exitPerimeter=0;entryX=0;entryY=0;entryDx=150;entryDy=55;entryPerimeter=0;" parent="86" source="91" target="88" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="91" value="Schema" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="86" vertex="1">
+                    <mxGeometry x="420" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="92" value="Data Analysis" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="350" y="900" width="230" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="93" value="Automation" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="930" y="900" width="230" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="95" value="Access Management" style="shape=folder;fontStyle=1;tabWidth=160;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" parent="9" vertex="1">
+                    <mxGeometry x="660" y="80" width="390" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="111" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=150;exitDy=55;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=55;entryPerimeter=0;" edge="1" parent="95" source="96" target="97">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="96" value="Login Manager" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="95" vertex="1">
+                    <mxGeometry x="20" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="97" value="Account Authenticator" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" parent="95" vertex="1">
+                    <mxGeometry x="220" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="106" value="Account Management" style="shape=folder;fontStyle=1;tabWidth=160;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;labelInHeader=1;container=1;collapsible=0;recursiveResize=0;" vertex="1" parent="9">
+                    <mxGeometry x="660" y="320" width="390" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="107" value="User Account" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" vertex="1" parent="106">
+                    <mxGeometry x="20" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="108" value="Email Account" style="shape=folder;fontStyle=1;tabWidth=80;tabHeight=30;tabPosition=left;html=1;boundedLbl=1;" vertex="1" parent="106">
+                    <mxGeometry x="220" y="50" width="150" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="109" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0;entryDx=115;entryDy=30;entryPerimeter=0;" edge="1" parent="9" source="106" target="88">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="112" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=55;entryPerimeter=0;" edge="1" parent="9" source="96" target="107">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="755" y="290"/>
+                            <mxPoint x="590" y="290"/>
+                            <mxPoint x="590" y="425"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="113" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0;entryY=0;entryDx=275;entryDy=30;entryPerimeter=0;" edge="1" parent="9" source="97" target="106">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="116" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=0;exitDy=55;exitPerimeter=0;entryX=0;entryY=0;entryDx=0;entryDy=95;entryPerimeter=0;" edge="1" parent="9" source="90" target="106">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="490" y="765"/>
+                            <mxPoint x="490" y="415"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="117" style="edgeStyle=none;html=1;exitX=0;exitY=0;exitDx=0;exitDy=55;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="9" source="96" target="73">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="570" y="185"/>
+                            <mxPoint x="570" y="390"/>
+                            <mxPoint x="470" y="390"/>
+                            <mxPoint x="470" y="830"/>
+                            <mxPoint x="155" y="830"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="114" style="edgeStyle=none;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="87">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="700" y="770" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

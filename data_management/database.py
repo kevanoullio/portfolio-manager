@@ -12,7 +12,6 @@ import sqlite3
 from data_management.connection import DatabaseConnection
 from data_management.queries import QueryExecutor
 from data_management.schema import DatabaseSchema
-from user_interface.query_results import QueryResults
 
 # Configure logging
 import logging
@@ -27,7 +26,6 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         self.db_connection = DatabaseConnection(self.db_filename)
         self.db_schema = DatabaseSchema(self.db_connection)
         self.query_executor = QueryExecutor(self.db_connection)
-        self.query_results = QueryResults()
         logging.info(f"Database initialized. Database: {self.db_filename}")
 
 

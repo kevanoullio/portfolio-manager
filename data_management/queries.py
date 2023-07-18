@@ -6,8 +6,8 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import EmailAccount
-from account_management.accounts import UserAccount
+from account_management.email_account import EmailAccount
+from account_management.user_account import UserAccount
 from data_management.connection import DatabaseConnection
 
 # Configure logging
@@ -560,7 +560,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} email_usage_id, [address], password_hash FROM email WHERE user_id = ?"
-        params = (self.session_manager.current_user_id,)
+        params = (self.session_manager.current_user.user_id,)
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:

@@ -68,7 +68,7 @@ class PasswordValidator(Validator):
 
 
 # EmailValidator class for validating emails
-class EmailValidator(Validator):
+class EmailAddressValidator(Validator):
     def __init__(self, minimum_length: int = 6, maximum_length: int = 254) -> None:
         allowed_characters = r"a-zA-Z0-9_@.-"
         valid_email_form = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
@@ -80,7 +80,7 @@ class UserInput:
     def __init__(self) -> None:
         self.username_validator = UsernameValidator()
         self.password_validator = PasswordValidator()
-        self.email_validator = EmailValidator()
+        self.email_validator = EmailAddressValidator()
 
 
     def __sanitize_input(self, raw_input: str) -> str:

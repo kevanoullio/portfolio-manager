@@ -8,7 +8,8 @@ import string
 import bcrypt
 
 # Local Modules
-from account_management.accounts import EmailAccount, UserAccount
+from account_management.email_account import EmailAccount
+from account_management.user_account import UserAccount
 
 # Configure logging
 import logging

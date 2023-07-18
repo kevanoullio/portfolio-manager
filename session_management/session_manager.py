@@ -6,7 +6,7 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import UserAccount
+from account_management.user_account import UserAccount
 # Import all remaining local modules using lazy imports to avoid circular importing
 
 # Configure logging
@@ -28,6 +28,7 @@ class SessionManager:
     def initialize_modules(self):
         # Import all local modules here to avoid circular importing
         from data_management.database import Database, DatabaseSnapshot
+        from data_management.queries import QueryExecutor
         from user_interface.dashboard import Dashboard
         from access_management.login_manager import LoginManager
         from access_management.account_authenticator import AccountAuthenticator
@@ -35,17 +36,19 @@ class SessionManager:
 
 
         self.database = Database(self.db_filename)
+        self.query_executor = QueryExecutor(self.database.db_connection)
         self.dashboard = Dashboard()
         self.login_manager = LoginManager()
-        self.authentication = AccountAuthenticator()
+        self.account_authenticator = AccountAuthenticator()
         self.session_token_manager = SessionTokenManager()
 
 
     def set_session_manager(self, session_manager):
         self.database.set_session_manager(session_manager)
+        self.query_executor.set_session_manager(session_manager)
         self.dashboard.set_session_manager(session_manager)
         self.login_manager.set_session_manager(session_manager)
-        self.authentication.set_session_manager(session_manager)
+        self.account_authenticator.set_session_manager(session_manager)
         self.session_token_manager.set_session_manager(session_manager)
 
 

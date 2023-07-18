@@ -10,7 +10,8 @@ import os
 from html.parser import HTMLParser
 
 # Local Modules
-from account_management.accounts import EmailAccount, UserAccount
+from account_management.email_account import EmailAccount
+from account_management.user_account import UserAccount
 from import_modules.csv_file_handler import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
 from session.session_manager import SessionManager
@@ -225,7 +226,7 @@ def import_from_email_account(session_manager: SessionManager) -> int:
 
 
 
-    # TODO - Use AvailableEmailAccount class instead of EmailAccount class
+    # TODO - Use AvailableEmailAccount class instead
     # Print the email addresses found
     print("\nAVAILABLE EMAIL ACCOUNTS:")
     print("-------------------------")
@@ -249,12 +250,16 @@ def import_from_email_account(session_manager: SessionManager) -> int:
             selected_email_account = email_account
             break
 
-    # Login to the Outlook IMAP server using the selected email account
+    # Login to the IMAP server using the selected email account
     imap_client = IMAPClient(selected_email_account)
     mail = imap_client.login()
     if mail is None:
         return 3
 
+
+
+
+    # TODO - replace with AvailableFolder class
     # List available folders
     folder_list = imap_client.list_folders()
     print("------------------")
@@ -263,6 +268,10 @@ def import_from_email_account(session_manager: SessionManager) -> int:
         print(folder)
     print("------------------")
 
+
+
+
+    # TODO - Replace with UserInput class
     folder_name = input("Enter the folder name: ")
 
     # Select the specified folder
@@ -271,11 +280,16 @@ def import_from_email_account(session_manager: SessionManager) -> int:
         print(f"Failed to select folder: {folder_name}")
         return 1
     
+
+
     # TODO - change from .csv to directly into the database
     # Set the names of the CSV files to save the data to
     csv_file_sec = "./data/ws-securities.csv"
     csv_file_divs = "./data/ws-divs.csv"
     csv_file_crypto = "./data/ws-crypto.csv"
+
+
+
 
     # Read the UID of the last processed email from the file
     last_uid = UIDHandler.read_last_uid()

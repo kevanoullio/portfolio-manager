@@ -5,7 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import UserAccount
+from account_management.user_account import UserAccount
 from user_interface.user_input import UserInput
 
 # Configure logging
@@ -68,7 +68,7 @@ class LoginManager:
         provided_password_hash = self.user_input.password_prompt()
 
         # Verify the username and password
-        if self.session_manager.account_authentication.authenticate_user(provided_username, provided_password_hash):
+        if self.session_manager.account_authenticator.authenticate_user(provided_username, provided_password_hash):
             if self.session_manager.current_user is None:
                 # Run the login_management function to log the user in
                 self.login_management(user)
