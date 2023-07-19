@@ -20,10 +20,8 @@ class AccountAuthenticator:
     def __init__(self) -> None:
         logging.info("UserAuthentication initialized.")
 
-
     def set_session_manager(self, session_manager):
         self.session_manager = session_manager
-
 
     def authenticate_user(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Check if the provided credentials are valid
@@ -32,7 +30,6 @@ class AccountAuthenticator:
         else:
             print("Account login failed. Please try again.")
             return False
-
 
     def validate_user_credentials(self, provided_username: str, provided_password_hash: bytes) -> bool:
         # Get a User class based on the username
@@ -43,7 +40,6 @@ class AccountAuthenticator:
         else:
             print("Invalid user credentials.")
             return False
-    
 
     def validate_email_credentials(self, provided_email_address: str, provided_password_hash: bytes) -> bool | None:
         # Get an EmailAccount class based on the email
@@ -59,13 +55,11 @@ class AccountAuthenticator:
             print("Invalid email credentials.")
             return False
 
-
     def verify_password(self, provided_password_hash: bytes, stored_password_hash: bytes) -> bool:
         # Verify if the provided password matches the user's stored password
         result = bcrypt.checkpw(provided_password_hash, stored_password_hash)
         return result
 
-    
 
 if __name__ == "__main__":
     print("This module is not meant to be executed directly.")

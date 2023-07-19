@@ -37,7 +37,6 @@ class IMAPClient:
             "icloud": "imap.mail.me.com"
         }
 
-
     def login(self):
         if self.email_account is None:
             print("Please set email account first.")
@@ -67,7 +66,6 @@ class IMAPClient:
                 self.mail = None  # Reset the mail object to None upon login failure
                 return None
     
-
     # Method to list all folders in the mailbox
     def list_folders(self) -> list:
         if self.mail is not None:
@@ -94,7 +92,6 @@ class IMAPClient:
             print("Please login first.")
             return []
 
-
     # Method to select a folder and check for new emails
     def select_folder(self, folder_name):
         if self.mail is not None:
@@ -111,7 +108,6 @@ class IMAPClient:
         else:
             print("Please login first.")
             return None
-
 
     # Method to search for emails in a folder
     def search_emails(self, search_query) -> list:
@@ -137,17 +133,12 @@ class MyHTMLParser(HTMLParser):
         super().__init__(*args, **kwargs)
         self.text = ""
 
-
     def feed(self, data):
         self.text = ""
         super().feed(data)
 
-
     def handle_data(self, data):
         self.text += data
-
-
-
 
 
 # Function to extract the data from the email body
@@ -194,19 +185,13 @@ def extract_from_email(data: dict, email_body) -> dict:
     return data
 
 
-
-
-
-
-
-
 # TODO - make this function a class object?
 def import_from_email_account(session_manager: SessionManager) -> int:
-    if session_manager.current_user is None or session_manager.current_user.user_id is None:
+    if session_manager.__current_user is None or session_manager.__current_user.user_id is None:
         return 1
     
     # Fetch all email addresses of usage "import" from the user
-    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager.current_user.user_id)
+    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager.__current_user.user_id)
     import_email_accounts = []
 
     # Check if any email addresses are found

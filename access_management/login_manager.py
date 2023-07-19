@@ -17,11 +17,9 @@ class LoginManager:
     def __init__(self) -> None:
         self.user_input = UserInput()
         logging.info("Login Manager initialized.")
-    
 
     def set_session_manager(self, session_manager) -> None:
         self.session_manager = session_manager
-
 
     def create_account(self) -> None:
         # Get the username from the user (username_prompt checks if it's valid)
@@ -50,7 +48,6 @@ class LoginManager:
         else:
             print("Account creation failed. Please try again")
             logging.info(f"Account creation '{provided_username}' failed. No user ID.")
-
 
     def login(self) -> None:
         # Get the username from the user, sanitize it, and store it
@@ -82,7 +79,6 @@ class LoginManager:
             print("Username or password is incorrect. Account login failed. Please try again")
             logging.info(f"User '{user.username}' user_id '{user.user_id}' failed to log in with session token: {self.session_manager.session_token}")
 
-
     def logout(self) -> None:
         username = None
         user_id = None
@@ -99,34 +95,27 @@ class LoginManager:
         self.logout_success_message(f"{username}")
         logging.info(f"User '{username}' user_id '{user_id}' logged out with session token: {session_token}")
 
-
     def login_management(self, user: UserAccount) -> None:
         # Load the user into the session manager
         self.session_manager.current_user = user
-        self.session_manager.logged_in = True
         # Generate a session token and start the session
         self.session_manager.session_token_manager.generate_session_token()
         self.session_manager.start_session()
-
     
     def logout_management(self) -> None:
         # Unload the user from the session manager
         self.session_manager.current_user = None
-        self.session_manager.logged_in = False
         # Clear the session token and close the session
         self.session_manager.session_token_manager.clear_session_token()
         self.session_manager.close_session()
-
 
     def account_creation_success_message(self, username: str) -> None:
         print("Account creation successful!")
         print(f"You are now logged in as '{username}'")
 
-
     def login_success_message(self, username: str) -> None:
         print("Login successful!")
         print(f"You are now logged in as '{username}'")
-    
 
     def logout_success_message(self, username: str) -> None:
         print("Logout successful!")

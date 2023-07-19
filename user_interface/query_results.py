@@ -11,11 +11,10 @@
 import logging
 
 
-
+# QueryResults class for handling and displaying the results of SQL queries
 class QueryResults:
     def __init__(self) -> None:
         pass
-
 
     def print(self, query_results) -> None:
         # Print the results in a table-like format

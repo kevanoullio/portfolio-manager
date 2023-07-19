@@ -22,7 +22,6 @@ class UIDHandler:
         except Exception as e:
             print(f"Error saving last UID: {e}")
 
-    
     @staticmethod
     # Define a function to read the UID of the last processed email from a file
     def read_last_uid(last_uid_cache: str | None = None):

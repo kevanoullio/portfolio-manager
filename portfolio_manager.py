@@ -79,14 +79,12 @@ def main():
     session_manager.set_session_manager(session_manager)
     logging.info("Session Manager set for all modules.")
 
-
     # Open the connection to the database
     session_manager.database.db_connection.open_connection()
     logging.info(f"Database {db_filename} connection opened.")
     # Run the dashboard
     session_manager.dashboard.run()
     logging.info("Dashboard started.")
-
 
     # Close the database connections
     session_manager.database.db_connection.close_connection()

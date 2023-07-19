@@ -54,10 +54,8 @@ class QueryExecutor:
         self.sql_queries_file = "./data_management/queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-
     def set_session_manager(self, session_manager):
         self.session_manager = session_manager
-
 
     def __find_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
@@ -76,12 +74,10 @@ class QueryExecutor:
             #         return individual_queries[i + 1].strip()
         return None
 
-
     def __replace_variables(self, query: str, args) -> str:
         for arg in args:
             query = query.replace("?", arg, 1)
         return query
-
 
     def execute_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
         # Read the queries.sql file
@@ -133,8 +129,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
-
     def rename_table(self, table_name: str, new_table_name: str) -> None:
         query_type = "ALTER TABLE"
         query = f"{query_type} {table_name} RENAME TO {new_table_name}"
@@ -143,7 +137,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def drop_table(self, table_name: str) -> None:
         query_type = "DROP TABLE"
@@ -154,7 +147,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def add_column(self, table_name: str, column_name: str, data_type: str) -> None:
         query_type = "ADD COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name} {data_type}"
@@ -164,7 +156,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def rename_column(self, table_name: str, column_name: str, new_column_name: str) -> None:
         query_type = "RENAME COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name} TO {new_column_name}"
@@ -173,7 +164,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def alter_column(self, table_name: str, column_name: str, new_data_type: str) -> None:
         query_type = "ALTER COLUMN"
@@ -184,7 +174,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def drop_column(self, table_name: str, column_name: str) -> None:
         query_type = "DROP COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name}"
@@ -193,7 +182,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-
 
     def insert_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
         query_type = "INSERT"
@@ -204,7 +192,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def update_entry(self, table_name: str, column_name: str, new_value: str, where_clause: str, user_id: int) -> None:
         query_type = "UPDATE"
         query = f"{query_type} {table_name} SET {column_name} = {new_value} WHERE {where_clause} AND user_id = {user_id}"
@@ -213,7 +200,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def delete_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
         query_type = "DELETE"
@@ -223,7 +209,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-
 
     def select(self, table_name: str, columns: tuple[str], user_id: int, where_clause: str | None = None) -> list[dict[str, str]]:
         query_type = "SELECT"
@@ -239,7 +224,6 @@ class QueryExecutor:
                 return result
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def join(self, table_name_1: str, table_name_2: str, columns: tuple[str], join_condition: str, user_id: int) -> list[dict[str, str]]:
         query_type = "JOIN"
@@ -251,7 +235,6 @@ class QueryExecutor:
                 return result
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def create_index(self, table_name: str, column_name: str) -> None:
         query_type = "CREATE INDEX"
@@ -261,7 +244,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def drop_index(self, table_name: str, column_name: str) -> None:
         query_type = "DROP INDEX"
@@ -272,7 +254,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
     
-    
     def create_view(self, view_name: str, view_body: str) -> None:
         query_type = "VIEW"
         query = f"{query_type} {view_name} {view_body}"
@@ -281,7 +262,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def drop_view(self, view_name: str) -> None:
         query_type = "DROP VIEW"
@@ -292,7 +272,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def create_trigger(self, trigger_name: str, trigger_body: str) -> None:
         query_type = "TRIGGER"
         query = f"{query_type} {trigger_name} {trigger_body}"
@@ -301,7 +280,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-
 
     def drop_trigger(self, trigger_name: str) -> None:
         query_type = "DROP TRIGGER"
@@ -312,7 +290,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def create_constraint(self, table_name: str, constraint_type: str, column_name: str) -> None:
         query_type = "CREATE CONSTRAINT"
         query = f"{query_type} {constraint_type} {table_name} {column_name}"
@@ -321,7 +298,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def drop_constraint(self, table_name: str, constraint_type: str, column_name: str) -> None:
         query_type = "DROP CONSTRAINT"
@@ -332,7 +308,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def create_transaction(self, queries: list[str]) -> None:
         query_type = "TRANSACTION"
         try:
@@ -341,7 +316,6 @@ class QueryExecutor:
                     cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def create_stored_procedure(self, procedure_name: str, procedure_body: str) -> None:
         query_type = "STORED PROCEDURE"
@@ -351,7 +325,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def call_stored_procedure(self, procedure_name: str, procedure_arguments: tuple[str]) -> None:
         query_type = "CALL STORED PROCEDURE"
@@ -361,7 +334,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def drop_stored_procedure(self, procedure_name: str) -> None:
         query_type = "DROP STORED PROCEDURE"
@@ -372,7 +344,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def create_function(self, function_name: str, function_body: str) -> None:
         query_type = "FUNCTION"
         query = f"{query_type} {function_name} {function_body}"
@@ -381,7 +352,6 @@ class QueryExecutor:
                 cursor.execute(query)
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
     
     def drop_function(self, function_name: str) -> None:
         query_type = "DROP FUNCTION"
@@ -392,15 +362,11 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
-
-
     # Would only need to sanatize input if user inputs table name or column name
     def __sanitize_input(self, input: str) -> str:
         # Remove any potentially dangerous characters
         sanitized_input = input.translate(str.maketrans('', '', '\'"<>;'))
         return sanitized_input
-    
 
     # def __format_sql_query(self, query: str, params: tuple[str] | None = None) -> str:
     #     sql_query = query
@@ -409,7 +375,6 @@ class QueryExecutor:
     #         sql_query = sql_query.replace("?", "{}")
     #         sql_query = sql_query.format(*params)
     #     return sql_query
-    
 
     # def __handle_exists_result(self, result, item_name: str) -> bool:
     #     if result is not None:
@@ -419,7 +384,6 @@ class QueryExecutor:
     #         logging.debug(f"Table '{item_name}' does not exist.")
     #         return False
 
-
     # def __item_exists(self, item_name: str, query: str, params: tuple | None = None) -> bool:
     #     # Format the SQL query
     #     sql_query = self.__format_sql_query(query, params)
@@ -427,7 +391,6 @@ class QueryExecutor:
     #     result = self.db_connection.execute_query(sql_query)
     #     # Handle the exists query result
     #     return self.__handle_exists_result(result, item_name)
-
 
     def __item_exists(self, item_name: str, query: str, params: tuple) -> bool:
         try:
@@ -438,7 +401,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryError(self.db_connection, "Error executing query", e)
 
-
     def table_exists(self, table_name: str) -> bool:
         # SQL query to check if a table exists
         check_table_query = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
@@ -447,7 +409,6 @@ class QueryExecutor:
         # Check if the table exists
         return self.__item_exists(table_name, check_table_query, params)
 
-
     def column_exists(self, table_name: str, column_name: str) -> bool:
         # SQL query to check if a column exists
         check_column_query = f"SELECT count(*) FROM pragma_table_info('{table_name}') WHERE name='{column_name}'"
@@ -455,7 +416,6 @@ class QueryExecutor:
         params = (table_name, column_name)
         # Check if the column exists
         return self.__item_exists(column_name, check_column_query, params)
-
 
     def entry_exists(self, table_name: str, condition: str, user_id: int) -> bool:
         # Sanitize the input to avoid SQL injection
@@ -521,7 +481,6 @@ class QueryExecutor:
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
 
-
     def get_email_usage_id_by_name(self, email_usage: str) -> int | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -535,7 +494,6 @@ class QueryExecutor:
                 return result[0]
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-
 
     def get_email_account_by_email_address(self, provided_email_address: str) -> EmailAccount | None:
         # Define the query parameters
@@ -553,8 +511,6 @@ class QueryExecutor:
                     return None
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
-
 
     def get_all_user_email_accounts(self) -> list[EmailAccount] | None:
         # Define the query parameters
@@ -583,7 +539,6 @@ class QueryExecutor:
 
         return email_accounts
 
-
     def get_user_email_accounts_by_usage(self, email_usage: str) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -609,7 +564,6 @@ class QueryExecutor:
                 logging.debug(f"Email address: {address}, usage: {usage}")
 
         return email_accounts
-
 
     # def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:
     #     query_type = "SELECT"
@@ -695,7 +649,6 @@ class QueryExecutor:
                 return result is None  # Returns True if no row is returned, indicating the table is empty
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        
 
     def store_username_and_password(self, username: str, password_hash: bytes) -> None:
         query_type = "INSERT"

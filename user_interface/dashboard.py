@@ -17,16 +17,13 @@ class Dashboard:
     def __init__(self) -> None:
         self.is_running = False
     
-
     def set_session_manager(self, session_manager):
         self.session_manager = session_manager
  
-
     def __print_welcome_screen(self):
         print("\n====================================")
         print("|| Welcome to 'PORTFOLIO MANAGER' ||")
         print("====================================")
-
 
     def run(self):
         # Start the Program
@@ -52,14 +49,13 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self.session_manager.logged_in:
+                if self.session_manager.current_user is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
                     continue
             else:
-                self.current_menu = None
-                
+                self.current_menu = None   
 
     # menu_logic is a list of functions that are executed based on the user's choice
     # Without this function, instead of going back to the previous menu, the program would exit
@@ -74,7 +70,6 @@ class Dashboard:
         else:
             logging.debug("User login failed.")
 
-
     def login(self):
         self.session_manager.login_manager.login()
         if self.session_manager.current_user is not None:
@@ -82,12 +77,10 @@ class Dashboard:
         else:
             logging.debug("User login failed.")
 
-
     def start_program(self):
         # Start the Dashboard
         self.is_running = True
         logging.info("Dashboard has started running.")
-
 
     def exit_program(self):
         # Stop the Dashboard

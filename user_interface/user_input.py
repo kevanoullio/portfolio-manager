@@ -21,18 +21,14 @@ class Validator:
         self.allowed_characters = allowed_characters
         self.valid_form = valid_form
 
-
     def is_valid_length(self, value: str) -> bool:
         return self.minimum_length <= len(value) <= self.maximum_length
 
-
     def is_valid_characters(self, value: str) -> bool:
         return re.match(f"^[{self.allowed_characters}]*$", value) is not None
-    
-
+   
     def is_valid_form(self, value: str) -> bool:
         return re.match(self.valid_form, value) is not None
-
 
     def validate(self, value: str) -> int:
         # Validate the length of the provided username
@@ -82,19 +78,16 @@ class UserInput:
         self.password_validator = PasswordValidator()
         self.email_validator = EmailAddressValidator()
 
-
     def __sanitize_input(self, raw_input: str) -> str:
         # Remove any potentially dangerous characters that can lead to SQL injection or XSS or other attacks
         sanitized_input = raw_input.translate(str.maketrans('', '', '\'"<>;'))
         return sanitized_input
-
 
     def __hash_password(self, provided_password: bytes) -> bytes:
         # Salt the provided password for extra security
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(provided_password, salt)
         return hashed_password
-
 
     def username_prompt(self, prompt: str = "Enter your username: ") -> str:
         # Get the username from the user
@@ -115,7 +108,6 @@ class UserInput:
         provided_username = self.__sanitize_input(provided_username)
 
         return provided_username
-
 
     def password_prompt(self, prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
         """
@@ -165,7 +157,6 @@ class UserInput:
         else:
             # If confirm is False, don't hash the password and return it as bytes
             return encoded_password
-
 
     def email_address_prompt(self, prompt: str="Enter your email address: ") -> str:
         # Get the email address from the user

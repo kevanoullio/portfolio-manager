@@ -22,7 +22,6 @@ class Menu:
         self.options = {}
         self.option_count = len(self.options)
 
-
     def format_return_to_previous_menu_option(self) -> None:
         # Format the return to previous menu option
         if isinstance(self, Login):
@@ -34,15 +33,6 @@ class Menu:
                 self.options[0] = {"verb": "Return", "connector": "to", "subject": "Previous Menu"}
             else:
                 self.options[0] = {"verb": "Return", "connector": "to", "subject": f"{self.previous_menu.title.title()} Menu"}
-
-
-    # def sort_options(self) -> list[int]:
-    #     # Sort the keys excluding 0
-    #     options_sorted = sorted([key for key in self.options.keys() if isinstance(key, int) and key != 0])
-    #     # Append 0 to the end of the options list
-    #     options_sorted.append(0)
-    #     return options_sorted
-
 
     def print_options(self) -> None:
         # Print the menu title
@@ -71,7 +61,6 @@ class Menu:
                 option_text += f"{option_dict['subject']}"
             
             print(option_text)
-
 
     def present_to_participle(self, present_verb: str) -> str:
         # Define irregular verbs found in the program
@@ -109,7 +98,6 @@ class Menu:
         else:
             return formatted_verb
 
-
     def print_choice_msg(self, option: int | str) -> None:
         if option in self.options:
             verb = self.options[option].get('verb', '')
@@ -131,7 +119,6 @@ class Menu:
         else:
             print(f"Option {option} does not exist.")
 
-
     def add_option(self, verb: str = "", connector: str = "", subject: str = "") -> None:
         new_option = {}
         if verb:
@@ -143,7 +130,6 @@ class Menu:
         self.option_count += 1
         self.options[self.option_count] = new_option
         logging.debug(f"Option {self.option_count} '{verb} {connector} {subject}' has been added to {self.title} menu.")
-
 
     def update_option(self, option_id: int, **kwargs) -> None:
         option = self.options.get(option_id)
@@ -161,7 +147,6 @@ class Menu:
         else:
             logging.warning(f"Option {option_id} does not exist in {self.title} menu.")
 
-
     def remove_option(self, option_id: int) -> None:
         if option_id == 0:
             logging.warning(f"Option {option_id} cannot be removed from {self.title} menu.")
@@ -171,7 +156,6 @@ class Menu:
             logging.debug(f"Option {option_id} has been removed from {self.title} menu.")
         else:
             logging.warning(f"Option {option_id} does not exist in {self.title} menu.")
-
 
     def get_valid_input(self):
         while True:
@@ -192,7 +176,6 @@ class Menu:
                 continue
 
             return choice
-
 
     def get_next_menu(self, choice: int):
         if self.menu_mapping is None:

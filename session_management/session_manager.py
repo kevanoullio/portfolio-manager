@@ -17,13 +17,11 @@ import logging
 class SessionManager:
     def __init__(self, db_filename):
         self.db_filename = db_filename
-        self.current_user: UserAccount | None = None
-        self.logged_in: bool = False
+        self.__current_user: UserAccount | None = None
         self.session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
-
 
     def initialize_modules(self):
         # Import all local modules here to avoid circular importing
@@ -34,14 +32,12 @@ class SessionManager:
         from access_management.account_authenticator import AccountAuthenticator
         from session_management.token_manager import SessionTokenManager
 
-
         self.database = Database(self.db_filename)
         self.query_executor = QueryExecutor(self.database.db_connection)
         self.dashboard = Dashboard()
         self.login_manager = LoginManager()
         self.account_authenticator = AccountAuthenticator()
         self.session_token_manager = SessionTokenManager()
-
 
     def set_session_manager(self, session_manager):
         self.database.set_session_manager(session_manager)
@@ -51,6 +47,11 @@ class SessionManager:
         self.account_authenticator.set_session_manager(session_manager)
         self.session_token_manager.set_session_manager(session_manager)
 
+    def get_current_user(self) -> UserAccount | None:
+        return self.__current_user
+    
+    def set_current_user(self, current_user: UserAccount | None) -> None:
+        self.__current_user = current_user
 
     def start_session(self) -> None:
         # # Add the initial snapshot to session history
@@ -62,12 +63,10 @@ class SessionManager:
         if len(self.session_history) > 100:
             self.session_history.pop(0)  # Remove the oldest snapshot
 
-
     def track_modification(self, modification) -> None:
         # Track modifications made during the session
         if not self.saved:
             self.modifications.append(modification)
-
 
     def save_changes(self) -> None:
         # Apply the tracked modifications to the database
@@ -78,13 +77,11 @@ class SessionManager:
             self.saved = True
             print("Portfolio saved!")
 
-
     def discard_changes(self) -> None:
         # Clear the tracked modifications without applying them
         if not self.saved:
             self.modifications = []
             print("Most recent Portfolio changes discarded!")
-
 
     def rollback_changes(self) -> None:
         if len(self.session_history) > 1:
@@ -93,7 +90,6 @@ class SessionManager:
             # Roll back the database to the previous snapshot
             previous_snapshot = self.session_history[-1]
             previous_snapshot.rollback()
-
 
     def close_session(self) -> None:
         if not self.saved and self.modifications:
@@ -115,7 +111,6 @@ class SessionManager:
         self.modifications = []
         self.session_history = []
         
-
 
 if __name__ == "__main__":
     print("This module is not meant to be executed directly.")
