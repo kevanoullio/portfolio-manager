@@ -2,22 +2,26 @@
 -- DATABASE SCHEMA FOR INITIALISATION --
 ----------------------------------------
 
--- Create table for users
-CREATE TABLE IF NOT EXISTS user (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(255) NOT NULL,
-    password_hash BLOB NOT NULL,
-    created_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (username)
-);
-
 -- Create table for user roles
 CREATE TABLE IF NOT EXISTS user_role (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
     [name] VARCHAR(255) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user (id),
     UNIQUE (user_id, [name])
+);
+
+-- Insert default user roles
+INSERT OR IGNORE INTO user_role (user_id, [name]) VALUES ('admin');
+INSERT OR IGNORE INTO user_role (user_id, [name]) VALUES ('user');
+
+-- Create table for users
+CREATE TABLE IF NOT EXISTS user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_role_id INTEGER NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    password_hash BLOB NOT NULL,
+    created_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_role_id) REFERENCES user_role (id),
+    UNIQUE (username)
 );
 
 --------------------
@@ -178,7 +182,6 @@ CREATE TABLE IF NOT EXISTS asset_transaction (
     FOREIGN KEY (brokerage_id) REFERENCES brokerage (id),
     FOREIGN KEY (asset_account_id) REFERENCES asset_account (id)
 );
-
 
 ------------------------
 -- FOR DATA IMPORTING --
