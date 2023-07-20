@@ -22,11 +22,15 @@ class QueryExecutor:
         self.complex_queries_file = "./data_management/complex_queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    def execute_query(self, query: str):
+    def execute_query(self, query: str, params: tuple[str] | None = None) -> list[tuple] | None:
         try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-                return cursor.fetchall()
+            with self.db_connection as connection:
+                with connection.cursor() as cursor:
+                    if params is not None:
+                        cursor.execute(query, params)
+                    else:
+                        cursor.execute(query)
+                    return cursor.fetchall()
         except DatabaseConnectionError as e:
             logging.error(str(e))
             raise DatabaseQueryError(self.db_connection, "Error executing the database query", e)
@@ -421,36 +425,28 @@ class QueryExecutor:
     def get_user_account_by_id(self, provided_user_id: int) -> UserAccount | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_user_account_by_id_query = f"{query_type} user_id, username FROM user WHERE user_id = ?"
-        params = (provided_user_id,)
+        get_user_account_by_id_query = f"{query_type} id, username FROM user WHERE id = ?"
+        params = (str(provided_user_id),)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_user_account_by_id_query, params)
-                result = cursor.fetchall()
-                if result is not None and len(result) > 0:
-                    return UserAccount(result[0][0], result[0][1])
-                else:
-                    return None
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_user_account_by_id_query, params)
+        # Check whether the result is None (None means the user doesn't exist)
+        if result is not None and len(result) > 0:
+            return UserAccount(result[0][0], result[0][1])
+        else:
+            return None
 
     def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_user_account_by_username_query = f"{query_type} user_id, username FROM user WHERE username = ?"
+        get_user_account_by_username_query = f"{query_type} id, username FROM user WHERE username = ?"
         params = (provided_username,)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_user_account_by_username_query, params)
-                result = cursor.fetchall()
-                if result is not None and len(result) > 0:
-                    return UserAccount(result[0][0], result[0][1])
-                else:
-                    return None
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_user_account_by_username_query, params)
+        # Check whether the result is None (None means the user doesn't exist)
+        if result is not None and len(result) > 0:
+            return UserAccount(result[0][0], result[0][1])
+        else:
+            return None
 
     def get_user_password_by_username(self, provided_username: str) -> bytes | None:
         # Define the query parameters
@@ -458,16 +454,12 @@ class QueryExecutor:
         get_user_account_by_username_query = f"{query_type} password_hash FROM user WHERE username = ?"
         params = (provided_username,)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_user_account_by_username_query, params)
-                result = cursor.fetchone()
-                if result is not None and len(result) > 0:
-                    return result[0]
-                else:
-                    return None
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_user_account_by_username_query, params)
+        # Check whether the result is None (None means the user doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
 
 
 

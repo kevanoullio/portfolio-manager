@@ -10,15 +10,26 @@
 import logging
 
 
-# QueryBuilder class for building complex queries based on user input or other criteria
 class QueryBuilder:
-    def __init__(self, table):
+    """QueryBuilder class for building complex queries based on user input or other criteria.
+    \nNeed to create a new instance of this class for each query and supply the table name.
+
+    Args:
+        table (str): The name of the table to query.
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    def __init__(self, table: str) -> None:
         self.table = table
         self.columns = '*'
         self.where_clauses = []
         self.join_clauses = []
 
-    def select(self, columns):
+    def select(self, columns: list[str]):
         self.columns = ', '.join(columns)
         return self
     
@@ -26,9 +37,12 @@ class QueryBuilder:
     query = QueryBuilder('users').select(['id', 'name', 'email']).where('age', '>', 18).build()
     print(query)  # SELECT id, name, email FROM users WHERE age > '18'
     '''
-    def where(self, column, operator, value):
-        self.where_clauses.append(f"{column} {operator} '{value}'")
+    def where(self, column: str, operator: str):
+        self.where_clauses.append(f"{column} {operator} ?")
         return self
+    # def where(self, column: str, operator: str, value: str):
+    #     self.where_clauses.append(f"{column} {operator} '{value}'")
+    #     return self
     
     def insert_entry(self, data):
         columns = ', '.join(data.keys())

@@ -1,11 +1,18 @@
 # Purpose: Database Schema module for creating and initializing the database schema.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from database_management.connection import DatabaseConnection
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from database_management.database import DatabaseConnection
 
 # Configure logging
 import logging

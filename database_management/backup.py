@@ -1,5 +1,9 @@
 # Purpose: Backup module for creating and restoring database backups.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 import shutil
 import sqlite3
@@ -7,8 +11,11 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
-from database_management.database import DatabaseConnection
 from database_management.schema.schema import DatabaseSchema
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from database_management.database import DatabaseConnection
 
 # Configure logging
 import logging

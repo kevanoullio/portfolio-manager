@@ -1,5 +1,9 @@
 # Purpose: Authentication module for authenticating user and validating credentials of various types.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 
 # Third-party Libraries
@@ -7,7 +11,10 @@ import bcrypt
 
 # Local Modules
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
-from database_management.database import Database
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from database_management.database import Database
 
 # Configure logging
 import logging

@@ -6,7 +6,6 @@
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
-from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 
 # Configure logging
 import logging
