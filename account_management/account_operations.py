@@ -1,12 +1,19 @@
 # Purpose: Account Operations module for performing methods and operations on various account data types.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import UserAccount, EmailAccount
 from database_management.database import Database
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from account_management.accounts import UserAccount
 
 # Configure logging
 import logging

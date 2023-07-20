@@ -7,53 +7,34 @@ import sqlite3
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
-from database_management.connection import DatabaseConnection
+from database_management.connection import DatabaseConnection, DatabaseConnectionError
+from session_management.session_manager import SessionManager
 
 # Configure logging
 import logging
 
 
-# DatabaseQueryError class  with Exception as base class for custom error handling
-class DatabaseQueryError(Exception):
-    def __init__(self, db_connection, message: str, original_exception=None) -> None:
-        self.db_connection = str(db_connection).strip()
-        self.message = message
-        self.original_exception = str(original_exception).strip() if original_exception is not None else None
-
-    def __str__(self) -> str:
-        if self.original_exception is None:
-            return f"Database query error: {self.message} on connection '{self.db_connection}'."
-        return f"Database query error: {self.message} on connection '{self.db_connection}'. \nOriginal exception: {self.original_exception}"
-
-
-class DatabaseQueryExecutionError(Exception):
-    def __init__(self, db_connection, query_type: str, original_exception=None) -> None:
-        self.db_connection = str(db_connection).strip()
-        self.query_type = query_type
-        self.original_exception = str(original_exception).strip() if original_exception is not None else None
-
-    def __str__(self) -> str:
-        if self.original_exception is None:
-            return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'."
-        return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'. \nOriginal exception: {self.original_exception}"
-
-
-# try:
-#     # Some code that may raise DatabaseConnectionError
-# except DatabaseConnectionError as e:
-#     print(f"Error occurred for database: {e.db_name}")
-#     print(e)  # Prints the custom error message and database name
-
-
-
 # QueryExecutor class for executing SQL statements
 class QueryExecutor:
-    def __init__(self, db_connection: DatabaseConnection):
+    def __init__(self, db_connection: DatabaseConnection, session_manager: SessionManager):
         self.db_connection = db_connection
-        self.sql_queries_file = "./data_management/complex_queries.sql"
+        self.session_manager = session_manager
+        self.complex_queries_file = "./data_management/complex_queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    def __find_query_by_title(self, queries: str, query_title: str) -> str | None:
+    def execute_query(self, query: str):
+        try:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute(query)
+                return cursor.fetchall()
+        except DatabaseConnectionError as e:
+            logging.error(str(e))
+            raise DatabaseQueryError(self.db_connection, "Error executing the database query", e)
+        except sqlite3.Error as e:
+            logging.error(f"Error executing the database query: {str(e)}")
+            raise DatabaseQueryExecutionError(self.db_connection, "SQL", e)
+
+    def __find_complex_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
         for i, query in enumerate(individual_queries):
             query = query.strip()
@@ -75,13 +56,13 @@ class QueryExecutor:
             query = query.replace("?", arg, 1)
         return query
 
-    def execute_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
+    def execute_complex_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
         # Read the complex_queries.sql file
-        with open(self.sql_queries_file, "r") as file:
+        with open(self.complex_queries_file, "r") as file:
             queries = file.read()
 
         # Find the selected query by matching the title
-        selected_query = self.__find_query_by_title(queries, query_title)
+        selected_query = self.__find_complex_query_by_title(queries, query_title)
 
         # Execute the selected query with variable substitution
         if selected_query:
@@ -98,10 +79,6 @@ class QueryExecutor:
             raise DatabaseQueryError(self.db_connection, f"Query with title '{query_title}' not found.")
 
 
-
-    def execute_query(self, query: str):
-        # TODO - finish this generic function
-        pass
 
 
 # Create Table: Creating a new table in the database.
@@ -530,7 +507,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        params = (self.session_manager.current_user_id, provided_email_address)
+        params = (self.session_manager.get_current_user_id(), provided_email_address)
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
@@ -554,7 +531,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
-        params = (self.session_manager.current_user.user_id,) # FIXME - no longer have access to current_user.user_id???
+        params = (self.session_manager.get_current_user_id(),) # FIXME - no longer have access to current_user.user_id???
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
@@ -579,7 +556,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
-        params = (self.session_manager.current_user_id, self.get_email_usage_id_by_usage_name(email_usage_name))
+        params = (self.session_manager.get_current_user_id(), self.get_email_usage_id_by_usage_name(email_usage_name))
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
@@ -725,6 +702,39 @@ class QueryExecutor:
                 return result[0]
         except Exception as e:
             raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+
+
+# DatabaseQueryError class  with Exception as base class for custom error handling
+class DatabaseQueryError(Exception):
+    def __init__(self, db_connection, message: str, original_exception=None) -> None:
+        self.db_connection = str(db_connection).strip()
+        self.message = message
+        self.original_exception = str(original_exception).strip() if original_exception is not None else None
+
+    def __str__(self) -> str:
+        if self.original_exception is None:
+            return f"Database query error: {self.message} on connection '{self.db_connection}'."
+        return f"Database query error: {self.message} on connection '{self.db_connection}'.\
+            \nOriginal exception: {self.original_exception}"
+
+
+class DatabaseQueryExecutionError(Exception):
+    def __init__(self, db_connection, query_type: str, original_exception=None) -> None:
+        self.db_connection = str(db_connection).strip()
+        self.query_type = query_type
+        self.original_exception = str(original_exception).strip() if original_exception is not None else None
+
+    def __str__(self) -> str:
+        if self.original_exception is None:
+            return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'."
+        return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'.\
+            \nOriginal exception: {self.original_exception}"
+
+# try:
+#     # Some code that may raise DatabaseConnectionError
+# except DatabaseConnectionError as e:
+#     print(f"Error occurred for database: {e.db_name}")
+#     print(e)  # Prints the custom error message and database name
 
 
 if __name__ == "__main__":

@@ -1,17 +1,24 @@
 # Purpose: Login Manager module for managing the user interface for the login process and the login process itself.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from access_management.account_authenticator import AccountAuthenticator
-from account_management.accounts import UserAccount, EmailAccount
-from account_management.account_operations import UserAccountOperation
-from database_management.database import Database
 from session_management.session_manager import SessionManager
+from database_management.database import Database
+from account_management.account_operations import UserAccountOperation
+from access_management.account_authenticator import AccountAuthenticator
 from session_management.token_manager  import SessionTokenManager
 from user_interface.user_input import UserInput
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging
@@ -58,7 +65,7 @@ import logging
 class LoginManager:
     def __init__(self, database: Database) -> None:
         self.database = database
-        self.session_manager = SessionManager()
+        self.session_manager = self.database.session_manager
         self.session_token_manager = SessionTokenManager(self.session_manager)
         self.account_authenticator = AccountAuthenticator(self.database)
         self.user_input = UserInput()

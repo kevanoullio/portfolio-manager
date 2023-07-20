@@ -9,10 +9,11 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
-from database_management.backup import BackupManager
 from database_management.connection import DatabaseConnection
+from session_management.session_manager import SessionManager
 from database_management.query.query_executor import QueryExecutor
 from database_management.schema.schema import DatabaseSchema
+from database_management.backup import BackupManager
 
 # Configure logging
 import logging
@@ -25,6 +26,9 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
     def __init__(self, db_filename: str, db_schema_filename: str):
         self.db_filename = db_filename
         self.db_schema_filename = db_schema_filename
+        self.db_connection = DatabaseConnection(db_filename)
+        self.session_manager = SessionManager()
+        self.query_executor = QueryExecutor(self.db_connection, self.session_manager)
         
 
     # TODO - all executions that return data don't need to commit the transaction?
@@ -52,12 +56,8 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                     logging.error("Failed to restore database file from backup.")
                     # Handle the error or exit the program as necessary
             else:
-                def create_database(db_connection):
-                    # Create a Database Schema object and initialize the database using the schema file
-                    db_schema = DatabaseSchema(db_connection)
-                    db_schema.initialize_database(self.db_schema_filename)
                 # Create a new database file by opening and closing a connection
-                self.with_connection(create_database)
+                self.create_new_database()
                 logging.info(f"Database file created and initialized successfully. Database: {self.db_filename}")
         else:
             # Check if the backup file exists
@@ -65,28 +65,38 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                 # Handle the case when the backup file does not exist
                 logging.info("Backup file does not exist.")
                 # Create a new backup database file and initialize it
-                def create_backup(db_connection):
-                    self.backup_manager.create_new_backup(db_connection)
-                self.with_connection(create_backup)
+                self.create_new_backup()
 
     def with_connection(self, callback_function):
-        # Create a new instance of the Connection class
-        db_connection = DatabaseConnection(self.db_filename)
-        # Open the database connection
-        db_connection.open_connection()
-        # Call the callback function, passing in the open connection
-        result = callback_function(db_connection)
-        # Close the database connection
-        db_connection.close_connection()
-        return result
+        # # Create a new instance of the Connection class
+        # db_connection = DatabaseConnection(self.db_filename)
+        # # Open the database connection
+        # db_connection.open_connection()
+        # # Call the callback function, passing in the open connection
+        # result = callback_function(db_connection)
+        # # Close the database connection
+        # db_connection.close_connection()
+        # return result
 
-    def execute_query(self, query):
-        def execute_query_callback(db_connection):
-            query_executor = QueryExecutor(db_connection)
-            # Execute a query using the query executor
-            return query_executor.execute_query(query)
+        with DatabaseConnection(self.db_filename) as db:
+            with db.cursor() as cursor:
+                cursor.execute("SELECT * FROM my_table")
+                results = cursor.fetchall()
 
-        return self.with_connection(execute_query_callback)
+
+    def create_new_database(self) -> None:
+        def create_database(db_connection):
+            # Create a Database Schema object and initialize the database using the schema file
+            db_schema = DatabaseSchema(db_connection)
+            db_schema.initialize_database(self.db_schema_filename)
+        self.with_connection(create_database)
+
+    def create_new_backup(self) -> None:
+        def create_backup(db_connection):
+            self.backup_manager.create_backup(db_connection)
+        self.with_connection(create_backup)
+
+
 
 
 

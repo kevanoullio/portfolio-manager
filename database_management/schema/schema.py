@@ -22,10 +22,8 @@ class DatabaseSchema:
             # Read the schema file
             with open(schema_filename, 'r') as schema_file:
                 schema_sql = schema_file.read()
-
                 # Execute the schema SQL statements
                 cursor.executescript(schema_sql)
-
                 logging.info("Database initialized using the Database schema.")
                 # Perform additional operations if needed
 

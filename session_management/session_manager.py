@@ -1,13 +1,18 @@
 # Purpose: Session Manager module for managing the current session state.
 
-# Standard Libraries
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
+# Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from account_management.account_operations import UserAccount
-# Import all remaining local modules using lazy imports to avoid circular importing
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging
@@ -16,23 +21,30 @@ import logging
 # SessionManager class for managing the current user session
 class SessionManager:
     def __init__(self):
-        self.__current_user: UserAccount | None = None
-        self.__session_token: str | None = None
+        self._current_user: UserAccount | None = None
+        self._session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
 
     def get_current_user(self) -> UserAccount | None:
-        return self.__current_user
+        return self._current_user
     
     def set_current_user(self, current_user: UserAccount | None) -> None:
-        self.__current_user = current_user
+        self._current_user = current_user
+
+    def get_current_user_id(self) -> int:
+        current_user = self.get_current_user()
+        if current_user is None:
+            return 0
+        else:
+            return current_user.user_id
 
     def get_session_token(self) -> str | None:
-        return self.__session_token
+        return self._session_token
     
     def set_session_token(self, session_token: str | None) -> None:
-        self.__session_token = session_token
+        self._session_token = session_token
 
     def start_session(self) -> None:
         # # Add the initial snapshot to session history

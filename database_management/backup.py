@@ -30,7 +30,7 @@ class BackupManager:
             print(f"Failed to restore from backup: {str(e)}")
             return False
 
-    def create_new_backup(self, db_connection: DatabaseConnection) -> bool:
+    def create_backup(self, db_connection: DatabaseConnection) -> bool:
         try:
             # Create a new backup database schema object
             backup_database_schema = DatabaseSchema(db_connection)

@@ -5,8 +5,8 @@
 # Third-party Libraries
 
 # Local Modules
-from access_management.login_manager import LoginManager
 from database_management.database import Database
+from access_management.login_manager import LoginManager
 from user_interface.dashboard import Dashboard
 
 # Configure logging

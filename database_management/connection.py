@@ -1,4 +1,4 @@
-# Purpose: DatabaseConnection class for opening and closing the database connection.
+# Purpose: Database Connection module for managing the database connection.
 
 # Standard Libraries
 from contextlib import contextmanager
@@ -13,28 +13,23 @@ import sqlite3
 import logging
 
 
-# DatabaseConnectionError class  with Exception as base class for custom error handling
-class DatabaseConnectionError(Exception):
-    def __init__(self, db_name: str, message: str, original_exception=None) -> None:
-        self.db_name = db_name
-        self.message = message
-        self.original_exception = original_exception
-
-    def __str__(self) -> str:
-        if self.original_exception is None:
-            return f"[{self.db_name}] {self.message}."
-        return f"[{self.db_name}] {self.message}. {self.original_exception}"
-
-# try:
-#     # Some code that may raise DatabaseConnectionError
-# except DatabaseConnectionError as e:
-#     print(f"Error occurred for database: {e.db_name}")
-#     print(e)  # Prints the custom error message and database name
-
-
-# DatabaseConnection class for opening and closing the database connection
+# DatabaseConnection class for managing the database connection
 class DatabaseConnection:
-    def __init__(self, db_filename):
+    """The singleton pattern to ensure that there is only one instance of the DatabaseConnection classthroughout the application.
+    \nThe key features of the Singleton pattern are:
+    - Private Constructor: The Singleton class has a private constructor, meaning that it cannot be instantiated directly from outside the class.
+    - Static Instance: The Singleton class maintains a static reference (often named _instance) to the single instance of the class that it creates.
+    - Global Access: The Singleton provides a public static method (often named getInstance()) that allows clients to access the single instance of the class. This method ensures that only one instance is created and returned.
+    """
+    _instance = None
+
+    def __new__(cls, db_filename: str):
+        if cls._instance is None:
+            cls._instance = super(DatabaseConnection, cls).__new__(cls)
+            cls._instance._init_db(db_filename)
+        return cls._instance
+
+    def _init_db(self, db_filename: str):
         self.db_filename = db_filename
         self.connection = None
         logging.info(f"Database connection initialized. Database: {self.db_filename}")
@@ -61,7 +56,7 @@ class DatabaseConnection:
                 cursor.close()
         else:
             logging.error(f"Database connection is closed: {self.db_filename}")
-            raise DatabaseConnectionError(self.db_filename, "Database connection is closed")
+            raise DatabaseConnectionError(self, "Database connection is closed")
 
     def open_connection(self):
         if self.connection is None:
@@ -69,25 +64,25 @@ class DatabaseConnection:
                 self.connection = sqlite3.connect(self.db_filename)
                 return self.connection
             except sqlite3.Error as e:
-                raise DatabaseConnectionError(self.db_filename, "Error opening the database connection", e)
+                raise DatabaseConnectionError(self, "Error opening the database connection", e)
         else:
-            raise DatabaseConnectionError(self.db_filename, "Database connection is already open.")
+            raise DatabaseConnectionError(self, "Database connection is already open.")
 
-    def close_connection(self):
+    def close_connection(self) -> None:
         if self.connection is not None:
             try:
                 self.connection.close()
                 self.connection = None
             except sqlite3.Error as e:
-                raise DatabaseConnectionError(self.db_filename, "Error closing the database connection", e)
+                raise DatabaseConnectionError(self, "Error closing the database connection", e)
         else:
-            raise DatabaseConnectionError(self.db_filename, "Database connection is already closed")
+            raise DatabaseConnectionError(self, "Database connection is already closed")
 
-    def begin_transaction(self):
+    def begin_transaction(self) -> None:
         if self.connection is not None:
             self.connection.execute("BEGIN TRANSACTION")
         else:
-            raise DatabaseConnectionError(self.db_filename, "Database connection is not open.")
+            raise DatabaseConnectionError(self, "Database connection is not open.")
 
     # def execute_query(self, sql_query: str) -> sqlite3.Cursor:
     #     if self.connection is not None:
@@ -101,20 +96,20 @@ class DatabaseConnection:
     #     else:
     #         raise DatabaseConnectionError(self.db_filename, "Database connection is closed")
 
-    def commit_transaction(self):
+    def commit_transaction(self) -> None:
             if self.connection is not None:
                 try:
                     self.connection.commit()
                 except sqlite3.Error as e:
-                    raise DatabaseConnectionError(self.db_filename, "Error committing changes to the database", e)
+                    raise DatabaseConnectionError(self, "Error committing changes to the database", e)
             else:
-                raise DatabaseConnectionError(self.db_filename, "Database connection is not open.")
+                raise DatabaseConnectionError(self, "Database connection is not open.")
 
-    def rollback_transaction(self):
+    def rollback_transaction(self) -> None:
         if self.connection is not None:
             self.connection.rollback()
         else:
-            raise DatabaseConnectionError(self.db_filename, "Database connection is not open.")
+            raise DatabaseConnectionError(self, "Database connection is not open.")
 
 
 # # Open the database connection
@@ -178,6 +173,26 @@ class DatabaseConnection:
 
 # # Close all connections in the pool when no longer needed
 # pool.close_all_connections()
+
+
+# DatabaseConnectionError class  with Exception as base class for custom error handling
+class DatabaseConnectionError(Exception):
+    def __init__(self, db_connection: DatabaseConnection, message: str, original_exception=None) -> None:
+        self.db_connection = str(db_connection).strip()
+        self.message = message
+        self.original_exception = str(original_exception).strip() if original_exception is not None else None
+
+    def __str__(self) -> str:
+        if self.original_exception is None:
+            return f"Database connection error: [{self.message}] on connection '{self.db_connection}'."
+        return f"Database connection error: [{self.message}] on connection '{self.db_connection}'.\
+            \nOriginal exception: {self.original_exception}"
+
+# try:
+#     # Some code that may raise DatabaseConnectionError
+# except DatabaseConnectionError as e:
+#     print(f"Error occurred for database: {e.db_name}")
+#     print(e)  # Prints the custom error message and database name
 
 
 if __name__ == "__main__":

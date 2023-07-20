@@ -1,5 +1,9 @@
 # Purpose: ImportEmailAccount class for data retrieval from email account.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 import csv
 import email
@@ -10,11 +14,13 @@ import os
 from html.parser import HTMLParser
 
 # Local Modules
-from account_management.email_account import EmailAccount
-from account_management.account_operations import UserAccount
 from import_modules.csv_file_handler import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
 from session_management.session_manager import SessionManager
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging
@@ -187,11 +193,11 @@ def extract_from_email(data: dict, email_body) -> dict:
 
 # TODO - make this function a class object?
 def import_from_email_account(session_manager: SessionManager) -> int:
-    if session_manager.__current_user is None or session_manager.__current_user.user_id is None:
+    if session_manager._current_user is None or session_manager._current_user.user_id is None:
         return 1
     
     # Fetch all email addresses of usage "import" from the user
-    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager.__current_user.user_id)
+    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager._current_user.user_id)
     import_email_accounts = []
 
     # Check if any email addresses are found

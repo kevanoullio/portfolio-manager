@@ -5,7 +5,6 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging

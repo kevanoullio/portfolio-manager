@@ -1,15 +1,22 @@
 # Purpose: Dashboard module for managing the user interface and all menu navigation.
 
+# Type Checking
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 # Standard Libraries
 
 # Third-party Libraries
 
 # Local Modules
-from account_management.accounts import UserAccount, EmailAccount
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 from access_management.login_manager import LoginManager
 from database_management.database import Database
 from user_interface.query_results import QueryResults
+
+# Local modules imported for Type Checking purposes only
+if TYPE_CHECKING:
+    from account_management.accounts import UserAccount, EmailAccount
 
 # Configure logging
 import logging
@@ -216,11 +223,11 @@ class Dashboard:
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
         current_user = self.login_manager.session_manager.get_current_user() 
-        if current_user is not None:
-            if current_user.user_id is not None:
-                self.database.import_file(current_user.user_id, "database", [".db"])
-        else:
-            print("You must be logged in to import from a database file.")
+        # if current_user is not None:
+        #     if current_user.user_id is not None:
+        #         # self.database.import_file(current_user.user_id, "database", [".db"])
+        # else:
+        #     print("You must be logged in to import from a database file.")
 
 
     def import_existing_portfolio_from_email_account(self):
