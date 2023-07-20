@@ -81,12 +81,12 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         return result
 
     def execute_query(self, query):
-        self.query_executor = QueryExecutor(self.db_connection)
-        # Execute a query using the query executor
-        return self.query_executor.execute_query(query)
+        def execute_query_callback(db_connection):
+            query_executor = QueryExecutor(db_connection)
+            # Execute a query using the query executor
+            return query_executor.execute_query(query)
 
-
-
+        return self.with_connection(execute_query_callback)
 
 
 
@@ -135,51 +135,52 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # menu_options.append(script_name)
         print("Script imported successfully.")
 
-    def import_file(self, user_id: int, file_type: str, file_extensions: list[str]) -> None:
-        # Only allow importing .db database files
-        print(f"Allowed file types: {file_extensions}")
-        # Prompt the user for the file path
-        filepath = input(f"Enter the path to the {file_type} file: ")
+    # # FIXME - fix this function to work with new code
+    # def import_file(self, user_id: int, file_type: str, file_extensions: list[str]) -> None:
+    #     # Only allow importing .db database files
+    #     print(f"Allowed file types: {file_extensions}")
+    #     # Prompt the user for the file path
+    #     filepath = input(f"Enter the path to the {file_type} file: ")
 
-        # Check if the file exists
-        if not os.path.isfile(filepath):
-            print("The file does not exist.")
-            return
+    #     # Check if the file exists
+    #     if not os.path.isfile(filepath):
+    #         print("The file does not exist.")
+    #         return
 
-        # Format the file name
-        data_name = os.path.basename(filepath)
+    #     # Format the file name
+    #     data_name = os.path.basename(filepath)
 
-        # Columns to insert into the data_type table
-        columns = ("[name]",)
-        # Values to insert into the data_type table
-        values = (file_type,)
+    #     # Columns to insert into the data_type table
+    #     columns = ("[name]",)
+    #     # Values to insert into the data_type table
+    #     values = (file_type,)
 
-        # Add the data type to the data_type table
-        try:
-            self.insert_entry("data_type", columns, values, user_id)
-        except sqlite3.IntegrityError:
-            print("Error: Data type already exists.")
-            return 
+    #     # Add the data type to the data_type table
+    #     try:
+    #         self.query_builder.insert_entry("data_type", columns, values, user_id)
+    #     except sqlite3.IntegrityError:
+    #         print("Error: Data type already exists.")
+    #         return 
 
-        # Get the data type id
-        data_type_id = self.query_executor.get_data_type_id(user_id, file_type)
+    #     # Get the data type id
+    #     data_type_id = self.query_executor.get_data_type_id(user_id, file_type)
 
-        # Columns to insert into the imported_data table
-        columns = ("[name]", "data_type_id", "filepath")
-        # Values to insert into the imported_data table
-        values = (data_name, data_type_id, filepath)
+    #     # Columns to insert into the imported_data table
+    #     columns = ("[name]", "data_type_id", "filepath")
+    #     # Values to insert into the imported_data table
+    #     values = (data_name, data_type_id, filepath)
 
-        # Add the file to the imported_data table
-        self.insert_entry("imported_data", columns, values, user_id)
+    #     # Add the file to the imported_data table
+    #     self.query_builder.insert_entry("imported_data", columns, values, user_id)
         
-        # Define the destination directory
-        destination_dir = f"./user_data/{file_type}/"
-        # Create the destination directory if it doesn't exist
-        if not os.path.exists(destination_dir):
-            os.makedirs(destination_dir)
-        # Copy the file to the destination directory
-        shutil.copy(filepath, destination_dir)
-        print("Database file imported successfully.")
+    #     # Define the destination directory
+    #     destination_dir = f"./user_data/{file_type}/"
+    #     # Create the destination directory if it doesn't exist
+    #     if not os.path.exists(destination_dir):
+    #         os.makedirs(destination_dir)
+    #     # Copy the file to the destination directory
+    #     shutil.copy(filepath, destination_dir)
+    #     print("Database file imported successfully.")
 
 
     # def add_email_address(self, user_id: int, email: str, usage: str):

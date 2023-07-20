@@ -65,6 +65,7 @@ class LoginManager:
         logging.info("Login Manager initialized.")
 
     def check_username_exists(self, provided_username: str) -> UserAccount | None:
+        # FIXME - need to fix query_executor connection
         return self.database.query_executor.get_user_account_by_username(provided_username)
 
     def get_password(self):

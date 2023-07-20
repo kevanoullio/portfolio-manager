@@ -53,9 +53,6 @@ class QueryExecutor:
         self.sql_queries_file = "./data_management/complex_queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    def set_session_manager(self, session_manager):
-        self.session_manager = session_manager
-
     def __find_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
         for i, query in enumerate(individual_queries):
@@ -101,6 +98,12 @@ class QueryExecutor:
             raise DatabaseQueryError(self.db_connection, f"Query with title '{query_title}' not found.")
 
 
+
+    def execute_query(self, query: str):
+        # TODO - finish this generic function
+        pass
+
+
 # Create Table: Creating a new table in the database.
 # Drop Table: Removing an existing table from the database.
 # Rename Table: Renaming an existing table in the database.
@@ -119,6 +122,7 @@ class QueryExecutor:
 # Transaction: Grouping multiple queries into a single atomic unit of work that should either succeed or fail as a whole.
 # Stored Procedure: Predefined set of SQL statements that can be executed as a single unit.
 
+    # TODO - review all of this code and consolidate into query_builder
     def create_table(self, table_name: str, columns: tuple[str]) -> None:
         query_type = "CREATE TABLE"
         query = f"{query_type} IF NOT EXISTS {table_name} {columns}"
@@ -550,7 +554,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
-        params = (self.session_manager.current_user.user_id,)
+        params = (self.session_manager.current_user.user_id,) # FIXME - no longer have access to current_user.user_id???
         # Execute the query
         try:
             with self.db_connection.cursor() as cursor:
