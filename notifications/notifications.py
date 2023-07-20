@@ -5,7 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from data_management.database import Database
+from database_management.database import Database
 
 # Notifications class
 class Notifications:

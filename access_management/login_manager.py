@@ -8,48 +8,70 @@
 from access_management.account_authenticator import AccountAuthenticator
 from account_management.accounts import UserAccount, EmailAccount
 from account_management.account_operations import UserAccountOperation
-from database_m import QueryBuilder
+from database_management.database import Database
 from session_management.session_manager import SessionManager
+from session_management.token_manager  import SessionTokenManager
 from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
 
+# from data_management.query.query_builder import QueryBuilder
+# class LoginManager:
+#     def __init__(self, database):
+#         self.database = database
+
+#     def validate_user(self, username, password):
+#         # Construct a SELECT statement using the QueryBuilder
+#         query = QueryBuilder('users').select(['id', 'name', 'email']).where('username', '=', username).where('password', '=', password).build()
+
+#         # Execute the query using the database object
+#         result = self.database.execute_query(query)
+
+#         # Check if the user credentials are valid
+#         is_valid = result.fetchone() is not None
+
+#         return is_valid
+
+#     def validate_user(self, username, password):
+#         # Use the with_connection method to manage the database connection
+#         is_valid = self.database.with_connection(lambda connection: self.validate_user_with_connection(username, password, connection))
+
+#         return is_valid
+
+#     def validate_user_with_connection(self, username, password, connection):
+#         # Construct a SELECT statement using the QueryBuilder
+#         query = QueryBuilder('users').select(['id', 'name', 'email']).where('username', '=', username).where('password', '=', password).build()
+
+#         # Execute the query using the provided connection object
+#         cursor = connection.execute(query)
+#         result = cursor.fetchone()
+
+#         # Check if the user credentials are valid
+#         is_valid = result is not None
+
+#         return is_valid
 
 
-
-class LoginManager:
-    def __init__(self, database):
-        self.database = database
-
-    def validate_user(self, username, password):
-        # Construct a SELECT statement using the QueryBuilder
-        query = QueryBuilder('users').select(['id', 'name', 'email']).where('username', '=', username).where('password', '=', password).build()
-
-        # Execute the query using the database object
-        result = self.database.execute_query(query)
-
-        # Check if the user credentials are valid
-        is_valid = result.fetchone() is not None
-
-        return is_valid
 
 # LoginManager class for managing the login process
 class LoginManager:
-    def __init__(self, session_manager: SessionManager) -> None:
-        self.session_manager = session_manager
-        self.account_authenticator = AccountAuthenticator()
+    def __init__(self, database: Database) -> None:
+        self.database = database
+        self.session_manager = SessionManager()
+        self.session_token_manager = SessionTokenManager(self.session_manager)
+        self.account_authenticator = AccountAuthenticator(self.database)
         self.user_input = UserInput()
         logging.info("Login Manager initialized.")
 
     def check_username_exists(self, provided_username: str) -> UserAccount | None:
-        return self.session_manager.database.query_executor.get_user_account_by_username(provided_username)
+        return self.database.query_executor.get_user_account_by_username(provided_username)
 
     def get_password(self):
         return self.user_input.password_prompt()
 
     def authenticate_user(self, provided_username, provided_password_hash):
-        return self.session_manager.account_authenticator.validate_user_credentials(provided_username, provided_password_hash)
+        return self.account_authenticator.validate_user_credentials(provided_username, provided_password_hash)
 
     def create_account(self) -> None:
         # Get the username from the user (username_prompt checks if it's valid)
@@ -64,7 +86,7 @@ class LoginManager:
         provided_password = self.user_input.password_prompt(confirm=True)
 
         # Create the account
-        self.session_manager.database.query_executor.store_username_and_password(provided_username, provided_password)
+        self.database.query_executor.store_username_and_password(provided_username, provided_password)
 
         # Check if the account was created successfully
         user_account = self.check_username_exists(provided_username)
@@ -139,14 +161,14 @@ class LoginManager:
         # Load the user into the session manager
         self.session_manager.set_current_user(user)
         # Generate a session token and start the session
-        self.session_manager.session_token_manager.generate_session_token()
+        self.session_token_manager.generate_session_token()
         self.session_manager.start_session()
     
     def execute_logout_operations(self) -> None:
         # Unload the user from the session manager
         self.session_manager.set_current_user(None)
         # Clear the session token and close the session
-        self.session_manager.session_token_manager.clear_session_token()
+        self.session_token_manager.clear_session_token()
         self.session_manager.close_session()
 
 

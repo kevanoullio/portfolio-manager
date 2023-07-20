@@ -7,6 +7,7 @@ import bcrypt
 
 # Local Modules
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
+from database_management.database import Database
 
 # Configure logging
 import logging
@@ -14,9 +15,10 @@ import logging
 
 # Authentication class for authenticating user and validating credentials of various types
 class AccountAuthenticator:
-    def __init__(self, user_account_operation: UserAccountOperation, email_account_operation: EmailAccountOperation) -> None:
-        self.user_account_operation = user_account_operation
-        self.email_account_operation = email_account_operation
+    def __init__(self, database: Database) -> None:
+        self.database = database
+        self.user_account_operation = UserAccountOperation(self.database)
+        self.email_account_operation = EmailAccountOperation(self.database)
         logging.debug("UserAuthentication initialized.")
 
     def validate_user_credentials(self, provided_username: str, provided_password_hash: bytes) -> bool:

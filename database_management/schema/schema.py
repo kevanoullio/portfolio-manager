@@ -5,7 +5,7 @@
 # Third-party Libraries
 
 # Local Modules
-from data_management.connection import DatabaseConnection
+from database_management.connection import DatabaseConnection
 
 # Configure logging
 import logging
@@ -13,11 +13,10 @@ import logging
 
 # DatabaseSchema class for creating and initializing the database schema
 class DatabaseSchema:
-    def __init__(self, db_connection: DatabaseConnection):
+    def __init__(self, db_connection: DatabaseConnection) -> None:
         self.db_connection = db_connection
 
-
-    def initialize_database(self, schema_filename):
+    def initialize_database(self, schema_filename: str) -> None:
         # TODO Check if initialization was successful, make sure the database file is deleted if it wasn't
         with self.db_connection.cursor() as cursor:
             # Read the schema file

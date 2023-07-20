@@ -6,7 +6,7 @@
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
-from data_management.query.query_executor import QueryExecutor
+from database_management.database import Database
 
 # Configure logging
 import logging
@@ -14,11 +14,11 @@ import logging
 
 # UserAccountOperation class for defining user account operations
 class UserAccountOperation:
-    def __init__(self, query_executor: QueryExecutor):
-        self.query_executor = query_executor
+    def __init__(self, database: Database):
+        self.database = database
 
     def check_username_exists(self, provided_username: str) -> bool:
-        result = self.query_executor.get_user_account_by_username(provided_username)
+        result = self.database.query_executor.get_user_account_by_username(provided_username)
         if result is None:
             return False
         if isinstance(result, UserAccount):
@@ -42,18 +42,23 @@ class UserAccountOperation:
         return UserAccount(provided_user_id, "username")
     
     def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
-        return self.query_executor.get_user_account_by_username(provided_username)
+        return self.database.query_executor.get_user_account_by_username(provided_username)
     
     def get_user_password_by_username(self, provided_username: str) -> bytes | None:
-        return self.query_executor.get_user_password_by_username(provided_username)
+        return self.database.query_executor.get_user_password_by_username(provided_username)
 
     def update_username(self, user_account: UserAccount, new_username: str) -> None:
         # Update the user's username to the new username
         user_account.username = new_username
+        # TODO - finish this method
 
     def update_password(self, user_account: UserAccount, new_password_hash: bytes) -> None:
         # Update the user's password to the new password
-        user_account.password_hash = new_password_hash
+        # user_account.username
+        # user_account.user_id
+        # new_password_hash
+        pass
+        # TODO - finish this method
 
     def deactivate_account(self, user_account: UserAccount) -> None:
         # Deactivate or disable the user's account
@@ -75,8 +80,8 @@ class UserAccountOperation:
 
 # EmailAccountOperation class for defining email account operations
 class EmailAccountOperation:
-    def __init__(self, query_executor: QueryExecutor):
-        self.query_executor = query_executor
+    def __init__(self, database: Database):
+        self.database = database
 
     # TODO - finish this, should I do email_address or email_account???
     # def check_email_address_exists(self, provided_email_address: str) -> bool:
@@ -88,8 +93,8 @@ class EmailAccountOperation:
     #     else:
     #         return False
 
-    def get_email_account_by_email_address(self, provided_email_address: str) -> EmailAccount | None:
-        return self.query_executor.get_email_account_by_email_address(provided_email_address)
+    def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
+        return self.database.query_executor.get_email_usage_by_email_address(provided_email_address)
 
     def get_email_password_by_email_address(self, provided_email_address: str) -> bytes | None:
         # TODO - finish this method

@@ -479,37 +479,37 @@ class ImportFromEmail(Menu):
         }
 
 
-class AvailableEmailAccounts(Menu): # TODO - finish this menu
-    def __init__(self, dashboard: Dashboard):
-        super().__init__(dashboard)
-        self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
-        self.previous_menu = ImportFromEmail(dashboard)
-        self.menu_options = {}
-        email_accounts = dashboard.get_available_email_accounts()
-        if email_accounts is None or len(email_accounts) == 0:
-            self.menu_options[1] = "No Available Email Accounts"
-        else:
-            for _, email_account in enumerate(email_accounts):
-                self.add_option(subject=email_account.address)
-        self.format_return_to_previous_menu_option()
-        self.menu_mapping = {}
-        self.menu_logic = {}
+# class AvailableEmailAccounts(Menu): # TODO - finish this menu
+#     def __init__(self, dashboard: Dashboard):
+#         super().__init__(dashboard)
+#         self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
+#         self.previous_menu = ImportFromEmail(dashboard)
+#         self.menu_options = {}
+#         email_accounts = dashboard.get_available_email_accounts()
+#         if email_accounts is None or len(email_accounts) == 0:
+#             self.menu_options[1] = "No Available Email Accounts"
+#         else:
+#             for _, email_account in enumerate(email_accounts):
+#                 self.add_option(subject=email_account.address)
+#         self.format_return_to_previous_menu_option()
+#         self.menu_mapping = {}
+#         self.menu_logic = {}
 
 
-class AvailableEmailFolders(Menu): # TODO - finish this menu
-    def __init__(self, dashboard: Dashboard):
-        super().__init__(dashboard)
-        self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
-        self.previous_menu = ImportFromEmail(dashboard)
-        self.menu_options = {}
-        email_folders = dashboard.get_available_email_folders()
-        for i in range(len(email_accounts)):
-            self.menu_options[i] = email_accounts[i].address
-        self.format_return_to_previous_menu_option()
-        self.menu_mapping = {}
-        self.menu_logic = {}
-        # for i in enumerate(email_accounts):
-        #     self.menu_options[i[0]] = i[1].address
+# class AvailableEmailFolders(Menu): # TODO - finish this menu
+#     def __init__(self, dashboard: Dashboard):
+#         super().__init__(dashboard)
+#         self.menu_title = "AVAILABLE EMAIL ACCOUNTS"
+#         self.previous_menu = ImportFromEmail(dashboard)
+#         self.menu_options = {}
+#         email_folders = dashboard.get_available_email_folders()
+#         for i in range(len(email_accounts)):
+#             self.menu_options[i] = email_accounts[i].address
+#         self.format_return_to_previous_menu_option()
+#         self.menu_mapping = {}
+#         self.menu_logic = {}
+#         # for i in enumerate(email_accounts):
+#         #     self.menu_options[i[0]] = i[1].address
 
 
 # ManageCustomImportScripts Menu class for managing the manage custom import scripts menu

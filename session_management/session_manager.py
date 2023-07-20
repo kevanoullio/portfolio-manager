@@ -15,34 +15,12 @@ import logging
 
 # SessionManager class for managing the current user session
 class SessionManager:
-    def __init__(self, db_filename):
-        self.db_filename = db_filename
+    def __init__(self):
         self.__current_user: UserAccount | None = None
         self.__session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
-
-    def initialize_modules(self):
-        # Import all local modules here to avoid circular importing
-        from data_management.database import Database, DatabaseSnapshot
-        from data_management.query.query_executor import QueryExecutor
-        from user_interface.dashboard import Dashboard
-        from access_management.login_manager import LoginManager
-        from access_management.account_authenticator import AccountAuthenticator
-        from session_management.token_manager import SessionTokenManager
-
-        self.database = Database(self.db_filename)
-        self.query_executor = QueryExecutor(self.database.db_connection)
-        self.dashboard = Dashboard()
-        self.login_manager = LoginManager(self)
-        self.account_authenticator = AccountAuthenticator(self.query_executor)
-        self.session_token_manager = SessionTokenManager(self)
-
-    def set_session_manager(self, session_manager):
-        self.database.set_session_manager(session_manager)
-        self.query_executor.set_session_manager(session_manager)
-        self.dashboard.set_session_manager(session_manager)
 
     def get_current_user(self) -> UserAccount | None:
         return self.__current_user

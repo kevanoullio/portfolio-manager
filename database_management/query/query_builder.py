@@ -6,7 +6,7 @@
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
-from data_management.query.query_executor import QueryExecutor
+from database_management.query.query_executor import QueryExecutor
 
 # Configure logging
 import logging

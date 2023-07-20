@@ -6,7 +6,10 @@
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
-from account_management.account_operations import UserAccount
+from account_management.account_operations import UserAccountOperation, EmailAccountOperation
+from access_management.login_manager import LoginManager
+from database_management.database import Database
+from user_interface.query_results import QueryResults
 
 # Configure logging
 import logging
@@ -14,11 +17,11 @@ import logging
 
 # Dashboard class for managing the user interface and all menu navigation
 class Dashboard:
-    def __init__(self) -> None:
+    def __init__(self, database: Database, login_manager: LoginManager) -> None:
+        self.database = database
+        self.login_manager = login_manager
+        self.query_results = QueryResults()
         self.is_running = False
-    
-    def set_session_manager(self, session_manager):
-        self.session_manager = session_manager
  
     def __print_welcome_screen(self):
         print("\n====================================")
@@ -49,7 +52,7 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self.session_manager.current_user is not None:
+                if self.login_manager.session_manager.get_current_user() is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
@@ -64,14 +67,14 @@ class Dashboard:
 
     # Login Menu Functions
     def create_account(self):
-        self.session_manager.login_manager.create_account()
-        if self.session_manager.current_user is not None:
-            logging.debug(f"User login: {self.session_manager.current_user}")
+        self.login_manager.create_account()
+        if self.login_manager.session_manager.get_current_user() is not None:
+            logging.debug(f"User login: {self.login_manager.session_manager.get_current_user()}")
         else:
             logging.debug("User login failed.")
 
     def login(self):
-        self.session_manager.login_manager.login()
+        self.login_manager.login()
 
     def start_program(self):
         # Start the Dashboard
@@ -106,7 +109,7 @@ class Dashboard:
     
 
     def logout(self):
-        self.session_manager.login_manager.logout()
+        self.login_manager.logout()
 
 
     def view_portfolio(self):
@@ -147,8 +150,8 @@ class Dashboard:
     
     def view_current_portfolio(self):
         # TODO - review and finish this function
-        results = self.session_manager.database.execute_query_by_title("view_current_portfolio")
-        self.session_manager.query_results.print(results)
+        results = self.database.query_executor.execute_query_by_title("view_current_portfolio")
+        self.query_results.print(results)
     
 
     def view_entire_portfolio_history(self):
@@ -167,7 +170,7 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        self.session_manager.database.execute_query_by_title("query_net_ticker_summary", ticker)
+        self.database.query_executor.execute_query_by_title("query_net_ticker_summary", ticker)
 
 
     def build_portfolio_from_data_set(self):
@@ -212,9 +215,10 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        if self.session_manager.current_user is not None:
-            if self.session_manager.current_user.user_id is not None:
-                self.session_manager.database.import_file(self.session_manager.current_user.user_id, "database", [".db"])
+        current_user = self.login_manager.session_manager.get_current_user() 
+        if current_user is not None:
+            if current_user.user_id is not None:
+                self.database.import_file(current_user.user_id, "database", [".db"])
         else:
             print("You must be logged in to import from a database file.")
 
@@ -223,7 +227,7 @@ class Dashboard:
         logging.info("Importing existing portfolio from email account...")
         # TODO - finish this function
         # Get the user's email accounts
-        email_accounts: list[EmailAccount] | None = self.session_manager.database.query_executor.get_user_email_accounts_by_usage("import")
+        email_accounts: list[EmailAccount] | None = self.database.query_executor.get_user_email_accounts_by_usage("import")
 
 
     def view_custom_import_scripts(self):

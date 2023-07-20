@@ -9,9 +9,10 @@ import sqlite3
 # Third-party Libraries
 
 # Local Modules
-from data_management.connection import DatabaseConnection
-from data_management.query.query_executor import QueryExecutor
-from data_management.schema.schema import DatabaseSchema
+from database_management.backup import BackupManager
+from database_management.connection import DatabaseConnection
+from database_management.query.query_executor import QueryExecutor
+from database_management.schema.schema import DatabaseSchema
 
 # Configure logging
 import logging
@@ -21,35 +22,66 @@ import logging
 class Database: # TODO prevent SQL injections in all SQL queries!!! 
     # TODO - Rewrite all SQL queries to use ? instead of f-strings
     #  It's generally recommended to use parameterized queries with placeholders (? in SQLite)
-    def __init__(self, db_filename: str):
+    def __init__(self, db_filename: str, db_schema_filename: str):
         self.db_filename = db_filename
-        self.db_schema = DatabaseSchema(self.db_connection)
-        self.query_executor = QueryExecutor(self.db_connection)
-        logging.info(f"Database initialized. Database: {self.db_filename}")
+        self.db_schema_filename = db_schema_filename
+        
 
     # TODO - all executions that return data don't need to commit the transaction?
     # TODO - call begin_transaction() then execute then commit_transaction() for transactions
     # self.db_connection.commit_transaction()
-    def initialize(self, schema_filename: str) -> None:
-        self.db_schema.initialize_database(schema_filename)
 
-    def set_session_manager(self, session_manager) -> None:
-        self.session_manager = session_manager
+    def startup(self) -> None:
+        self.backup_manager = BackupManager(self.db_filename, self.db_schema_filename)
+        # Check if the database file exists
+        if not os.path.exists(self.db_filename):
+            # Handle the case when the database file does not exist
+            logging.info("Database file does not exist.")
 
+            # Check if a backup file exists
+            if os.path.exists(self.backup_manager.db_backup_filename):
 
+                # Restore from the backup file
+                restore_success = self.backup_manager.restore_from_backup(self.db_filename)
+                if restore_success:
+                    print("Restored from backup.")
+                    logging.info("Database file restored from backup successfully.")
+                    # Perform additional steps to restore the database state, if needed
+                else:
+                    print("Failed to restore from backup.")
+                    logging.error("Failed to restore database file from backup.")
+                    # Handle the error or exit the program as necessary
+            else:
+                def create_database(db_connection):
+                    # Create a Database Schema object and initialize the database using the schema file
+                    db_schema = DatabaseSchema(db_connection)
+                    db_schema.initialize_database(self.db_schema_filename)
+                # Create a new database file by opening and closing a connection
+                self.with_connection(create_database)
+                logging.info(f"Database file created and initialized successfully. Database: {self.db_filename}")
+        else:
+            # Check if the backup file exists
+            if not os.path.exists(self.backup_manager.db_backup_filename):
+                # Handle the case when the backup file does not exist
+                logging.info("Backup file does not exist.")
+                # Create a new backup database file and initialize it
+                def create_backup(db_connection):
+                    self.backup_manager.create_new_backup(db_connection)
+                self.with_connection(create_backup)
 
-    def with_connection(self, callback):
+    def with_connection(self, callback_function):
         # Create a new instance of the Connection class
         db_connection = DatabaseConnection(self.db_filename)
         # Open the database connection
         db_connection.open_connection()
         # Call the callback function, passing in the open connection
-        result = callback(db_connection)
+        result = callback_function(db_connection)
         # Close the database connection
-        db_connection.close_connection
+        db_connection.close_connection()
         return result
 
     def execute_query(self, query):
+        self.query_executor = QueryExecutor(self.db_connection)
         # Execute a query using the query executor
         return self.query_executor.execute_query(query)
 
