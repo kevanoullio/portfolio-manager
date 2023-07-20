@@ -9,6 +9,7 @@ import os
 from data_management.backup import BackupManager
 from data_management.database import Database
 from session_management.session_manager import SessionManager
+from container.container import Container
 
 # Configure logging
 import logging

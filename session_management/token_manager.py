@@ -7,31 +7,26 @@ import string
 # Third-party Libraries
 
 # Local Modules
+from session_management.session_manager import SessionManager
 
 # Configure logging
 import logging
 
 
 class SessionTokenManager:
-    def __init__(self) -> None:
-        pass
-
-
-    def set_session_manager(self, session_manager):
+    def __init__(self, session_manager: SessionManager) -> None:
         self.session_manager = session_manager
-
 
     def generate_session_token(self, length: int = 16) -> None:
         # Generates a random session token of the specified length
         characters = string.ascii_letters + string.digits
         session_token = ''.join(secrets.choice(characters) for _ in range(length))
-        self.session_manager.session_token = session_token
-
+        self.session_manager.set_session_token(session_token)
 
     def verify_session_token(self, provided_session_token: str) -> bool:
         # TODO - utilize token verification for every transaction on the database
         # Get the session token from the database or cache
-        current_session_token = self.session_manager.session_token
+        current_session_token = self.session_manager.get_session_token()
         # Check if the session token is present and matches the stored token
         if current_session_token and provided_session_token == current_session_token:
             # TODO - Add additional checks such as token expiration
@@ -40,11 +35,9 @@ class SessionTokenManager:
         # Return False if the token is invalid or not present
         return False
 
-
     def clear_session_token(self) -> None:
         # Remove the session token from the database or cache
-        self.session_manager.session_token = None
-
+        self.session_manager.set_session_token(None)
 
 
 # To verify the session token, you typically perform the verification step at the beginning of each protected or restricted operation within your application. Here are some guidelines on when and where to verify the session token:

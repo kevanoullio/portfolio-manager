@@ -6,7 +6,7 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.user_account import UserAccount
+from account_management.account_operations import UserAccount
 # Import all remaining local modules using lazy imports to avoid circular importing
 
 # Configure logging
@@ -18,7 +18,7 @@ class SessionManager:
     def __init__(self, db_filename):
         self.db_filename = db_filename
         self.__current_user: UserAccount | None = None
-        self.session_token: str | None = None
+        self.__session_token: str | None = None
         self.modifications = []
         self.session_history = []
         logging.info("Session Manager initialized.")
@@ -26,7 +26,7 @@ class SessionManager:
     def initialize_modules(self):
         # Import all local modules here to avoid circular importing
         from data_management.database import Database, DatabaseSnapshot
-        from data_management.queries import QueryExecutor
+        from data_management.query.query_executor import QueryExecutor
         from user_interface.dashboard import Dashboard
         from access_management.login_manager import LoginManager
         from access_management.account_authenticator import AccountAuthenticator
@@ -35,23 +35,26 @@ class SessionManager:
         self.database = Database(self.db_filename)
         self.query_executor = QueryExecutor(self.database.db_connection)
         self.dashboard = Dashboard()
-        self.login_manager = LoginManager()
-        self.account_authenticator = AccountAuthenticator()
-        self.session_token_manager = SessionTokenManager()
+        self.login_manager = LoginManager(self)
+        self.account_authenticator = AccountAuthenticator(self.query_executor)
+        self.session_token_manager = SessionTokenManager(self)
 
     def set_session_manager(self, session_manager):
         self.database.set_session_manager(session_manager)
         self.query_executor.set_session_manager(session_manager)
         self.dashboard.set_session_manager(session_manager)
-        self.login_manager.set_session_manager(session_manager)
-        self.account_authenticator.set_session_manager(session_manager)
-        self.session_token_manager.set_session_manager(session_manager)
 
     def get_current_user(self) -> UserAccount | None:
         return self.__current_user
     
     def set_current_user(self, current_user: UserAccount | None) -> None:
         self.__current_user = current_user
+
+    def get_session_token(self) -> str | None:
+        return self.__session_token
+    
+    def set_session_token(self, session_token: str | None) -> None:
+        self.__session_token = session_token
 
     def start_session(self) -> None:
         # # Add the initial snapshot to session history

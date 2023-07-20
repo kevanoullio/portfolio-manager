@@ -11,7 +11,7 @@ from html.parser import HTMLParser
 
 # Local Modules
 from account_management.email_account import EmailAccount
-from account_management.user_account import UserAccount
+from account_management.account_operations import UserAccount
 from import_modules.csv_file_handler import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
 from session_management.session_manager import SessionManager

@@ -7,7 +7,7 @@ import shutil
 
 # Local Modules
 from data_management.database import DatabaseConnection
-from data_management.schema import DatabaseSchema
+from data_management.schema.schema import DatabaseSchema
 
 # Configure logging
 import logging

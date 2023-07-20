@@ -5,8 +5,8 @@
 # Third-party Libraries
 
 # Local Modules
-from account_management.email_account import EmailAccount
-from account_management.user_account import UserAccount
+from account_management.accounts import UserAccount, EmailAccount
+from account_management.account_operations import UserAccount
 
 # Configure logging
 import logging
@@ -72,10 +72,6 @@ class Dashboard:
 
     def login(self):
         self.session_manager.login_manager.login()
-        if self.session_manager.current_user is not None:
-            logging.debug(f"User login: {self.session_manager.current_user.username}")
-        else:
-            logging.debug("User login failed.")
 
     def start_program(self):
         # Start the Dashboard

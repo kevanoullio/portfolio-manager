@@ -10,8 +10,8 @@ import sqlite3
 
 # Local Modules
 from data_management.connection import DatabaseConnection
-from data_management.queries import QueryExecutor
-from data_management.schema import DatabaseSchema
+from data_management.query.query_executor import QueryExecutor
+from data_management.schema.schema import DatabaseSchema
 
 # Configure logging
 import logging
@@ -23,7 +23,6 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
     #  It's generally recommended to use parameterized queries with placeholders (? in SQLite)
     def __init__(self, db_filename: str):
         self.db_filename = db_filename
-        self.db_connection = DatabaseConnection(self.db_filename)
         self.db_schema = DatabaseSchema(self.db_connection)
         self.query_executor = QueryExecutor(self.db_connection)
         logging.info(f"Database initialized. Database: {self.db_filename}")
@@ -37,6 +36,29 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
     def set_session_manager(self, session_manager) -> None:
         self.session_manager = session_manager
 
+
+
+    def with_connection(self, callback):
+        # Create a new instance of the Connection class
+        db_connection = DatabaseConnection(self.db_filename)
+        # Open the database connection
+        db_connection.open_connection()
+        # Call the callback function, passing in the open connection
+        result = callback(db_connection)
+        # Close the database connection
+        db_connection.close_connection
+        return result
+
+    def execute_query(self, query):
+        # Execute a query using the query executor
+        return self.query_executor.execute_query(query)
+
+
+
+
+
+
+
     def restore(self, snapshot_data) -> None:
         # Implement the logic to restore the database to the state of the given snapshot
         # You would typically need to perform operations such as truncating tables,
@@ -47,87 +69,6 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # you can replace the existing database file with the snapshot file
         snapshot_filename = snapshot_data.get_snapshot_filename()
         shutil.copyfile(snapshot_filename, self.db_filename)
-
-    def create_table(self, table_name: str, columns: tuple) -> None:
-        self.query_executor.create_table(table_name, columns)
-
-    def rename_table(self, table_name: str, new_table_name: str) -> None:
-        self.query_executor.rename_table(table_name, new_table_name)
-
-    def drop_table(self, table_name: str) -> None:
-        self.query_executor.drop_table(table_name)
-    
-    def add_column(self, table_name: str, column_name: str, data_type: str) -> None:
-        self.query_executor.add_column(table_name, column_name, data_type)
-    
-    def rename_column(self, table_name: str, column_name: str, new_column_name: str) -> None:
-        self.query_executor.rename_column(table_name, column_name, new_column_name)
-    
-    def alter_column(self, table_name: str, column_name: str, new_data_type: str) -> None:
-        self.query_executor.alter_column(table_name, column_name, new_data_type)
-
-    def drop_column(self, table_name: str, column_name: str) -> None:
-        self.query_executor.drop_column(table_name, column_name)
-
-    def insert_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
-        self.query_executor.insert_entry(table_name, columns, values, user_id)
-
-    def update_entry(self, table_name: str, column_name: str, new_value: str, where_clause: str, user_id: int) -> None:
-        self.query_executor.update_entry(table_name, column_name, new_value, where_clause, user_id)
-
-    def delete_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
-        self.query_executor.delete_entry(table_name, columns, values, user_id)
-
-    def select(self, table_name: str, columns: tuple, user_id: int, where_clause: str) -> list[dict[str, str]]:
-        return self.query_executor.select(table_name, columns, user_id, where_clause)
-    
-    def join(self, table_name1: str, table_name2: str, columns: tuple, join_condition: str, user_id: int) -> list[dict[str, str]]:
-        return self.query_executor.join(table_name1, table_name2, columns, join_condition, user_id)
-
-    def create_index(self, table_name: str, column_name: str) -> None:
-        self.query_executor.create_index(table_name, column_name)
-
-    def drop_index(self, table_name: str, column_name: str) -> None:
-        self.query_executor.drop_index(table_name, column_name)
-
-    def create_view(self, view_name: str, view_body: str) -> None:
-        self.query_executor.create_view(view_name, view_body)
-
-    def drop_view(self, view_name: str) -> None:
-        self.query_executor.drop_view(view_name)
-    
-    def create_trigger(self, trigger_name: str, trigger_body: str) -> None:
-        self.query_executor.create_trigger(trigger_name, trigger_body)
-    
-    def drop_trigger(self, trigger_name: str) -> None:
-        self.query_executor.drop_trigger(trigger_name)
-
-    def create_constraint(self, table_name: str, constraint_name: str, constraint_body: str) -> None:
-        self.query_executor.create_constraint(table_name, constraint_name, constraint_body)
-    
-    def drop_constraint(self, table_name: str, constraint_name: str, column_name: str) -> None:
-        self.query_executor.drop_constraint(table_name, constraint_name, column_name)
-
-    def create_transaction(self, transaction_queries: list[str]) -> None:
-        self.query_executor.create_transaction(transaction_queries)
-    
-    def create_stored_procedure(self, procedure_name: str, procedure_body: str) -> None:
-        self.query_executor.create_stored_procedure(procedure_name, procedure_body)
-    
-    def call_stored_procedure(self, procedure_name: str, procedure_params: tuple) -> None:
-        self.query_executor.call_stored_procedure(procedure_name, procedure_params)
-
-    def drop_stored_procedure(self, procedure_name: str) -> None:
-        self.query_executor.drop_stored_procedure(procedure_name)
-
-    def create_function(self, function_name: str, function_body: str) -> None:
-        self.query_executor.create_function(function_name, function_body)
-    
-    def drop_function(self, function_name: str) -> None:
-        self.query_executor.drop_function(function_name)
-
-    def execute_query_by_title(self, query_title: str, *args: str) -> None:
-        self.query_executor.execute_query_by_title(query_title, *args)
 
 
 

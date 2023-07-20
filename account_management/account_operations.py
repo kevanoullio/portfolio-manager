@@ -1,31 +1,99 @@
-# Purpose: Email Account module for defining email account data type and its associated functionality.
+# Purpose: Account Operations module for performing methods and operations on various account data types.
 
 # Standard Libraries
-from dataclasses import dataclass
 
 # Third-party Libraries
 
 # Local Modules
-from data_management.connection import DatabaseConnection
+from account_management.accounts import UserAccount, EmailAccount
+from data_management.query.query_executor import QueryExecutor
 
 # Configure logging
 import logging
 
 
-# EmailAccount class for defining email account data type
-@dataclass
-class EmailAccount:
-    usage: str
-    address: str
-    password_hash: bytes | None = None
+# UserAccountOperation class for defining user account operations
+class UserAccountOperation:
+    def __init__(self, query_executor: QueryExecutor):
+        self.query_executor = query_executor
 
-    def __post_init__(self) -> None:
-        logging.info(f"Email account initialized successfully. Address: {self.address}, Usage: {self.usage}")
+    def check_username_exists(self, provided_username: str) -> bool:
+        result = self.query_executor.get_user_account_by_username(provided_username)
+        if result is None:
+            return False
+        if isinstance(result, UserAccount):
+            return True
+        else:
+            return False
+
+    def save_user_account_to_database(self, user_account: UserAccount) -> None:
+        # Save the user's information to the database
+        # Perform necessary database interactions to store user data
+        pass
+
+    def delete_user_account_from_database(self, user_account: UserAccount) -> None:
+        # Delete the user's information from the database
+        # Perform necessary database interactions to remove user data
+        pass
+
+    def get_user_account_by_user_id(self, provided_user_id: int) -> UserAccount | None:
+        # Logic to retrieve user account from the database based on provided user_id
+        # TODO - Implement this method and fix return
+        return UserAccount(provided_user_id, "username")
+    
+    def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
+        return self.query_executor.get_user_account_by_username(provided_username)
+    
+    def get_user_password_by_username(self, provided_username: str) -> bytes | None:
+        return self.query_executor.get_user_password_by_username(provided_username)
+
+    def update_username(self, user_account: UserAccount, new_username: str) -> None:
+        # Update the user's username to the new username
+        user_account.username = new_username
+
+    def update_password(self, user_account: UserAccount, new_password_hash: bytes) -> None:
+        # Update the user's password to the new password
+        user_account.password_hash = new_password_hash
+
+    def deactivate_account(self, user_account: UserAccount) -> None:
+        # Deactivate or disable the user's account
+        # Perform any necessary cleanup or disable associated functionality
+        pass
+
+    def is_admin(self, user_account: UserAccount) -> bool:
+        # Check if the user has admin privileges or roles
+        # Return True if the user is an admin, False otherwise
+        # TODO - Implement this method and fix return
+        return False
+
+    def get_user_profile(self, user_account: UserAccount) -> dict:
+        # Retrieve and return the user's profile information
+        # Return a dictionary containing profile data
+        # TODO - Implement this method and fix return
+        return {"username": user_account.username}
 
 
-class EmailAccountService:
-    def __init__(self, database_connection: DatabaseConnection):
-        self.database_connection = database_connection
+# EmailAccountOperation class for defining email account operations
+class EmailAccountOperation:
+    def __init__(self, query_executor: QueryExecutor):
+        self.query_executor = query_executor
+
+    # TODO - finish this, should I do email_address or email_account???
+    # def check_email_address_exists(self, provided_email_address: str) -> bool:
+    #     result = self.query_executor.get_user_account_by_username(provided_email_address)
+    #     if result is None:
+    #         return False
+    #     if isinstance(result, UserAccount):
+    #         return True
+    #     else:
+    #         return False
+
+    def get_email_account_by_email_address(self, provided_email_address: str) -> EmailAccount | None:
+        return self.query_executor.get_email_account_by_email_address(provided_email_address)
+
+    def get_email_password_by_email_address(self, provided_email_address: str) -> bytes | None:
+        # TODO - finish this method
+        pass
 
     # def import_data(self):
     #     # Logic to import data from the email account
