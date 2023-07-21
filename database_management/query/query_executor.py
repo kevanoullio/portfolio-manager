@@ -23,8 +23,11 @@ class QueryExecutor:
         self.db_connection = db_connection
         self.session_manager = session_manager
         self.complex_queries_file = "./database_management/query/complex_queries.sql"
-        logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
+        logging.debug(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
+    # TODO - all executions that return data don't need to commit the transaction?
+    # TODO - call begin_transaction() then execute then commit_transaction() for transactions
+    # self.db_connection.commit_transaction()???
     def execute_query(self, query: str, params: execute_query_type = None) -> list[tuple] | None:
         try:
             with self.db_connection as connection:
@@ -431,7 +434,8 @@ class QueryExecutor:
         get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
         current_user_id = self.session_manager.get_current_user_id()
         if current_user_id is None:
-            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+            print("No user is currently logged in.")
+            return None
         else:
             params = (str(current_user_id), provided_email_address)
             # Execute the query
@@ -455,7 +459,8 @@ class QueryExecutor:
         get_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
         current_user_id = self.session_manager.get_current_user_id()
         if current_user_id is None:
-            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+            print("No user is currently logged in.")
+            return None
         else:
             params = (str(current_user_id),)
             # Execute the query
@@ -479,7 +484,8 @@ class QueryExecutor:
         get_email_accounts_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
         current_user_id = self.session_manager.get_current_user_id()
         if current_user_id is None:
-            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+            print("No user is currently logged in.")
+            return None
         else:
             email_usage_id = self.get_email_usage_id_by_usage_name(email_usage_name)
             if email_usage_id is None:
@@ -501,21 +507,19 @@ class QueryExecutor:
                     logging.debug(f"Email address: {address}, usage: {usage}")
                 return email_accounts
 
-    # def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:
-    #     query_type = "SELECT"
-    #     # SQL query to get the password for an email address
-    #     get_email_password_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
-    #     # Set the query parameters
-    #     params = (user_id, email_address)
-
-    #     # Execute the query
-    #     try:
-    #         with self.db_connection.cursor() as cursor:
-    #             cursor.execute(get_email_password_query, params)
-    #             result = cursor.fetchone()
-    #             return result[0]
-    #     except Exception as e:
-    #         raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+    def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_email_password_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
+        current_user_id = self.session_manager.get_current_user_id()
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            params = (str(current_user_id), email_address)
+            # Execute the query
+            result = self.execute_query(get_email_password_query, params)
+            return result[0][0] if result is not None else None
         
 
 

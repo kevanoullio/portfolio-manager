@@ -25,7 +25,7 @@ class SessionManager:
         self._session_token: str | None = None
         self._modifications = []
         self._session_history = []
-        logging.info("Session Manager initialized.")
+        logging.debug("Session Manager initialized.")
 
     def get_current_user(self) -> UserAccount | None:
         return self._current_user

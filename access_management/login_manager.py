@@ -33,7 +33,7 @@ class LoginManager:
         self.email_account_operation = EmailAccountOperation(self._database)
         self._account_authenticator = AccountAuthenticator(self.user_account_operation, self.email_account_operation)
         self.user_input = UserInput()
-        logging.info("Login Manager initialized.")
+        logging.debug("Login Manager initialized.")
 
     def create_account(self) -> None:
         # Get the username from the user (username_prompt checks if it's valid)

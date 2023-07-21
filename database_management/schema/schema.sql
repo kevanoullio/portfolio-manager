@@ -6,12 +6,12 @@
 CREATE TABLE IF NOT EXISTS user_role (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     [name] VARCHAR(255) NOT NULL,
-    UNIQUE (user_id, [name])
+    UNIQUE ([name])
 );
 
 -- Insert default user roles
-INSERT OR IGNORE INTO user_role (user_id, [name]) VALUES ('admin');
-INSERT OR IGNORE INTO user_role (user_id, [name]) VALUES ('user');
+INSERT OR IGNORE INTO user_role ([name]) VALUES ('admin');
+INSERT OR IGNORE INTO user_role ([name]) VALUES ('user');
 
 -- Create table for users
 CREATE TABLE IF NOT EXISTS user (

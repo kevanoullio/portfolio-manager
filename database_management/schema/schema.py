@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 # Third-party Libraries
 
 # Local Modules
+from database_management.connection import DatabaseConnectionError
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -20,19 +21,24 @@ import logging
 
 # DatabaseSchema class for creating and initializing the database schema
 class DatabaseSchema:
-    def __init__(self, db_connection: DatabaseConnection) -> None:
+    def __init__(self, db_connection: DatabaseConnection, db_schema_filename: str) -> None:
         self.db_connection = db_connection
+        self.db_schema_filename = db_schema_filename
 
-    def initialize_database(self, schema_filename: str) -> None:
+    def initialize_database(self) -> None:
         # TODO Check if initialization was successful, make sure the database file is deleted if it wasn't
-        with self.db_connection.cursor() as cursor:
-            # Read the schema file
-            with open(schema_filename, 'r') as schema_file:
-                schema_sql = schema_file.read()
-                # Execute the schema SQL statements
-                cursor.executescript(schema_sql)
-                logging.info("Database initialized using the Database schema.")
-                # Perform additional operations if needed
+        try:
+            with self.db_connection as connection:
+                with connection.cursor() as cursor:
+                    # Read the schema file
+                    with open(self.db_schema_filename, 'r') as database_schema_file:
+                        schema_sql_script = database_schema_file.read()
+                        # Execute the schema SQL statements
+                        cursor.executescript(schema_sql_script)
+                        logging.info("Database initialized using the Database schema.")
+                        # Perform additional operations if needed
+        except DatabaseConnectionError as e:
+            logging.error(str(e))
 
 
 if __name__ == "__main__":

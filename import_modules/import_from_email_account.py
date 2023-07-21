@@ -14,9 +14,10 @@ import os
 from html.parser import HTMLParser
 
 # Local Modules
+from database_management.database import Database
 from import_modules.csv_file_handler import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
-from session_management.session_manager import SessionManager
+from user_interface.user_input import UserInput
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -32,8 +33,9 @@ last_uid_cache = None
     
 # Class to handle IMAP connection and login
 class IMAPClient:
-    def __init__(self, email_account: EmailAccount | None) -> None:
-        self.email_account = email_account
+    def __init__(self, email_address: str, email_account_password_hash: bytes) -> None:
+        self.email_address = email_address
+        self.email_account_password_hash = email_account_password_hash
         self.mail = None
         self.servers = {
             "outlook": "outlook.office365.com",
@@ -43,29 +45,21 @@ class IMAPClient:
             "icloud": "imap.mail.me.com"
         }
 
-    def login(self):
-        if self.email_account is None:
-            print("Please set email account first.")
-            return None
-        
-        # Store email address and password into more concise variables
-        email_address = self.email_account.address
-        password_hash = self.email_account.password_hash
-
+    def email_login(self) -> imaplib.IMAP4_SSL | None:
         # Need to check if email address and password are None for decode() to work
-        if email_address is None or password_hash is None:
+        if self.email_address is None or self.email_account_password_hash is None:
             print("Please set email account first.")
             return None
 
         # Get the email type from the email address
-        email_service = email_address.split("@")[-1].split(".")[0]
+        email_service = self.email_address.split("@")[-1].split(".")[0]
         if email_service not in self.servers:
             print("Email service provider not supported for import.")
             return None
         else:
             try:
                 self.mail = imaplib.IMAP4_SSL(email_service)
-                self.mail.login(email_address, password_hash.decode())
+                self.mail.login(self.email_address, self.email_account_password_hash.decode())
                 return self.mail
             except imaplib.IMAP4.error:
                 print("Failed to login. Please check your credentials.")
@@ -90,7 +84,7 @@ class IMAPClient:
             except (imaplib.IMAP4.abort, AttributeError):
                 print("Failed to retrieve folder list. Attempting re-login...")
                 self.mail.logout()
-                self.mail = self.login()
+                self.mail = self.email_login()
                 if self.mail is None:
                     return []
                 return self.list_folders()
@@ -99,7 +93,7 @@ class IMAPClient:
             return []
 
     # Method to select a folder and check for new emails
-    def select_folder(self, folder_name):
+    def select_folder(self, folder_name: str):
         if self.mail is not None:
             try:
                 typ, data = self.mail.select(folder_name)
@@ -107,7 +101,7 @@ class IMAPClient:
             except imaplib.IMAP4.abort:
                 print("Failed to select folder. Attempting re-login...")
                 self.mail.logout()
-                self.mail = self.login()
+                self.mail = self.email_login()
                 if self.mail is None:
                     return None
                 return self.select_folder(folder_name)
@@ -116,7 +110,7 @@ class IMAPClient:
             return None
 
     # Method to search for emails in a folder
-    def search_emails(self, search_query) -> list:
+    def search_emails(self, search_query: str) -> list:
         if self.mail is not None:
             try:
                 typ, search_data = self.mail.uid("search", search_query)
@@ -124,7 +118,7 @@ class IMAPClient:
             except imaplib.IMAP4.abort:
                 print("Failed to search for emails. Attempting re-login...")
                 self.mail.logout()
-                self.mail = self.login()
+                self.mail = self.email_login()
                 if self.mail is None:
                     return []
                 return self.search_emails(search_query)
@@ -192,12 +186,12 @@ def extract_from_email(data: dict, email_body) -> dict:
 
 
 # TODO - make this function a class object?
-def import_from_email_account(session_manager: SessionManager) -> int:
-    if session_manager._current_user is None or session_manager._current_user.user_id is None:
+def import_from_email_account(database: Database) -> int:
+    if database.session_manager.get_current_user() is None or database.session_manager.get_current_user_id() is None:
         return 1
     
     # Fetch all email addresses of usage "import" from the user
-    user_email_accounts = session_manager.database.query_executor.get_all_user_email_accounts(session_manager._current_user.user_id)
+    user_email_accounts = database.query_executor.get_all_user_email_accounts()
     import_email_accounts = []
 
     # Check if any email addresses are found
@@ -231,19 +225,17 @@ def import_from_email_account(session_manager: SessionManager) -> int:
     while selected_email_address not in available_email_addresses:
         selected_email_address = input("Invalid email address. Please try again: ")
 
+    # Get the selected email account's password hash
+    selected_email_account_password_hash = database.query_executor.get_email_account_password_hash_by_email_address(selected_email_address)
 
-
-
-    # Get the selected email account
-    selected_email_account = None
-    for email_account in import_email_accounts:
-        if email_account.address == selected_email_account:
-            selected_email_account = email_account
-            break
+    # Check if the selected email account's password hash is found
+    if selected_email_account_password_hash is None:
+        print("Error: Email account password hash not found.")
+        return 3
 
     # Login to the IMAP server using the selected email account
-    imap_client = IMAPClient(selected_email_account)
-    mail = imap_client.login()
+    imap_client = IMAPClient(selected_email_address, selected_email_account_password_hash)
+    mail = imap_client.email_login()
     if mail is None:
         return 3
 
@@ -262,8 +254,9 @@ def import_from_email_account(session_manager: SessionManager) -> int:
 
 
 
-    # TODO - Replace with UserInput class
+    # TODO - Replace with UserInput class???
     folder_name = input("Enter the folder name: ")
+    folder_name = UserInput()._sanitize_input(folder_name)
 
     # Select the specified folder
     select_result = imap_client.select_folder(folder_name)
@@ -311,7 +304,7 @@ def import_from_email_account(session_manager: SessionManager) -> int:
             # on the server. "num" is the UID of the message to be fetched, "(RFC822)" specifies
             # which parts of the message you want to fetch.
         except imaplib.IMAP4.abort:
-            mail = imap_client.login()
+            mail = imap_client.email_login()
             if mail is None:
                 return 1
             typ, data = mail.uid("FETCH", num, "(RFC822)")

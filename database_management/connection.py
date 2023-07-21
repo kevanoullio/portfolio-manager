@@ -32,7 +32,7 @@ class DatabaseConnection:
     def _init_db(self, db_filename: str):
         self.db_filename = db_filename
         self.connection = None
-        logging.info(f"Database connection initialized. Database: {self.db_filename}")
+        logging.debug(f"Database connection initialized. Database: {self.db_filename}")
 
     def __enter__(self):
         try:

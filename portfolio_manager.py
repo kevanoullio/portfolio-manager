@@ -24,15 +24,19 @@ def main():
 
     # Set the database filenames
     db_filename = "./data/database.db"
-    db_schema_filename = "./database/schema.sql"
+    db_schema_filename = "./database_management/schema/schema.sql"
 
     # Create a container object
     main_container = MainContainer(db_filename, db_schema_filename)
-    logging.info("Program Container created.")
+    logging.debug("Program Container created.")
+
+    # Start the database
+    main_container.database.start()
+    logging.debug("Database started.")
 
     # Run the dashboard
     main_container.dashboard.run()
-    logging.info("Dashboard started.")
+    logging.debug("Dashboard started.")
 
     # Exit the program gracefully
     logging.info("Exiting the portfolio manager application.")

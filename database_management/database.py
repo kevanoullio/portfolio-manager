@@ -27,26 +27,27 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         self.db_filename = db_filename
         self.db_schema_filename = db_schema_filename
         self.db_connection = DatabaseConnection(db_filename)
+        self.backup_manager = BackupManager(self.db_filename)
         self.session_manager = SessionManager()
         self.query_executor = QueryExecutor(self.db_connection, self.session_manager)
-        
 
-    # TODO - all executions that return data don't need to commit the transaction?
-    # TODO - call begin_transaction() then execute then commit_transaction() for transactions
-    # self.db_connection.commit_transaction()
-
-    def startup(self) -> None:
-        self.backup_manager = BackupManager(self.db_filename, self.db_schema_filename)
+    def start(self) -> None:
         # Check if the database file exists
-        if not os.path.exists(self.db_filename):
-            # Handle the case when the database file does not exist
-            logging.info("Database file does not exist.")
-
+        if os.path.exists(self.db_filename):
             # Check if a backup file exists
             if os.path.exists(self.backup_manager.db_backup_filename):
-
+                logging.info("Backup file exists.")
+            else:
+                logging.info("Backup file does not exist.")
+                # Create a new backup database file and initialize it
+                self.backup_manager.create_backup()
+        else:
+            logging.info("Database file does not exist.")
+            # Check if a backup file exists
+            if os.path.exists(self.backup_manager.db_backup_filename):
+                logging.info("Backup file exists.")
                 # Restore from the backup file
-                restore_success = self.backup_manager.restore_from_backup(self.db_filename)
+                restore_success = self.backup_manager.restore_from_backup()
                 if restore_success:
                     print("Restored from backup.")
                     logging.info("Database file restored from backup successfully.")
@@ -57,50 +58,10 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                     # Handle the error or exit the program as necessary
             else:
                 # Create a new database file by opening and closing a connection
-                self.create_new_database()
+                # Create a Database Schema object and initialize the database using the schema file
+                db_schema = DatabaseSchema(self.db_connection, self.db_schema_filename)
+                db_schema.initialize_database()
                 logging.info(f"Database file created and initialized successfully. Database: {self.db_filename}")
-        else:
-            # Check if the backup file exists
-            if not os.path.exists(self.backup_manager.db_backup_filename):
-                # Handle the case when the backup file does not exist
-                logging.info("Backup file does not exist.")
-                # Create a new backup database file and initialize it
-                self.create_new_backup()
-
-    def with_connection(self, callback_function):
-        # # Create a new instance of the Connection class
-        # db_connection = DatabaseConnection(self.db_filename)
-        # # Open the database connection
-        # db_connection.open_connection()
-        # # Call the callback function, passing in the open connection
-        # result = callback_function(db_connection)
-        # # Close the database connection
-        # db_connection.close_connection()
-        # return result
-
-        with DatabaseConnection(self.db_filename) as db:
-            with db.cursor() as cursor:
-                cursor.execute("SELECT * FROM my_table")
-                results = cursor.fetchall()
-
-    # TODO - refactor this function after redoing giant if/else statement block above
-    def create_new_database(self) -> None:
-        def create_database(db_connection):
-            # Create a Database Schema object and initialize the database using the schema file
-            db_schema = DatabaseSchema(db_connection)
-            db_schema.initialize_database(self.db_schema_filename)
-        self.with_connection(create_database)
-
-    # TODO - refactor this function after redoing giant if/else statement block above
-    def create_new_backup(self) -> None:
-        def create_backup(db_connection):
-            self.backup_manager.create_backup(db_connection)
-        self.with_connection(create_backup)
-
-
-
-
-
 
     def restore(self, snapshot_data) -> None:
         # Implement the logic to restore the database to the state of the given snapshot
@@ -112,13 +73,6 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # you can replace the existing database file with the snapshot file
         snapshot_filename = snapshot_data.get_snapshot_filename()
         shutil.copyfile(snapshot_filename, self.db_filename)
-
-
-
-
-
-
-
 
     def import_custom_script(self, menu_options: dict) -> None:
         # Only allow importing python scripts
