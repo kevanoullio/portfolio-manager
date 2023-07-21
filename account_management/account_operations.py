@@ -22,10 +22,10 @@ import logging
 # UserAccountOperation class for defining user account operations
 class UserAccountOperation:
     def __init__(self, database: Database):
-        self.database = database
+        self._database = database
 
     def check_username_exists(self, provided_username: str) -> bool:
-        result = self.database.query_executor.get_user_account_by_username(provided_username)
+        result = self._database.query_executor.get_user_account_by_username(provided_username)
         if result is None:
             return False
         if isinstance(result, UserAccount):
@@ -33,7 +33,8 @@ class UserAccountOperation:
         else:
             return False
 
-    def save_user_account_to_database(self, user_account: UserAccount) -> None:
+    # TODO - account for user roles for all methods that make changes to the database
+    def save_username_and_password_to_database(self, username: str, password: bytes) -> None:
         # Save the user's information to the database
         # Perform necessary database interactions to store user data
         pass
@@ -49,10 +50,10 @@ class UserAccountOperation:
         return UserAccount(provided_user_id, "username")
     
     def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
-        return self.database.query_executor.get_user_account_by_username(provided_username)
+        return self._database.query_executor.get_user_account_by_username(provided_username)
     
     def get_user_password_by_username(self, provided_username: str) -> bytes | None:
-        return self.database.query_executor.get_user_password_by_username(provided_username)
+        return self._database.query_executor.get_user_password_by_username(provided_username)
 
     def update_username(self, user_account: UserAccount, new_username: str) -> None:
         # Update the user's username to the new username
@@ -88,7 +89,7 @@ class UserAccountOperation:
 # EmailAccountOperation class for defining email account operations
 class EmailAccountOperation:
     def __init__(self, database: Database):
-        self.database = database
+        self._database = database
 
     # TODO - finish this, should I do email_address or email_account???
     # def check_email_address_exists(self, provided_email_address: str) -> bool:
@@ -101,7 +102,7 @@ class EmailAccountOperation:
     #         return False
 
     def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
-        return self.database.query_executor.get_email_usage_by_email_address(provided_email_address)
+        return self._database.query_executor.get_email_usage_by_email_address(provided_email_address)
 
     def get_email_password_by_email_address(self, provided_email_address: str) -> bytes | None:
         # TODO - finish this method

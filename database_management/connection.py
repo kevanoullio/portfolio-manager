@@ -84,6 +84,8 @@ class DatabaseConnection:
         else:
             raise DatabaseConnectionError(self, "Database connection is not open.")
 
+    # TODO - decide whether need to use execute_query in db_connection or query_executor,
+    # specifically when using transactions
     # def execute_query(self, sql_query: str) -> sqlite3.Cursor:
     #     if self.connection is not None:
     #         with self.cursor() as cursor:

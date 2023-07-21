@@ -58,7 +58,7 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self.login_manager.session_manager.get_current_user() is not None:
+                if self.database.session_manager.get_current_user() is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
@@ -74,13 +74,13 @@ class Dashboard:
     # Login Menu Functions
     def create_account(self):
         self.login_manager.create_account()
-        if self.login_manager.session_manager.get_current_user() is not None:
-            logging.debug(f"User login: {self.login_manager.session_manager.get_current_user()}")
+        if self.database.session_manager.get_current_user() is not None:
+            logging.debug(f"User login: {self.database.session_manager.get_current_user()}")
         else:
             logging.debug("User login failed.")
 
     def login(self):
-        self.login_manager.login()
+        self.login_manager.user_login()
 
     def start_program(self):
         # Start the Dashboard
@@ -115,7 +115,7 @@ class Dashboard:
     
 
     def logout(self):
-        self.login_manager.logout()
+        self.login_manager.user_logout()
 
 
     def view_portfolio(self):
@@ -221,7 +221,7 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        current_user = self.login_manager.session_manager.get_current_user() 
+        current_user = self.database.session_manager.get_current_user() 
         # if current_user is not None:
         #     if current_user.user_id is not None:
         #         # self.database.import_file(current_user.user_id, "database", [".db"])

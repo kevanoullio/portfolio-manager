@@ -83,7 +83,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                 cursor.execute("SELECT * FROM my_table")
                 results = cursor.fetchall()
 
-
+    # TODO - refactor this function after redoing giant if/else statement block above
     def create_new_database(self) -> None:
         def create_database(db_connection):
             # Create a Database Schema object and initialize the database using the schema file
@@ -91,6 +91,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
             db_schema.initialize_database(self.db_schema_filename)
         self.with_connection(create_database)
 
+    # TODO - refactor this function after redoing giant if/else statement block above
     def create_new_backup(self) -> None:
         def create_backup(db_connection):
             self.backup_manager.create_backup(db_connection)

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
-    from account_management.accounts import UserAccount, EmailAccount
+    from account_management.accounts import UserAccount
 
 # Configure logging
 import logging
@@ -23,8 +23,8 @@ class SessionManager:
     def __init__(self):
         self._current_user: UserAccount | None = None
         self._session_token: str | None = None
-        self.modifications = []
-        self.session_history = []
+        self._modifications = []
+        self._session_history = []
         logging.info("Session Manager initialized.")
 
     def get_current_user(self) -> UserAccount | None:
@@ -53,39 +53,39 @@ class SessionManager:
         self.saved = False
 
         # Only keep the latest 100 snapshots
-        if len(self.session_history) > 100:
-            self.session_history.pop(0)  # Remove the oldest snapshot
+        if len(self._session_history) > 100:
+            self._session_history.pop(0)  # Remove the oldest snapshot
 
     def track_modification(self, modification) -> None:
         # Track modifications made during the session
         if not self.saved:
-            self.modifications.append(modification)
+            self._modifications.append(modification)
 
     def save_changes(self) -> None:
         # Apply the tracked modifications to the database
         if not self.saved:
-            for modification in self.modifications:
+            for modification in self._modifications:
                 modification.execute()
-            self.modifications = []
+            self._modifications = []
             self.saved = True
             print("Portfolio saved!")
 
     def discard_changes(self) -> None:
         # Clear the tracked modifications without applying them
         if not self.saved:
-            self.modifications = []
+            self._modifications = []
             print("Most recent Portfolio changes discarded!")
 
     def rollback_changes(self) -> None:
-        if len(self.session_history) > 1:
+        if len(self._session_history) > 1:
             # Remove the latest snapshot from session history
-            self.session_history.pop()
+            self._session_history.pop()
             # Roll back the database to the previous snapshot
-            previous_snapshot = self.session_history[-1]
+            previous_snapshot = self._session_history[-1]
             previous_snapshot.rollback()
 
     def close_session(self) -> None:
-        if not self.saved and self.modifications:
+        if not self.saved and self._modifications:
             # Prompt the user to save or discard changes before exiting
             choice = input("Do you want to save changes? ([y]/n): ").strip().lower()
             if choice == "y" or choice == "":
@@ -101,8 +101,8 @@ class SessionManager:
                     self.discard_changes()
 
         # Clear session-related data
-        self.modifications = []
-        self.session_history = []
+        self._modifications = []
+        self._session_history = []
         
 
 if __name__ == "__main__":

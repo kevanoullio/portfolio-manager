@@ -157,6 +157,7 @@ class Menu:
         else:
             logging.warning(f"Option {option_id} does not exist in {self.title} menu.")
 
+    # TODO - refactor this method into the user_input() module
     def get_valid_input(self):
         while True:
             choice = input("\nPlease enter your choice: ")

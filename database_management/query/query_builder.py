@@ -10,6 +10,7 @@
 import logging
 
 
+# TODO - figure out whether refactoring code to use QueryBuilder is worth it, will need to use "?" for parameters to avoid SQL injection
 class QueryBuilder:
     """QueryBuilder class for building complex queries based on user input or other criteria.
     \nNeed to create a new instance of this class for each query and supply the table name.

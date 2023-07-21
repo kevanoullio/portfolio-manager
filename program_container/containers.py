@@ -9,8 +9,8 @@ from database_management.database import Database
 from access_management.login_manager import LoginManager
 from user_interface.dashboard import Dashboard
 
-# Configure logging
-import logging
+# # Configure logging
+# import logging
 
 
 # Container class for importing and organizing all necessary local modules
