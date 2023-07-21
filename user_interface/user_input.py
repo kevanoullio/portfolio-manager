@@ -179,9 +179,9 @@ class UserInput:
 
         return provided_email
 
-    def get_valid_choice(self, maximum_choice: int) -> int:
+    def get_valid_menu_choice(self, maximum_choice: int, choice_prompt: str | None="Please enter your choice: ") -> int:
         while True:
-            choice = input("\nPlease enter your choice: ")
+            choice = input(f"\n{choice_prompt}")
 
             # Check if the input is a digit
             if not choice.isdigit():

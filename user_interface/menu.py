@@ -6,6 +6,7 @@
 
 # Local Modules
 from user_interface.dashboard import Dashboard
+from user_interface.user_input import UserInput
 
 # Configure logging
 import logging
@@ -15,6 +16,7 @@ import logging
 class Menu:
     def __init__(self, dashboard: Dashboard) -> None:
         self.dashboard = dashboard
+        self.user_input = UserInput()
         self.is_active = False
         self.title = ""
         self.previous_menu = None
@@ -157,26 +159,8 @@ class Menu:
         else:
             logging.warning(f"Option {option_id} does not exist in {self.title} menu.")
 
-    # TODO - refactor this method into the user_input() module
-    def get_valid_input(self) -> int:
-        while True:
-            choice = input("\nPlease enter your choice: ")
-
-            # Check if the input is a digit
-            if not choice.isdigit():
-                print("Invalid input. Please enter a digit.")
-                continue
-
-            choice = int(choice)
-
-            # Check if the input is within the valid range
-            logging.debug(f"Choice: {choice}")
-            logging.debug(f"Option count: {self.option_count}")
-            if choice < 0 or choice > self.option_count:
-                print("Invalid input. Please enter a valid option.")
-                continue
-
-            return choice
+    def get_valid_menu_choice(self) -> int:
+        return self.user_input.get_valid_menu_choice(self.option_count)
 
     def get_next_menu(self, choice: int):
         if self.menu_mapping is None:
@@ -464,18 +448,12 @@ class ImportFromEmail(Menu):
         # TODO - finish this menu
 
         # Add menu options
-        self.add_option(verb="Import", subject="Existing Portfolio from Brokerage Account")
-        self.add_option(verb="Import", subject="Existing Portfolio from CSV File")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: ImportFromBrokerageAccount,
-            2: ImportFromCSVFile,
-            0: ManagePortfolio
+            0: ImportExistingPortfolio
         }
         self.menu_logic = {
-            1: self.dashboard.import_existing_portfolio_from_brokerage_account,
-            2: self.dashboard.import_existing_portfolio_from_csv_file,
             0: self.dashboard.previous_menu
         }
 

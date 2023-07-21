@@ -588,7 +588,7 @@ class QueryExecutor:
     def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_account_password_hash_by_email_address_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
+        get_email_account_password_hash_by_email_address_query = f"{query_type} password_hash FROM email WHERE user_id = ? AND address = ?"
         current_user_id = self.session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:

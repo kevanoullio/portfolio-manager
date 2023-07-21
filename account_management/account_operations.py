@@ -136,7 +136,7 @@ class EmailAccountOperation:
         print("4. Cancel")
 
         # Get the user's choice
-        choice = self._user_input.get_valid_choice(4)
+        choice = self._user_input.get_valid_menu_choice(4)
 
         # Check if the user wants to cancel
         if choice == 4:

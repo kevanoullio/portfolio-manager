@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from access_management.login_manager import LoginManager
 from database_management.database import Database
 from user_interface.query_results import QueryResults
+from user_interface.user_input import UserInput
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 
 # Local modules imported for Type Checking purposes only
@@ -28,6 +29,7 @@ class Dashboard:
         self.database = database
         self.login_manager = login_manager
         self.query_results = QueryResults()
+        self.user_input = UserInput()
         self.user_account_operation = UserAccountOperation(self.database)
         self.email_account_operation = EmailAccountOperation(self.database)
         self.is_running = False
@@ -53,7 +55,7 @@ class Dashboard:
             # Print the menu options
             self.current_menu.print_options()
             # Get the user's choice
-            choice = self.current_menu.get_valid_input()
+            choice = self.current_menu.get_valid_menu_choice()
             # Print the choice message
             self.current_menu.print_choice_msg(choice)
 
@@ -233,11 +235,13 @@ class Dashboard:
 
 
     def import_existing_portfolio_from_email_account(self):
-        logging.info("Importing existing portfolio from email account...")
-        # TODO - finish this function
-        # Get the user's email accounts
-        email_accounts: list[EmailAccount] | None = self.database.query_executor.get_user_email_accounts_by_usage("import")
-
+        # TODO - Use AvailableEmailAccount class instead???
+        print("Importing existing portfolio from email account...")
+        # Call the import_from_email_account script
+        from import_modules.import_from_email_account import import_from_email_account
+        import_from_email_account(self.database)
+        
+        
 
     def view_custom_import_scripts(self):
         print("View Custom Import Scripts logic goes here...")

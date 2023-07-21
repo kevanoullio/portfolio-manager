@@ -50,7 +50,7 @@ class AccountAuthenticator:
         #     print("Email address is not in the database.")
         #     return None
         # Get the email account password hash
-        email_account_password_hash: bytes | None = self._email_account_operation.get_email_password_by_email_address(provided_email_address)
+        email_account_password_hash: bytes | None = self._email_account_operation.get_email_account_password_hash_by_email_address(provided_email_address)
         # Check if the email password exists.
         if email_account_password_hash is None:
             # If the email account was only added for notification purposes, the password hash will be None

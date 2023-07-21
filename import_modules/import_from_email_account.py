@@ -17,7 +17,6 @@ from html.parser import HTMLParser
 from database_management.database import Database
 from import_modules.csv_file_handler import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
-from user_interface.user_input import UserInput
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -37,7 +36,7 @@ class IMAPClient:
         self.email_address = email_address
         self.email_account_password_hash = email_account_password_hash
         self.mail = None
-        self.servers = {
+        self.server_hosts = {
             "outlook": "outlook.office365.com",
             "gmail": "imap.gmail.com",
             "yahoo": "imap.mail.yahoo.com",
@@ -52,13 +51,13 @@ class IMAPClient:
             return None
 
         # Get the email type from the email address
-        email_service = self.email_address.split("@")[-1].split(".")[0]
-        if email_service not in self.servers:
+        email_service_host = self.email_address.split("@")[-1].split(".")[0]
+        if email_service_host not in self.server_hosts:
             print("Email service provider not supported for import.")
             return None
         else:
             try:
-                self.mail = imaplib.IMAP4_SSL(email_service)
+                self.mail = imaplib.IMAP4_SSL(self.server_hosts[email_service_host])
                 self.mail.login(self.email_address, self.email_account_password_hash.decode())
                 return self.mail
             except imaplib.IMAP4.error:
@@ -187,62 +186,57 @@ def extract_from_email(data: dict, email_body) -> dict:
 
 # TODO - make this function a class object?
 def import_from_email_account(database: Database) -> int:
-    if database.session_manager.get_current_user() is None or database.session_manager.get_current_user_id() is None:
-        return 1
-    
+    from user_interface.user_input import UserInput
+    user_input = UserInput()
     # Fetch all email addresses of usage "import" from the user
-    user_email_accounts = database.query_executor.get_all_current_user_email_accounts()
-    import_email_accounts = []
-
-    # Check if any email addresses are found
-    if user_email_accounts is None or len(user_email_accounts) == 0:
-        print("No email accounts found.")
-        return 2
-    
-    # Filter the email addresses by usage "import"
-    for email_account in user_email_accounts:
-        if email_account.usage == "import":
-            import_email_accounts.append(email_account)
+    import_email_accounts = database.query_executor.get_user_email_accounts_by_usage("import")
     
     # Check if any import email addresses are found
-    if import_email_accounts is None or len(import_email_accounts) == 0:
-        print("No email accounts found.")
-        return 2
-
-
+    if import_email_accounts is None or len(import_email_accounts) <= 0:
+        print("No email accounts for importing portfolios found.")
+        return 1
 
     # TODO - Use AvailableEmailAccount class instead
-    # Print the email addresses found
-    print("\nAVAILABLE EMAIL ACCOUNTS:")
-    print("-------------------------")
-    available_email_addresses: list[str] = []
-    for available_email_account in import_email_accounts:
-        print(available_email_account.address)
-        available_email_addresses.append(available_email_account.address)
+    # Print the available email accounts
+    title = "AVAILABLE EMAIL ACCOUNTS:"
+    print(f"\n{title}")
+    print("-" * len(title))
+    for i, email_account in enumerate(import_email_accounts, start=1):
+        print(f"{i}: {email_account}")
 
-    # Ask the user to select an email address
-    selected_email_address = input("\nEnter the email address to import from: ")
-    while selected_email_address not in available_email_addresses:
-        selected_email_address = input("Invalid email address. Please try again: ")
+    # Get the user's choice
+    choice = user_input.get_valid_menu_choice(len(import_email_accounts), "Choose the email account you would like to import from: ")
+    # Get the email account based on the user's choice
+    selected_import_email_account = import_email_accounts[choice - 1]
 
+    # Prompt the user for the email account password
+    provided_password_hash = user_input.password_prompt(prompt="Verify your email credentials by entering your email password: ", confirm=False)
     # Get the selected email account's password hash
-    selected_email_account_password_hash = database.query_executor.get_email_account_password_hash_by_email_address(selected_email_address)
+    selected_import_email_account_password_hash = database.query_executor.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
 
     # Check if the selected email account's password hash is found
-    if selected_email_account_password_hash is None:
-        print("Error: Email account password hash not found.")
-        return 3
+    if selected_import_email_account_password_hash is None:
+        print("Error: Email account password not found in the database. Please ensure you've properly added an email account for importing porfolios.")
+        return 2
 
+    # Validate the user's email credentials
+    from account_management.account_operations import UserAccountOperation, EmailAccountOperation
+    from access_management.account_authenticator import AccountAuthenticator
+    user_account_operation = UserAccountOperation(database)
+    email_account_operation = EmailAccountOperation(database)
+    email_authenticated = AccountAuthenticator(user_account_operation, email_account_operation)
+    email_authenticated.validate_email_credentials(selected_import_email_account.address, provided_password_hash)
+
+    if not email_authenticated:
+        print("Invalid email credentials.")
+        return 3
     # Login to the IMAP server using the selected email account
-    imap_client = IMAPClient(selected_email_address, selected_email_account_password_hash)
+    imap_client = IMAPClient(selected_import_email_account.address, provided_password_hash)
     mail = imap_client.email_login()
     if mail is None:
         return 3
 
-
-
-
-    # TODO - replace with AvailableFolder class
+    # TODO - replace with AvailableFolder menu class???
     # List available folders
     folder_list = imap_client.list_folders()
     print("------------------")
@@ -251,12 +245,8 @@ def import_from_email_account(database: Database) -> int:
         print(folder)
     print("------------------")
 
-
-
-
     # TODO - Replace with UserInput class???
-    folder_name = input("Enter the folder name: ")
-    folder_name = UserInput()._sanitize_input(folder_name)
+    folder_name = input("Enter the folder name (copy/paste from above): ")
 
     # Select the specified folder
     select_result = imap_client.select_folder(folder_name)
@@ -268,9 +258,9 @@ def import_from_email_account(database: Database) -> int:
 
     # TODO - change from .csv to directly into the database
     # Set the names of the CSV files to save the data to
-    csv_file_sec = "./data/ws-securities.csv"
-    csv_file_divs = "./data/ws-divs.csv"
-    csv_file_crypto = "./data/ws-crypto.csv"
+    csv_file_sec = "./data/email_import/ws-securities.csv"
+    csv_file_divs = "./data/email_import/ws-divs.csv"
+    csv_file_crypto = "./data/email_import/ws-crypto.csv"
 
 
 

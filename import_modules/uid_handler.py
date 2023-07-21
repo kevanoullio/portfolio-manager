@@ -13,6 +13,8 @@ import logging
 
 # UIDHandler class for handling Unique Identifier (UID) operations.
 class UIDHandler:
+    last_uid_cache = None
+
     @staticmethod
     # Function for saving the UID of the last processed email to a file
     def save_last_uid(uid):
@@ -25,12 +27,11 @@ class UIDHandler:
     @staticmethod
     # Define a function to read the UID of the last processed email from a file
     def read_last_uid(last_uid_cache: str | None = None):
-        global last_uid_cache
         if last_uid_cache is not None:
             return last_uid_cache
-        if os.path.isfile("./data/last_uid.txt") and os.path.getsize("./data/last_uid.txt") > 0:
+        if os.path.isfile("./data/email_import/last_uid.txt") and os.path.getsize("./data/last_uid.txt") > 0:
             try:
-                with open("./data/last_uid.txt", "r") as f:
+                with open("./data/email_import/last_uid.txt", "r") as f:
                     last_uid = f.read()
                     last_uid_cache = last_uid
                     return last_uid
