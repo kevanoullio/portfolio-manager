@@ -38,24 +38,19 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
             if os.path.exists(self.backup_manager.db_backup_filename):
                 logging.info("Backup file exists.")
             else:
+                print("Backup file does not exist.")
                 logging.info("Backup file does not exist.")
                 # Create a new backup database file and initialize it
                 self.backup_manager.create_backup()
         else:
+            print("Database file does not exist.")
             logging.info("Database file does not exist.")
             # Check if a backup file exists
             if os.path.exists(self.backup_manager.db_backup_filename):
+                print("Backup file exists.")
                 logging.info("Backup file exists.")
                 # Restore from the backup file
-                restore_success = self.backup_manager.restore_from_backup()
-                if restore_success:
-                    print("Restored from backup.")
-                    logging.info("Database file restored from backup successfully.")
-                    # Perform additional steps to restore the database state, if needed
-                else:
-                    print("Failed to restore from backup.")
-                    logging.error("Failed to restore database file from backup.")
-                    # Handle the error or exit the program as necessary
+                self.backup_manager.restore_from_backup()
             else:
                 # Create a new database file by opening and closing a connection
                 # Create a Database Schema object and initialize the database using the schema file

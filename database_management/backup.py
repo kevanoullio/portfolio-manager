@@ -31,6 +31,7 @@ class BackupManager:
         try:
             # Restore from the backup by copying the backup file to the database file
             shutil.copyfile(self.db_backup_filename, self.db_filename)
+            logging.info("Backup file restored.")
             return True
         except (IOError, shutil.Error) as e:
             print(f"Failed to restore from backup: {str(e)}")
@@ -40,6 +41,7 @@ class BackupManager:
         try:
             # Create a new backup by copying the database file
             shutil.copyfile(self.db_filename, self.db_backup_filename)
+            logging.info("Backup file created.")
             return True
         except (IOError, shutil.Error) as e:
             print(f"Failed to restore from backup: {str(e)}")
