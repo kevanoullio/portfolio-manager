@@ -13,16 +13,19 @@ from session_management.session_manager import SessionManager
 # Configure logging
 import logging
 
+# Custom Type Hinting
+execute_query_type = tuple[str, ...] | str | type(None)
+
 
 # QueryExecutor class for executing SQL statements
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection, session_manager: SessionManager):
         self.db_connection = db_connection
         self.session_manager = session_manager
-        self.complex_queries_file = "./data_management/complex_queries.sql"
+        self.complex_queries_file = "./database_management/query/complex_queries.sql"
         logging.info(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    def execute_query(self, query: str, params: tuple[str] | None = None) -> list[tuple] | None:
+    def execute_query(self, query: str, params: execute_query_type = None) -> list[tuple] | None:
         try:
             with self.db_connection as connection:
                 with connection.cursor() as cursor:
@@ -68,20 +71,13 @@ class QueryExecutor:
         # Find the selected query by matching the title
         selected_query = self.__find_complex_query_by_title(queries, query_title)
 
-        # Execute the selected query with variable substitution
-        if selected_query:
-            query_with_values = self.__replace_variables(selected_query, args)
-            # Execute the query
-            try:
-                with self.db_connection.cursor() as cursor:
-                    cursor.execute(query_with_values)
-                    result = cursor.fetchall()  # Fetch all rows of the result
-                    return result
-            except Exception as e:
-                raise DatabaseQueryExecutionError(self.db_connection, "QUERY BY TITLE", e)
-        else:
+        # Check if the query was found
+        if selected_query is None:
             raise DatabaseQueryError(self.db_connection, f"Query with title '{query_title}' not found.")
-
+        else:
+            # Execute the selected query with variable substitution
+            result = self.execute_query(self.__replace_variables(selected_query, args))
+            return result
 
 
 
@@ -105,246 +101,199 @@ class QueryExecutor:
 
     # TODO - review all of this code and consolidate into query_builder
     def create_table(self, table_name: str, columns: tuple[str]) -> None:
+        # Define the query parameters
         query_type = "CREATE TABLE"
         query = f"{query_type} IF NOT EXISTS {table_name} {columns}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def rename_table(self, table_name: str, new_table_name: str) -> None:
+        # Define the query parameters
         query_type = "ALTER TABLE"
         query = f"{query_type} {table_name} RENAME TO {new_table_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def drop_table(self, table_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP TABLE"
         query = f"{query_type} IF EXISTS {table_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def add_column(self, table_name: str, column_name: str, data_type: str) -> None:
+        # Define the query parameters
         query_type = "ADD COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name} {data_type}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def rename_column(self, table_name: str, column_name: str, new_column_name: str) -> None:
+        # Define the query parameters
         query_type = "RENAME COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name} TO {new_column_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def alter_column(self, table_name: str, column_name: str, new_data_type: str) -> None:
+        # Define the query parameters
         query_type = "ALTER COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name} {new_data_type}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def drop_column(self, table_name: str, column_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP COLUMN"
         query = f"ALTER TABLE {table_name} {query_type} {column_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
 
     def insert_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
+        # Define the query parameters
         query_type = "INSERT"
         query = f"{query_type} INTO {table_name} {columns} VALUES {values} WHERE user_id = {user_id}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def update_entry(self, table_name: str, column_name: str, new_value: str, where_clause: str, user_id: int) -> None:
+        # Define the query parameters
         query_type = "UPDATE"
         query = f"{query_type} {table_name} SET {column_name} = {new_value} WHERE {where_clause} AND user_id = {user_id}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def delete_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
+        # Define the query parameters
         query_type = "DELETE"
         query = f"{query_type} FROM {table_name} WHERE {columns} = {values} AND user_id = {user_id}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
-    def select(self, table_name: str, columns: tuple[str], user_id: int, where_clause: str | None = None) -> list[dict[str, str]]:
+    def select(self, table_name: str, columns: tuple[str], user_id: int, where_clause: str | None = None) -> list[tuple[str]] | None:
+        # Define the query parameters
         query_type = "SELECT"
         query = f"{query_type} {columns} FROM {table_name}"
         if where_clause is not None:
             query += f" WHERE {where_clause} AND user_id = {user_id}"
         else:
             query += f" WHERE user_id = {user_id}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-                result = cursor.fetchall()
-                return result
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        result = self.execute_query(query)
+        # Check whether the result is None (None means ...) # TODO - what does None mean?
+        if result is not None and len(result) > 0:
+            return result
+        else:
+            return None
     
-    def join(self, table_name_1: str, table_name_2: str, columns: tuple[str], join_condition: str, user_id: int) -> list[dict[str, str]]:
+    def join(self, table_name_1: str, table_name_2: str, columns: tuple[str], join_condition: str, user_id: int) -> list[tuple[str]] | None:
+        # Define the query parameters
         query_type = "JOIN"
         query = f"{query_type} {table_name_1} INNER JOIN {table_name_2} ON {join_condition} {columns} WHERE user_id = {user_id}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-                result = cursor.fetchall()
-                return result
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        result = self.execute_query(query)
+        # Check whether the result is None (None means ...) # TODO - what does None mean?
+        if result is not None and len(result) > 0:
+            return result
+        else:
+            return None
 
     def create_index(self, table_name: str, column_name: str) -> None:
+        # Define the query parameters
         query_type = "CREATE INDEX"
         query = f"{query_type} ON {table_name} ({column_name})"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def drop_index(self, table_name: str, column_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP INDEX"
         query = f"{query_type} {table_name} {column_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def create_view(self, view_name: str, view_body: str) -> None:
+        # Define the query parameters
         query_type = "VIEW"
         query = f"{query_type} {view_name} {view_body}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def drop_view(self, view_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP VIEW"
         query = f"{query_type} {view_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def create_trigger(self, trigger_name: str, trigger_body: str) -> None:
+        # Define the query parameters
         query_type = "TRIGGER"
         query = f"{query_type} {trigger_name} {trigger_body}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def drop_trigger(self, trigger_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP TRIGGER"
         query = f"{query_type} {trigger_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def create_constraint(self, table_name: str, constraint_type: str, column_name: str) -> None:
+        # Define the query parameters
         query_type = "CREATE CONSTRAINT"
         query = f"{query_type} {constraint_type} {table_name} {column_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def drop_constraint(self, table_name: str, constraint_type: str, column_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP CONSTRAINT"
         query = f"{query_type} {constraint_type} {table_name} {column_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def create_transaction(self, queries: list[str]) -> None:
+        # Define the query parameters
         query_type = "TRANSACTION"
-        try:
-            with self.db_connection.cursor() as cursor:
-                for query in queries:
-                    cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        query = f"{query_type} {queries}"
+        # Execute the query
+        self.execute_query(query)
 
     def create_stored_procedure(self, procedure_name: str, procedure_body: str) -> None:
+        # Define the query parameters
         query_type = "STORED PROCEDURE"
         query = f"{query_type} {procedure_name} {procedure_body}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def call_stored_procedure(self, procedure_name: str, procedure_arguments: tuple[str]) -> None:
+        # Define the query parameters
         query_type = "CALL STORED PROCEDURE"
         query = f"{query_type} {procedure_name} {procedure_arguments}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def drop_stored_procedure(self, procedure_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP STORED PROCEDURE"
         query = f"{query_type} {procedure_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     def create_function(self, function_name: str, function_body: str) -> None:
+        # Define the query parameters
         query_type = "FUNCTION"
         query = f"{query_type} {function_name} {function_body}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
     
     def drop_function(self, function_name: str) -> None:
+        # Define the query parameters
         query_type = "DROP FUNCTION"
         query = f"{query_type} {function_name}"
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        # Execute the query
+        self.execute_query(query)
 
     # Would only need to sanatize input if user inputs table name or column name
     def __sanitize_input(self, input: str) -> str:
@@ -377,13 +326,12 @@ class QueryExecutor:
     #     return self.__handle_exists_result(result, item_name)
 
     def __item_exists(self, item_name: str, query: str, params: tuple) -> bool:
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(query, params)
-                result = cursor.fetchone()
-                return result is not None  # Returns True if a row is returned, indicating the item exists
-        except Exception as e:
-            raise DatabaseQueryError(self.db_connection, "Error executing query", e)
+        # Define the query parameters
+        query_type = "SELECT"
+        final_query = f"{query_type} {item_name} FROM {query}"
+        # Execute the query
+        result = self.execute_query(final_query, params)
+        return result is not None  # Returns True if a row is returned, indicating the item exists
 
     def table_exists(self, table_name: str) -> bool:
         # SQL query to check if a table exists
@@ -405,22 +353,12 @@ class QueryExecutor:
         # Sanitize the input to avoid SQL injection
         table_name = self.__sanitize_input(table_name)
         condition = self.__sanitize_input(condition)
-
         # SQL query to check if the entry exists in the table
         check_entry_query = f"SELECT 1 FROM {table_name} WHERE {condition} AND user_id = ?"
         # Set the query parameters
         params = (user_id,)
         # Check if the entry exists
         return self.__item_exists(table_name, check_entry_query, params)
-
-
-
-
-
-
-
-
-
 
     def get_user_account_by_id(self, provided_user_id: int) -> UserAccount | None:
         # Define the query parameters
@@ -461,25 +399,18 @@ class QueryExecutor:
         else:
             return None
 
-
-
-
-
-
-
-    def get_email_usage_name_by_usage_id(self, email_usage_id: int) -> str:
+    def get_email_usage_name_by_usage_id(self, email_usage_id: int) -> str | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_usage_query = f"{query_type} usage FROM email_usage WHERE id = ?"
-        params = (email_usage_id,)
+        params = (str(email_usage_id),)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_usage_query, params)
-                result = cursor.fetchone()
-                return result[0]
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_email_usage_query, params)
+        # Check whether the result is None (None means the email_usage doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
 
     def get_email_usage_id_by_usage_name(self, email_usage_name: str) -> int | None:
         # Define the query parameters
@@ -487,86 +418,88 @@ class QueryExecutor:
         get_email_usage_id_query = f"{query_type} id FROM email_usage WHERE usage = ?"
         params = (email_usage_name,)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_usage_id_query, params)
-                result = cursor.fetchone()
-                return result[0]
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_email_usage_id_query, params)
+        # Check whether the result is None (None means the email_usage_id doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
 
     def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        params = (self.session_manager.get_current_user_id(), provided_email_address)
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_account_by_email_address_query, params)
-                result = cursor.fetchall()
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        # Check if the user has any email accounts
-        if result is None or len(result) > 0:
-            return None
-        # Initialize a list of EmailAccount types
-        email_usage: list[str] = []
-        # Replace the email usage id with the email usage name
-        for row in result:
-            usage = self.get_email_usage_name_by_usage_id(result[row][0])
-            email_usage.append(usage)
-            logging.debug(f"Email address: {provided_email_address}, usage: {usage}")
-        return email_usage
+        current_user_id = self.session_manager.get_current_user_id()
+        if current_user_id is None:
+            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+        else:
+            params = (str(current_user_id), provided_email_address)
+            # Execute the query
+            result = self.execute_query(get_email_account_by_email_address_query, params)
+            # Check if the user has any email accounts
+            if result is None or len(result) > 0:
+                return None
+            # Initialize a list of EmailAccount types
+            email_usage: list[str] = []
+            # Replace the email usage id with the email usage name
+            for row in result:
+                usage = self.get_email_usage_name_by_usage_id(int(row[0]))
+                if usage is not None:
+                    email_usage.append(usage)
+                    logging.debug(f"Email address: {provided_email_address}, usage: {usage}")
+            return email_usage
 
     def get_all_user_email_accounts(self) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
-        params = (self.session_manager.get_current_user_id(),) # FIXME - no longer have access to current_user.user_id???
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_accounts_query, params)
-                result = cursor.fetchall()
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        # Check if the user has any email accounts
-        if result is None or len(result) > 0:
-            return None
-        # Initialize a list of EmailAccount types
-        email_accounts: list[EmailAccount] = []
-        # Replace the email usage id with the email usage name
-        for row in result:
-            usage = self.get_email_usage_name_by_usage_id(result[row][0])
-            address = result[row][1]
-            email_accounts.append(EmailAccount(usage, address))
-            logging.debug(f"Email address: {address}, usage: {usage}")
-        return email_accounts
+        current_user_id = self.session_manager.get_current_user_id()
+        if current_user_id is None:
+            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+        else:
+            params = (str(current_user_id),)
+            # Execute the query
+            result = self.execute_query(get_email_accounts_query, params)
+            # Check if the user has any email accounts
+            if result is None or len(result) > 0:
+                return None
+            # Initialize a list of EmailAccount types
+            email_accounts: list[EmailAccount] = []
+            # Replace the email usage id with the email usage name
+            for row in result:
+                usage = self.get_email_usage_name_by_usage_id(row[0])
+                address = row[1]
+                email_accounts.append(EmailAccount(str(usage), address))
+                logging.debug(f"Email address: {address}, usage: {usage}")
+            return email_accounts
 
     def get_user_email_accounts_by_usage(self, email_usage_name: str) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_accounts_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
-        params = (self.session_manager.get_current_user_id(), self.get_email_usage_id_by_usage_name(email_usage_name))
-        # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_email_accounts_query, params)
-                result = cursor.fetchall()
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
-        # Initialize a list of EmailAccount types
-        email_accounts: list[EmailAccount] = []
-        # Check if the user has any email accounts
-        if result is not None:
-            # Replace the email usage id with the email usage name
-            for row in result:
-                usage = email_usage_name
-                address = row[0]
-                email_accounts.append(EmailAccount(usage, address))
-                logging.debug(f"Email address: {address}, usage: {usage}")
-        return email_accounts
+        current_user_id = self.session_manager.get_current_user_id()
+        if current_user_id is None:
+            raise DatabaseQueryError(self.db_connection, "No user is currently logged in.")
+        else:
+            email_usage_id = self.get_email_usage_id_by_usage_name(email_usage_name)
+            if email_usage_id is None:
+                raise DatabaseQueryError(self.db_connection, f"Email usage '{email_usage_name}' does not exist.")
+            else:    
+                params = (str(current_user_id), str(email_usage_id))
+                # Execute the query
+                result = self.execute_query(get_email_accounts_query, params)
+                # Check if the user has any email accounts
+                if result is None:
+                    return None
+                # Initialize a list of EmailAccount types
+                email_accounts: list[EmailAccount] = []
+                # Replace the email usage id with the email usage name
+                for row in result:
+                    usage = email_usage_name
+                    address = row[0]
+                    email_accounts.append(EmailAccount(usage, address))
+                    logging.debug(f"Email address: {address}, usage: {usage}")
+                return email_accounts
 
     # def get_email_password_hash(self, user_id: int, email_address: str) -> bytes | None:
     #     query_type = "SELECT"
@@ -638,34 +571,25 @@ class QueryExecutor:
 
 
     def table_is_empty(self, table_name: str) -> bool:
+        # Define the query parameters
         query_type = "SELECT"
         # SQL query to check if a table is empty
         check_table_query = f"{query_type} * FROM ? LIMIT 1"
         # Set the query parameters
         params = (table_name,)
-
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(check_table_query, params)
-                result = cursor.fetchone()
-                return result is None  # Returns True if no row is returned, indicating the table is empty
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(check_table_query, params)
+        return result is None  # Returns True if no row is returned, indicating the table is empty
 
     def store_username_and_password(self, username: str, password_hash: bytes) -> None:
+        # Define the query parameters
         query_type = "INSERT"
         # SQL query to store the username and password hash
         store_username_and_password_query = f"{query_type} INTO user (username, password_hash) VALUES (?, ?)"
         # Set the query parameters
-        params = (username, password_hash)
-
+        params = (username, password_hash.decode("utf-8"))
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(store_username_and_password_query, params)
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        self.execute_query(store_username_and_password_query, params)
      
 
 
@@ -680,20 +604,19 @@ class QueryExecutor:
 
 
     def get_data_type_id(self, user_id: int, data_type: str) -> int | None:
+        # Define the query parameters
         query_type = "SELECT"
         # SQL query to get the id of a data type
         get_data_type_id_query = f"{query_type} id FROM data_type WHERE user_id = ? AND name = ?"
         # Set the query parameters
-        params = (user_id, data_type)
-
+        params = (str(user_id), data_type)
         # Execute the query
-        try:
-            with self.db_connection.cursor() as cursor:
-                cursor.execute(get_data_type_id_query, params)
-                result = cursor.fetchone()
-                return result[0]
-        except Exception as e:
-            raise DatabaseQueryExecutionError(self.db_connection, query_type, e)
+        result = self.execute_query(get_data_type_id_query, params)
+        # Check whether the result is None (None means the data type doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
 
 
 # DatabaseQueryError class  with Exception as base class for custom error handling

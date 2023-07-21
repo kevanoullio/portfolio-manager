@@ -156,7 +156,7 @@ class Dashboard:
     
     def view_current_portfolio(self):
         # TODO - review and finish this function
-        results = self.database.query_executor.execute_query_by_title("view_current_portfolio")
+        results = self.database.query_executor.execute_complex_query_by_title("view_current_portfolio")
         self.query_results.print(results)
     
 
@@ -176,7 +176,7 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        self.database.query_executor.execute_query_by_title("query_net_ticker_summary", ticker)
+        self.database.query_executor.execute_complex_query_by_title("query_net_ticker_summary", ticker)
 
 
     def build_portfolio_from_data_set(self):
