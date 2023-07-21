@@ -89,7 +89,7 @@ class UserInput:
         hashed_password = bcrypt.hashpw(provided_password, salt)
         return hashed_password
 
-    def username_prompt(self, prompt: str = "Enter your username: ") -> str:
+    def username_prompt(self, prompt: str="Enter your username: ") -> str:
         # Get the username from the user
         provided_username = input(prompt)
 
@@ -109,14 +109,14 @@ class UserInput:
 
         return provided_username
 
-    def password_prompt(self, prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
+    def password_prompt(self, prompt: str="Enter your password: ", confirm: bool=False, confirm_prompt: str="Confirm your password: ") -> bytes:
         """
         This function prompts the user for a password and ensures that it is a valid password format.
 
         Args:
-            prompt: The desired prompt to display to the user.
-            confirm: Whether or not to confirm the provided password with a second prompt.
-            confirm_prompt: The desired prompt to display to the user for confirming the password.
+            prompt (str): The desired prompt to display to the user.
+            confirm (bool): Whether or not to confirm the provided password with a second prompt.
+            confirm_prompt (str): The desired prompt to display to the user for confirming the password.
 
         Returns:
             If confirm is set to False, this function returns the hashed password as bytes, otherwise it returns the provided password as bytes without hashing.
@@ -126,13 +126,13 @@ class UserInput:
         provided_password = getpass(prompt)
 
         # Check if the provided password is valid
-        while self._username_validator.validate(provided_password) != 0:
+        while self._password_validator.validate(provided_password) != 0:
             print("Invalid password. ", end="")
-            if self._username_validator.validate(provided_password) == 1:
+            if self._password_validator.validate(provided_password) == 1:
                 print(f"Must be between {self._password_validator._minimum_length} and {self._password_validator._maximum_length} characters long.")
-            elif self._username_validator.validate(provided_password) == 2:
+            elif self._password_validator.validate(provided_password) == 2:
                 print("Only alphanumeric characters and underscores are allowed.")
-            elif self._username_validator.validate(provided_password) == 3:
+            elif self._password_validator.validate(provided_password) == 3:
                 print("Must only contain alphanumeric characters and underscores with no separations.")
             provided_password = input("Please try again: ")
 

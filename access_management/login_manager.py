@@ -48,8 +48,7 @@ class LoginManager:
         provided_password = self.user_input.password_prompt(confirm=True)
 
         # Create the account
-        # TODO - move this to UserAccountOperation
-        self._database.query_executor.store_username_and_password(provided_username, provided_password)
+        self.user_account_operation.create_user_account(provided_username, provided_password)
 
         # Retrieve the created user account, will return None if creation failed
         user_account = self.user_account_operation.get_user_account_by_username(provided_username)
@@ -62,7 +61,7 @@ class LoginManager:
             logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' created and logged in with session token: {self._database.session_manager.get_session_token()}")
             # self.redirect_to_dashboard(session_token)
         else:
-            print("Account creation failed. Please try again")
+            print("Account creation failed. Please try again.")
             logging.info(f"Account creation '{provided_username}' failed. No user ID.")
 
     def user_login(self) -> None:
@@ -72,7 +71,7 @@ class LoginManager:
         # Check if the username exists, will return None if it doesn't
         user_account = self.user_account_operation.get_user_account_by_username(provided_username)
         if user_account is None:
-            print("Username does not exist. Account login failed. Please try again")
+            print("Username does not exist. Account login failed. Please try again.")
             return None
         else:
             print(f"Logging in as '{user_account.username}'...")

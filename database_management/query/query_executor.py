@@ -14,7 +14,7 @@ from session_management.session_manager import SessionManager
 import logging
 
 # Custom Type Hinting
-execute_query_type = tuple[str, ...] | str | type(None)
+execute_query_params_type = tuple[str] | tuple[str, str] | tuple[int, str, bytes] | None
 
 
 # QueryExecutor class for executing SQL statements
@@ -25,24 +25,13 @@ class QueryExecutor:
         self.complex_queries_file = "./database_management/query/complex_queries.sql"
         logging.debug(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    # TODO - all executions that return data don't need to commit the transaction?
-    # TODO - call begin_transaction() then execute then commit_transaction() for transactions
-    # self.db_connection.commit_transaction()???
-    def execute_query(self, query: str, params: execute_query_type = None) -> list[tuple] | None:
-        try:
-            with self.db_connection as connection:
-                with connection.cursor() as cursor:
-                    if params is not None:
-                        cursor.execute(query, params)
-                    else:
-                        cursor.execute(query)
-                    return cursor.fetchall()
-        except DatabaseConnectionError as e:
-            logging.error(str(e))
-            raise DatabaseQueryError(self.db_connection, "Error executing the database query", e)
-        except sqlite3.Error as e:
-            logging.error(f"Error executing the database query: {str(e)}")
-            raise DatabaseQueryExecutionError(self.db_connection, "SQL", e)
+    def execute_query(self, query: str, params: execute_query_params_type=None) -> list[tuple] | None:
+        with self.db_connection as connection:
+            connection.begin_transaction()
+            cursor = connection.execute_query(query, params)
+            result = cursor.fetchall() # TODO - use QueryResults class to handle and format the results
+            connection.commit_transaction()
+            return result
 
     def __find_complex_query_by_title(self, queries: str, query_title: str) -> str | None:
         individual_queries = queries.split(";")
@@ -589,9 +578,11 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         # SQL query to store the username and password hash
-        store_username_and_password_query = f"{query_type} INTO user (username, password_hash) VALUES (?, ?)"
+        store_username_and_password_query = f"{query_type} INTO user (user_role_id, username, password_hash) VALUES (?, ?, ?)"
         # Set the query parameters
-        params = (username, password_hash.decode("utf-8"))
+        params = (2, username, password_hash)
+        print(f"query: {store_username_and_password_query}")
+        print(f"params: {params}")
         # Execute the query
         self.execute_query(store_username_and_password_query, params)
      

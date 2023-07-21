@@ -56,7 +56,15 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                 # Create a Database Schema object and initialize the database using the schema file
                 db_schema = DatabaseSchema(self.db_connection, self.db_schema_filename)
                 db_schema.initialize_database()
+                print(f"Database file created and initialized successfully.")
                 logging.info(f"Database file created and initialized successfully. Database: {self.db_filename}")
+                if os.path.exists(self.backup_manager.db_backup_filename):
+                    logging.info("Backup file exists.")
+                else:
+                    print("Backup file does not exist.")
+                    logging.info("Backup file does not exist.")
+                    # Create a new backup database file and initialize it
+                    self.backup_manager.create_backup()
 
     def restore(self, snapshot_data) -> None:
         # Implement the logic to restore the database to the state of the given snapshot

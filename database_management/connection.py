@@ -35,20 +35,25 @@ class DatabaseConnection:
         logging.debug(f"Database connection initialized. Database: {self.db_filename}")
 
     def __enter__(self):
+        """The __enter__ method is called when entering the context manager's scope.
+        \nIt returns the context manager object itself.
+        """
         try:
-            self.connection = self.open_connection()
+            self.open_connection()
         except Exception as e:
             self.close_connection()
             raise e
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """The __exit__ method is called when exiting the context manager's scope.
+        \nIf an exception is raised inside the 'with' block, the exception is passed to the __exit__ method.
+        """
         self.close_connection()
 
     @contextmanager
     def cursor(self):
         if self.connection is not None:
-            # connection = self.open_connection()
             cursor = self.connection.cursor()
             try:
                 yield cursor
@@ -62,7 +67,6 @@ class DatabaseConnection:
         if self.connection is None:
             try:
                 self.connection = sqlite3.connect(self.db_filename)
-                return self.connection
             except sqlite3.Error as e:
                 raise DatabaseConnectionError(self, "Error opening the database connection", e)
         else:
@@ -80,60 +84,57 @@ class DatabaseConnection:
 
     def begin_transaction(self) -> None:
         if self.connection is not None:
-            self.connection.execute("BEGIN TRANSACTION")
+            try:
+                self.connection.execute("BEGIN TRANSACTION")
+            except sqlite3.Error as e:
+                raise DatabaseQueryExecutionError(self, "Error beginning a transaction", e)
         else:
             raise DatabaseConnectionError(self, "Database connection is not open.")
 
-    # TODO - decide whether need to use execute_query in db_connection or query_executor,
-    # specifically when using transactions
-    # def execute_query(self, sql_query: str) -> sqlite3.Cursor:
-    #     if self.connection is not None:
-    #         with self.cursor() as cursor:
-    #             try:
-    #                 result = cursor.execute(sql_query)
-    #                 logging.debug(f"Query executed successfully: {sql_query}")
-    #                 return result
-    #             except sqlite3.Error as e:
-    #                 raise DatabaseConnectionError(self.db_filename, "Error executing SQL query", e)
-    #     else:
-    #         raise DatabaseConnectionError(self.db_filename, "Database connection is closed")
+    # Custom type hinting based on the type of parameters passed to the execute_query method
+    execute_query_params_type = tuple[str] | tuple[str, str] | tuple[int, str, bytes] | None
+
+    def execute_query(self, sql_query: str, params: execute_query_params_type=None) -> sqlite3.Cursor:
+        """Can be used to execute a single query, or a sequence of queries separated by semicolons.
+        \nExample usage:
+        \nsql_query = '''
+        \nINSERT INTO table1 (column1, column2) VALUES (?, ?);
+        \nINSERT INTO table2 (column1, column2) VALUES (?, ?);
+        \n'''
+        \nparams = (value1, value2, value3, value4)
+        \nexecute_query(sql_query, params)
+        """
+        if self.connection is not None:
+            try:
+                cursor = self.connection.cursor()
+                if params is not None:
+                    result = cursor.execute(sql_query, params)
+                else:
+                    result = cursor.execute(sql_query)
+                logging.debug(f"Query executed successfully: {sql_query}")
+                return result
+            except sqlite3.Error as e:
+                raise DatabaseQueryExecutionError(self, "Error executing SQL query", e)
+        else:
+            raise DatabaseConnectionError(self, "Database connection is closed")
 
     def commit_transaction(self) -> None:
             if self.connection is not None:
                 try:
                     self.connection.commit()
                 except sqlite3.Error as e:
-                    raise DatabaseConnectionError(self, "Error committing changes to the database", e)
+                    raise DatabaseQueryExecutionError(self, "Error committing changes to the database", e)
             else:
                 raise DatabaseConnectionError(self, "Database connection is not open.")
 
     def rollback_transaction(self) -> None:
         if self.connection is not None:
-            self.connection.rollback()
+            try:
+                self.connection.rollback()
+            except sqlite3.Error as e:
+                raise DatabaseQueryExecutionError(self, "Error rolling back changes to the database", e)
         else:
             raise DatabaseConnectionError(self, "Database connection is not open.")
-
-
-# # Open the database connection
-# with DatabaseConnection("your_database.db") as connection:
-#     # Begin a transaction
-#     connection.begin_transaction()
-
-#     try:
-#         # Execute multiple queries within the transaction
-#         connection.execute_query("INSERT INTO table1 (col1, col2) VALUES (1, 'A')")
-#         connection.execute_query("UPDATE table2 SET col1 = 'B' WHERE col2 = 'X'")
-
-#         # Commit the transaction
-#         connection.commit_transaction()
-
-#     except Exception:
-#         # Rollback the transaction if an exception occurs
-#         connection.rollback_transaction()
-
-
-
-
 
 
 # # ConnectionPool class for managing a pool of database connections
@@ -177,7 +178,7 @@ class DatabaseConnection:
 # pool.close_all_connections()
 
 
-# DatabaseConnectionError class  with Exception as base class for custom error handling
+# DatabaseConnectionError class with Exception as base class for custom error handling during database connection
 class DatabaseConnectionError(Exception):
     def __init__(self, db_connection: DatabaseConnection, message: str, original_exception=None) -> None:
         self.db_connection = str(db_connection).strip()
@@ -190,11 +191,19 @@ class DatabaseConnectionError(Exception):
         return f"Database connection error: [{self.message}] on connection '{self.db_connection}'.\
             \nOriginal exception: {self.original_exception}"
 
-# try:
-#     # Some code that may raise DatabaseConnectionError
-# except DatabaseConnectionError as e:
-#     print(f"Error occurred for database: {e.db_name}")
-#     print(e)  # Prints the custom error message and database name
+
+# DatabaseQueryExecutionError class with Exception as base class for custom error handling during query execution
+class DatabaseQueryExecutionError(Exception):
+    def __init__(self, db_connection, query_type: str, original_exception=None) -> None:
+        self.db_connection = str(db_connection).strip()
+        self.query_type = query_type
+        self.original_exception = str(original_exception).strip() if original_exception is not None else None
+
+    def __str__(self) -> str:
+        if self.original_exception is None:
+            return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'."
+        return f"[Database query error] Error executing {self.query_type} query on connection '{self.db_connection}'.\
+            \nOriginal exception: {self.original_exception}"
 
 
 if __name__ == "__main__":

@@ -34,10 +34,8 @@ class UserAccountOperation:
             return False
 
     # TODO - account for user roles for all methods that make changes to the database
-    def save_username_and_password_to_database(self, username: str, password: bytes) -> None:
-        # Save the user's information to the database
-        # Perform necessary database interactions to store user data
-        pass
+    def create_user_account(self, provided_username: str, provided_password: bytes) -> None:
+        self._database.query_executor.store_username_and_password(provided_username, provided_password)
 
     def delete_user_account_from_database(self, user_account: UserAccount) -> None:
         # Delete the user's information from the database
