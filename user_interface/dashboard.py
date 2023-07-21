@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from access_management.login_manager import LoginManager
 from database_management.database import Database
 from user_interface.query_results import QueryResults
+from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -27,6 +28,8 @@ class Dashboard:
         self.database = database
         self.login_manager = login_manager
         self.query_results = QueryResults()
+        self.user_account_operation = UserAccountOperation(self.database)
+        self.email_account_operation = EmailAccountOperation(self.database)
         self.is_running = False
  
     def __print_welcome_screen(self):
@@ -443,12 +446,25 @@ class Dashboard:
 
 
     def view_current_email_accounts(self):
-        print("View Current Email Accounts logic goes here...")
+        email_accounts = self.database.query_executor.get_all_current_user_email_accounts()
+        logging.debug(f"Current email accounts: {email_accounts}")
+        if email_accounts is not None:
+            title = "CURRENT EMAIL ACCOUNTS"
+            print(f"\n{title}")
+            print("-" * len(title))
+            for email_account in email_accounts:
+                print(email_account)
+        else:
+            print("\nNo email accounts found.")
     
 
     def add_email_account(self):
-        print("Add Email Account logic goes here...")
-    
+        # TODO - make this function less hacky, and use the menu if possible
+        title = "ADD EMAIL ACCOUNTS"
+        print(f"\n{title}")
+        print("-" * len(title))
+        # Run through the prompts to get the email address and password
+        self.email_account_operation.add_email_account()    
 
     def remove_email_account(self):
         print("Remove Email Account logic goes here...")

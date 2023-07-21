@@ -158,7 +158,7 @@ class Menu:
             logging.warning(f"Option {option_id} does not exist in {self.title} menu.")
 
     # TODO - refactor this method into the user_input() module
-    def get_valid_input(self):
+    def get_valid_input(self) -> int:
         while True:
             choice = input("\nPlease enter your choice: ")
 
@@ -1234,8 +1234,8 @@ class ManageEmailAccounts(Menu):
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: CurrentEmailAccounts,
-            2: AddEmailAccount,
+            1: ManageEmailAccounts,
+            2: ManageEmailAccounts,
             3: RemoveEmailAccount,
             0: AccountSettings
         }
@@ -1247,15 +1247,34 @@ class ManageEmailAccounts(Menu):
         }
 
 
-# AddEmailAccount Menu class for managing the add email account menu
-class AddEmailAccount(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "ADD EMAIL ACCOUNT"
-        self.previous_menu = ManageEmailAccounts(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of email accounts to choose from
-        # TODO - finish this menu
+# # CurrentEmailAccounts Menu class for managing the user's current email accounts
+# class ViewCurrentEmailAccounts(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "CURRENT EMAIL ACCOUNTS"
+#         self.previous_menu = ManageEmailAccounts(dashboard)
+#         # Add menu options
+#         self.options = {
+#         } # TODO - Populate user's current email accounts
+#         # TODO - finish this menu
+#         self.format_return_to_previous_menu_option()
+#         self.menu_mapping = {
+#             0: ManageEmailAccounts
+#         }
+#         self.menu_logic = {
+#             0: self.dashboard.previous_menu
+#         }
+
+
+# # AddEmailAccount Menu class for managing the add email account menu
+# class AddEmailAccount(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "ADD EMAIL ACCOUNT"
+#         self.previous_menu = ManageEmailAccounts(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of email accounts to choose from
+#         # TODO - finish this menu
 
 
 # RemoveEmailAccount Menu class for managing the remove email account menu
@@ -1299,17 +1318,6 @@ class DeleteAccount(Menu):
         self.previous_menu = AccountSettings(dashboard)
         # Add menu options
         self.options = {} # TODO - Add dynamic list of email accounts to choose from
-        # TODO - finish this menu
-
-
-# CurrentEmailAccounts Menu class for managing the user's current email accounts
-class CurrentEmailAccounts(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "CURRENT EMAIL ACCOUNTS"
-        self.previous_menu = ManageEmailAccounts(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Populate user's current email accounts
         # TODO - finish this menu
 
 

@@ -58,10 +58,11 @@ class UsernameValidator(Validator):
 # PasswordValidator class for validating passwords
 class PasswordValidator(Validator):
     def __init__(self, minimum_length: int = 3, maximum_length: int = 64) -> None:
-        allowed_characters = r"a-zA-Z0-9_"
-        valid_password_form = r"^[a-zA-Z0-9_]*$"
+        # Allow all special characters except for single quote, double quote, less than, greater than, and semicolon
+        allowed_characters = r"a-zA-Z0-9_!@#$%^&*()-_=+`~\[{\]}\\|:,./?"
+        valid_password_form = r"^[a-zA-Z0-9_!@#$%^&*()-_=+`~\[{\]}\\|:,./?]+$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_password_form)
-
+        # Allow all special characters except for single quote, double quote, less than, greater than, and semicolon
 
 # EmailValidator class for validating emails
 class EmailAddressValidator(Validator):
@@ -119,7 +120,7 @@ class UserInput:
             confirm_prompt (str): The desired prompt to display to the user for confirming the password.
 
         Returns:
-            If confirm is set to False, this function returns the hashed password as bytes, otherwise it returns the provided password as bytes without hashing.
+            (bytes): If confirm is set to False, this function returns the hashed password as bytes, otherwise it returns the provided password as bytes without hashing.
         """
         
         # Get the password from the user
@@ -131,10 +132,10 @@ class UserInput:
             if self._password_validator.validate(provided_password) == 1:
                 print(f"Must be between {self._password_validator._minimum_length} and {self._password_validator._maximum_length} characters long.")
             elif self._password_validator.validate(provided_password) == 2:
-                print("Only alphanumeric characters and underscores are allowed.")
+                print("Single quotes, double quotes, less than, greater than, and semicolons are not allowed.")
             elif self._password_validator.validate(provided_password) == 3:
-                print("Must only contain alphanumeric characters and underscores with no separations.")
-            provided_password = input("Please try again: ")
+                print("Must use allowed characters only with no separations.")
+            provided_password = getpass("Please try again: ")
 
         # Confirm the provided password if confirm was set to True
         if confirm:
@@ -171,11 +172,32 @@ class UserInput:
                 print("Only alphanumeric characters, underscores, periods, hyphens, and @ symbols are allowed.")
             elif self._email_validator.validate(provided_email) == 3:
                 print("Must be in the form of a standard email address, i.e. 'email@service.something'")
+            provided_email = input("Please try again: ")
 
         # Sanitize the provided email address
         provided_email = self._sanitize_input(provided_email)
 
         return provided_email
+
+    def get_valid_choice(self, maximum_choice: int) -> int:
+        while True:
+            choice = input("\nPlease enter your choice: ")
+
+            # Check if the input is a digit
+            if not choice.isdigit():
+                print("Invalid input. Please enter a digit.")
+                continue
+
+            choice = int(choice)
+
+            # Check if the input is within the valid range
+            logging.debug(f"Choice: {choice}")
+            logging.debug(f"Maximum choice: {maximum_choice}")
+            if choice < 0 or choice > maximum_choice:
+                print("Invalid input. Please enter a valid option.")
+                continue
+
+            return choice
 
 
 if __name__ == "__main__":

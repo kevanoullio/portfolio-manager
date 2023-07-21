@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 # Local Modules
 from database_management.database import Database
+from user_interface.user_input import UserInput
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -88,23 +89,29 @@ class UserAccountOperation:
 class EmailAccountOperation:
     def __init__(self, database: Database):
         self._database = database
+        self._user_input = UserInput()
 
     # TODO - finish this, should I do email_address or email_account???
-    # def check_email_address_exists(self, provided_email_address: str) -> bool:
-    #     result = self.query_executor.get_user_account_by_username(provided_email_address)
-    #     if result is None:
-    #         return False
-    #     if isinstance(result, UserAccount):
-    #         return True
-    #     else:
-    #         return False
+    def check_email_address_exists(self, provided_email_address: str) -> bool:
+        result = self._database.query_executor.get_email_account_by_email_address(provided_email_address)
+        if result is None:
+            return False
+        if isinstance(result, UserAccount):
+            return True
+        else:
+            return False
+
+    def store_email_address_only(self, email_usage_id: int, provided_email_address: str) -> None:
+        self._database.query_executor.store_email_address_only(email_usage_id, provided_email_address)
+
+    def store_email_address_and_password_hash(self, email_usage_id: int, provided_email_address: str, provided_password_hash: bytes) -> None:
+        self._database.query_executor.store_email_address_and_password_hash(email_usage_id, provided_email_address, provided_password_hash)
 
     def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
-        return self._database.query_executor.get_email_usage_by_email_address(provided_email_address)
+        return self._database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
 
-    def get_email_password_by_email_address(self, provided_email_address: str) -> bytes | None:
-        # TODO - finish this method
-        pass
+    def get_email_account_password_hash_by_email_address(self, provided_email_address: str) -> bytes | None:
+        return self._database.query_executor.get_email_account_password_hash_by_email_address(provided_email_address)
 
     # def import_data(self):
     #     # Logic to import data from the email account
@@ -116,49 +123,75 @@ class EmailAccountOperation:
 
 
 
-    # def add_email_account(self, email_usage: str) -> int:
-    #     if self.session_manager.current_user is None:
-    #         print("You are not logged in.")
-    #         return 1
+    def add_email_account(self) -> int:
+        if self._database.session_manager.get_current_user() is None:
+            print("You are not logged in.")
+            return 1
 
-    #     # Get the email address from the user (email_prompt checks if it's valid)
-    #     provided_email = self.user_input.email_prompt()
+        # Ask the user whether they want to add an email account for portfolio importing or for email notifications or both
+        print("What would you like to use this email account for?")
+        print("1. Portfolio Importing")
+        print("2. Email Notifications")
+        print("3. Both")
+        print("4. Cancel")
 
-    #     # Get the email_usage_id from the database
-    #     email_usage_id = self.query_executor.get_email_usage_id(email_usage)
+        # Get the user's choice
+        choice = self._user_input.get_valid_choice(4)
 
-    #     # Check if the email address is already in the database
-    #     if self.query_executor.entry_exists("email",
-    #             f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
-    #             self.session_manager.current_user.user_id):
-    #         print("Email address already in the database.")
-    #         return 2
+        # Check if the user wants to cancel
+        if choice == 4:
+            print("Email account import cancelled.")
+            return 0
+
+        # Get the email address from the user (email_prompt checks if it's valid)
+        provided_email_address = self._user_input.email_address_prompt()
+
+        # Get the email usage from the provided email address
+        email_usage_names = self._database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
         
-    #     # Only get the email password if the email usage is not "notification"
-    #     if email_usage == "notification":
-    #         provided_password = None
-    #         # Prep the email information for insertion into the database
-    #         columns = ("email_address", "email_usage_id")
-    #         values = (provided_email, email_usage_id)
-    #     else:
-    #         # Get the password from the user (password_prompt checks if it's valid)
-    #         provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
-    #         # Prep the email information for insertion into the database
-    #         columns = ("email_address", "password_hash", "email_usage_id")
-    #         values = (provided_email, provided_password, email_usage_id)
-        
-    #     # Insert the entry into the database
-    #     try:
-    #         self.query_executor.insert_entry("email", columns, values, self.session_manager.current_user.user_id)
-    #         # Add the email account to the current user
-    #         self.session_manager.current_user.add_email_account(EmailAccount(email_usage, provided_email, provided_password))
-    #     except Exception as e:
-    #         print("Error inserting email account into the database.")
-    #         logging.warning(e)
-    #         return 3
+        # Check if the email address is already in the database based on usage type
+        if email_usage_names is not None:
+            if choice == 1:
+                if "import" in email_usage_names:
+                    print("Email address already in the database for portfolio importing.")
+                    return 2
+            elif choice == 2:
+                if "notification" in email_usage_names:
+                    print("Email address already in the database for notifications.")
+                    return 2
+            elif choice == 3:
+                if "import" in email_usage_names and "notification" in email_usage_names:
+                    print("Email address already in the database for both portfolio importing and notifications.")
+                    return 2
 
-    #     print("Email account import successful.")
-    #     return 0
+        # Get the email usage id by usage name
+        import_id = self._database.query_executor.get_email_usage_id_by_usage_name("import")
+        notification_id = self._database.query_executor.get_email_usage_id_by_usage_name("notification")
+
+        # Check if the email usage id is None
+        if import_id is None or notification_id is None:
+            print("Error getting email usage id.")
+            return 3
+        
+        # Only get the email password if the email usage is not "notification"
+        if choice == 1:
+            # Get the password from the user (password_prompt checks if it's valid)
+            provided_email_password = self._user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
+            self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
+        elif choice == 2:
+            self.store_email_address_only(notification_id, provided_email_address)
+        elif choice == 3:
+            # Get the password from the user (password_prompt checks if it's valid)
+            provided_email_password = self._user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
+            self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
+            self.store_email_address_only(notification_id, provided_email_address)
+        else:
+            print("Invalid choice.")
+            return 4
+
+        print(f"Email account {provided_email_address} successfully added.")
+        logging.info(f"Email account {provided_email_address} successfully added.")
+        return 0
 
 
     # def remove_email_account(self, email_usage: str) -> int:

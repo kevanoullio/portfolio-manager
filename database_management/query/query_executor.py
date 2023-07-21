@@ -13,9 +13,6 @@ from session_management.session_manager import SessionManager
 # Configure logging
 import logging
 
-# Custom Type Hinting
-execute_query_params_type = tuple[str] | tuple[str, str] | tuple[int, str, bytes] | None
-
 
 # QueryExecutor class for executing SQL statements
 class QueryExecutor:
@@ -25,7 +22,7 @@ class QueryExecutor:
         self.complex_queries_file = "./database_management/query/complex_queries.sql"
         logging.debug(f"Query executor initialized. Database: {self.db_connection.db_filename}")
 
-    def execute_query(self, query: str, params: execute_query_params_type=None) -> list[tuple] | None:
+    def execute_query(self, query: str, params: tuple | None=None) -> list[tuple] | None:
         with self.db_connection as connection:
             connection.begin_transaction()
             cursor = connection.execute_query(query, params)
@@ -352,6 +349,36 @@ class QueryExecutor:
         # Check if the entry exists
         return self.__item_exists(table_name, check_entry_query, params)
 
+    def table_is_empty(self, table_name: str) -> bool:
+        # Define the query parameters
+        query_type = "SELECT"
+        # SQL query to check if a table is empty
+        check_table_query = f"{query_type} * FROM ? LIMIT 1"
+        # Set the query parameters
+        params = (table_name,)
+        # Execute the query
+        result = self.execute_query(check_table_query, params)
+        return result is None  # Returns True if no row is returned, indicating the table is empty
+
+
+
+
+    ###########################
+    # USER ACCOUNT OPERATIONS #
+    ###########################
+
+    def store_username_and_password(self, username: str, password_hash: bytes) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        # SQL query to store the username and password hash
+        store_username_and_password_query = f"{query_type} INTO user (user_role_id, username, password_hash) VALUES (?, ?, ?)"
+        # Set the query parameters
+        params = (2, username, password_hash)
+        print(f"query: {store_username_and_password_query}")
+        print(f"params: {params}")
+        # Execute the query
+        self.execute_query(store_username_and_password_query, params)
+
     def get_user_account_by_id(self, provided_user_id: int) -> UserAccount | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -391,11 +418,44 @@ class QueryExecutor:
         else:
             return None
 
+
+    ############################
+    # Email ACCOUNT OPERATIONS #
+    ############################
+
+    def store_email_address_only(self, email_usage_id: int, email_address: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        store_email_address_query = f"{query_type} INTO email (user_id, email_usage_id, [address]) VALUES (?, ?, ?)"
+        current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            params = (current_user_id, email_usage_id, email_address)
+            # Execute the query
+            self.execute_query(store_email_address_query, params)
+    
+    def store_email_address_and_password_hash(self, email_usage_id: int, email_address: str, email_password_hash: bytes) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        store_email_address_and_password_hash_query = f"{query_type} INTO email (user_id, email_usage_id, [address], password_hash) VALUES (?, ?, ?, ?)"
+        current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            params = (current_user_id, email_usage_id, email_address, email_password_hash)
+        # Execute the query
+        self.execute_query(store_email_address_and_password_hash_query, params)
+
     def get_email_usage_name_by_usage_id(self, email_usage_id: int) -> str | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_usage_query = f"{query_type} usage FROM email_usage WHERE id = ?"
-        params = (str(email_usage_id),)
+        params = (email_usage_id,)
         # Execute the query
         result = self.execute_query(get_email_usage_query, params)
         # Check whether the result is None (None means the email_usage doesn't exist)
@@ -417,18 +477,19 @@ class QueryExecutor:
         else:
             return None
 
-    def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
+    def get_email_usage_names_by_email_address(self, provided_email_address: str) -> list[str] | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
+        get_email_usage_names_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
         current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
             return None
         else:
-            params = (str(current_user_id), provided_email_address)
+            params = (current_user_id, provided_email_address)
             # Execute the query
-            result = self.execute_query(get_email_account_by_email_address_query, params)
+            result = self.execute_query(get_email_usage_names_by_email_address_query, params)
             # Check if the user has any email accounts
             if result is None or len(result) > 0:
                 return None
@@ -442,36 +503,42 @@ class QueryExecutor:
                     logging.debug(f"Email address: {provided_email_address}, usage: {usage}")
             return email_usage
 
-    def get_all_user_email_accounts(self) -> list[EmailAccount] | None:
+    def get_all_current_user_email_accounts(self) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
+        get_all_current_user_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
         current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
             return None
         else:
-            params = (str(current_user_id),)
+            params = (current_user_id,)
             # Execute the query
-            result = self.execute_query(get_email_accounts_query, params)
+            result = self.execute_query(get_all_current_user_email_accounts_query, params)
+            logging.debug(f"result: {result}")
             # Check if the user has any email accounts
-            if result is None or len(result) > 0:
+            if result is None or len(result) <= 0:
                 return None
-            # Initialize a list of EmailAccount types
-            email_accounts: list[EmailAccount] = []
-            # Replace the email usage id with the email usage name
-            for row in result:
-                usage = self.get_email_usage_name_by_usage_id(row[0])
-                address = row[1]
-                email_accounts.append(EmailAccount(str(usage), address))
-                logging.debug(f"Email address: {address}, usage: {usage}")
+            # Use a list comprehension to create a list of EmailAccount types
+            email_accounts = [
+                EmailAccount(
+                    str(self.get_email_usage_name_by_usage_id(tuple[0])),
+                    str(tuple[1])
+                )
+                for tuple in result
+            ]
+            # Log debug messages for each email account
+            for email_account in email_accounts:
+                logging.debug(f"Email address: {email_account.address}, usage: {email_account.usage}")
             return email_accounts
 
     def get_user_email_accounts_by_usage(self, email_usage_name: str) -> list[EmailAccount] | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_accounts_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
+        get_user_email_accounts_by_usage_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
         current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
             return None
@@ -480,9 +547,9 @@ class QueryExecutor:
             if email_usage_id is None:
                 raise DatabaseQueryError(self.db_connection, f"Email usage '{email_usage_name}' does not exist.")
             else:    
-                params = (str(current_user_id), str(email_usage_id))
+                params = (current_user_id, str(email_usage_id))
                 # Execute the query
-                result = self.execute_query(get_email_accounts_query, params)
+                result = self.execute_query(get_user_email_accounts_by_usage_query, params)
                 # Check if the user has any email accounts
                 if result is None:
                     return None
@@ -496,18 +563,41 @@ class QueryExecutor:
                     logging.debug(f"Email address: {address}, usage: {usage}")
                 return email_accounts
 
-    def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
+    def get_email_account_by_email_address(self, email_address: str) -> EmailAccount | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_email_password_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
+        get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
         current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
             return None
         else:
-            params = (str(current_user_id), email_address)
+            params = (current_user_id, email_address)
             # Execute the query
-            result = self.execute_query(get_email_password_query, params)
+            result = self.execute_query(get_email_account_by_email_address_query, params)
+            # Check if the user has any email accounts
+            if result is None or len(result) > 0:
+                return None
+            # Replace the email usage id with the email usage name
+            usage = self.get_email_usage_name_by_usage_id(int(result[0][0]))
+            if usage is None:
+                raise DatabaseQueryError(self.db_connection, f"Email usage id '{result[0][0]}' does not exist.")
+            return EmailAccount(usage, email_address)
+
+    def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_email_account_password_hash_by_email_address_query = f"{query_type} password FROM email WHERE user_id = ? AND email_address = ?"
+        current_user_id = self.session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            params = (current_user_id, email_address)
+            # Execute the query
+            result = self.execute_query(get_email_account_password_hash_by_email_address_query, params)
             return result[0][0] if result is not None else None
         
 
@@ -553,40 +643,6 @@ class QueryExecutor:
             print(failure_message)
             return None
         
-
-
-
-
-
-
-
-
-
-
-    def table_is_empty(self, table_name: str) -> bool:
-        # Define the query parameters
-        query_type = "SELECT"
-        # SQL query to check if a table is empty
-        check_table_query = f"{query_type} * FROM ? LIMIT 1"
-        # Set the query parameters
-        params = (table_name,)
-        # Execute the query
-        result = self.execute_query(check_table_query, params)
-        return result is None  # Returns True if no row is returned, indicating the table is empty
-
-    def store_username_and_password(self, username: str, password_hash: bytes) -> None:
-        # Define the query parameters
-        query_type = "INSERT"
-        # SQL query to store the username and password hash
-        store_username_and_password_query = f"{query_type} INTO user (user_role_id, username, password_hash) VALUES (?, ?, ?)"
-        # Set the query parameters
-        params = (2, username, password_hash)
-        print(f"query: {store_username_and_password_query}")
-        print(f"params: {params}")
-        # Execute the query
-        self.execute_query(store_username_and_password_query, params)
-     
-
 
 
 

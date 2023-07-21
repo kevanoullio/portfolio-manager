@@ -20,6 +20,9 @@ class UserAccount:
     def __post_init__(self) -> None:
         logging.info(f"User initialized successfully. Username: {self.username}, User ID: {self.user_id}")
 
+    def __str__(self) -> str:
+        return f"User ID: {self.user_id}, Username: {self.username}"
+
 
 # EmailAccount class for defining email account data type
 @dataclass
@@ -29,6 +32,9 @@ class EmailAccount:
 
     def __post_init__(self) -> None:
         logging.info(f"Email account initialized successfully. Address: {self.address}, Usage: {self.usage}")
+
+    def __str__(self) -> str:
+        return f"Email Address: {self.address}, Usage: {self.usage}"
 
 
 if __name__ == "__main__":

@@ -91,18 +91,35 @@ class DatabaseConnection:
         else:
             raise DatabaseConnectionError(self, "Database connection is not open.")
 
-    # Custom type hinting based on the type of parameters passed to the execute_query method
-    execute_query_params_type = tuple[str] | tuple[str, str] | tuple[int, str, bytes] | None
+    def execute_query(self, sql_query: str, params: tuple | None=None) -> sqlite3.Cursor:
+        """Executes an SQL query on the database and returns a cursor object.
+        
+        Can be used to execute a single query, or a sequence of queries separated by semicolons.
 
-    def execute_query(self, sql_query: str, params: execute_query_params_type=None) -> sqlite3.Cursor:
-        """Can be used to execute a single query, or a sequence of queries separated by semicolons.
-        \nExample usage:
-        \nsql_query = '''
-        \nINSERT INTO table1 (column1, column2) VALUES (?, ?);
-        \nINSERT INTO table2 (column1, column2) VALUES (?, ?);
-        \n'''
-        \nparams = (value1, value2, value3, value4)
-        \nexecute_query(sql_query, params)
+        Args:
+            sql_query (str): The SQL query/ies to be executed.
+            params (execute_query_params_type, optional): The parameters to use in the query/ies, if any. Defaults to None.
+
+        Returns:
+            (sqlite3.Cursor): A cursor object that can be used to iterate over the results of the query.
+
+        Raises:
+            DatabaseConnectionError: If the database connection is closed.
+            DatabaseQueryExecutionError: If there is an error executing the query.
+
+        Example usage:
+
+            sql_query = '''
+
+            INSERT INTO table1 (column1, column2) VALUES (?, ?);
+
+            INSERT INTO table2 (column1, column2) VALUES (?, ?);
+
+            '''
+
+            params = (value1, value2, value3, value4)
+            
+            execute_query(sql_query, params)
         """
         if self.connection is not None:
             try:

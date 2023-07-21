@@ -191,7 +191,7 @@ def import_from_email_account(database: Database) -> int:
         return 1
     
     # Fetch all email addresses of usage "import" from the user
-    user_email_accounts = database.query_executor.get_all_user_email_accounts()
+    user_email_accounts = database.query_executor.get_all_current_user_email_accounts()
     import_email_accounts = []
 
     # Check if any email addresses are found
