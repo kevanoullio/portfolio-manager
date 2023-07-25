@@ -4,6 +4,7 @@
 import sqlite3
 
 # Third-party Libraries
+import pandas as pd
 
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
@@ -17,13 +18,13 @@ import logging
 # QueryExecutor class for executing SQL statements
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection, session_manager: SessionManager):
-        self.db_connection = db_connection
-        self.session_manager = session_manager
-        self.complex_queries_file = "./database_management/query/complex_queries.sql"
-        logging.debug(f"Query executor initialized. Database: {self.db_connection.db_filename}")
+        self._db_connection = db_connection
+        self._session_manager = session_manager
+        self._complex_queries_file = "./database_management/query/complex_queries.sql"
+        logging.debug(f"Query executor initialized. Database: {self._db_connection.db_filename}")
 
     def execute_query(self, query: str, params: tuple | None=None) -> list[tuple] | None:
-        with self.db_connection as connection:
+        with self._db_connection as connection:
             connection.begin_transaction()
             cursor = connection.execute_query(query, params)
             result = cursor.fetchall() # TODO - use QueryResults class to handle and format the results
@@ -54,7 +55,7 @@ class QueryExecutor:
 
     def execute_complex_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
         # Read the complex_queries.sql file
-        with open(self.complex_queries_file, "r") as file:
+        with open(self._complex_queries_file, "r") as file:
             queries = file.read()
 
         # Find the selected query by matching the title
@@ -62,12 +63,29 @@ class QueryExecutor:
 
         # Check if the query was found
         if selected_query is None:
-            raise DatabaseQueryError(self.db_connection, f"Query with title '{query_title}' not found.")
+            raise DatabaseQueryError(self._db_connection, f"Query with title '{query_title}' not found.")
         else:
             # Execute the selected query with variable substitution
             result = self.execute_query(self.__replace_variables(selected_query, args))
             return result
 
+    def pandas_to_existing_sql_table(self, dataframe: pd.DataFrame, table_name: str) -> None:
+        # Check if the dataframe is not None
+        if dataframe is not None:
+            # Access the underlying database connection object
+            conn = self._db_connection.connection
+            # Check if the connection is None or not
+            if conn is not None:
+                try:
+                    # Insert all rows from the dataframe into the existing database table
+                    dataframe.to_sql(table_name, conn, index=False, if_exists="append")
+                    logging.info(f"Dataframe inserted into the {table_name} table.")
+                except sqlite3.IntegrityError as e:
+                    logging.error(f"Dataframe could not be inserted into the {table_name} table. {e}")
+            else:
+                raise DatabaseConnectionError(self._db_connection, "Database connection is None.")
+        else:
+            logging.error("Dataframe is None.")
 
 
 # Create Table: Creating a new table in the database.
@@ -427,7 +445,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         store_email_address_query = f"{query_type} INTO email (user_id, email_usage_id, [address]) VALUES (?, ?, ?)"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -441,7 +459,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         store_email_address_and_password_hash_query = f"{query_type} INTO email (user_id, email_usage_id, [address], password_hash) VALUES (?, ?, ?, ?)"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -481,7 +499,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_usage_names_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -507,7 +525,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_all_current_user_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -537,7 +555,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_user_email_accounts_by_usage_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -545,7 +563,7 @@ class QueryExecutor:
         else:
             email_usage_id = self.get_email_usage_id_by_usage_name(email_usage_name)
             if email_usage_id is None:
-                raise DatabaseQueryError(self.db_connection, f"Email usage '{email_usage_name}' does not exist.")
+                raise DatabaseQueryError(self._db_connection, f"Email usage '{email_usage_name}' does not exist.")
             else:    
                 params = (current_user_id, str(email_usage_id))
                 # Execute the query
@@ -567,7 +585,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -582,14 +600,14 @@ class QueryExecutor:
             # Replace the email usage id with the email usage name
             usage = self.get_email_usage_name_by_usage_id(int(result[0][0]))
             if usage is None:
-                raise DatabaseQueryError(self.db_connection, f"Email usage id '{result[0][0]}' does not exist.")
+                raise DatabaseQueryError(self._db_connection, f"Email usage id '{result[0][0]}' does not exist.")
             return EmailAccount(usage, email_address)
 
     def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_password_hash_by_email_address_query = f"{query_type} password_hash FROM email WHERE user_id = ? AND address = ?"
-        current_user_id = self.session_manager.get_current_user_id()
+        current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")

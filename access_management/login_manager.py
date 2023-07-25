@@ -27,7 +27,7 @@ import logging
 class LoginManager:
     def __init__(self, database: Database) -> None:
         self._database = database
-        self._session_token_manager = SessionTokenManager(self._database.session_manager)
+        self._session_token_manager = SessionTokenManager(self._database._session_manager)
         # TODO - may nee to pass account operation as arguments since they'll be used elsewhere
         self.user_account_operation = UserAccountOperation(self._database)
         self.email_account_operation = EmailAccountOperation(self._database)
@@ -58,7 +58,7 @@ class LoginManager:
             # Print the success message
             print("Account creation success!")
             print(f"You are now logged in as '{user_account.username}'")
-            logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' created and logged in with session token: {self._database.session_manager.get_session_token()}")
+            logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' created and logged in with session token: {self._database._session_manager.get_session_token()}")
             # self.redirect_to_dashboard(session_token)
         else:
             print("Account creation failed. Please try again.")
@@ -81,23 +81,23 @@ class LoginManager:
 
         # Verify the username and password
         if self._account_authenticator.validate_user_credentials(provided_username, provided_password_hash):
-            if self._database.session_manager.get_current_user() is None:
+            if self._database._session_manager.get_current_user() is None:
                 # Run the login_management function to log the user in
                 self._execute_login_operations(user_account)
                 # Print the success message
                 print("Login success!")
                 print(f"You are now logged in as '{user_account.username}'")
-                logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' logged in with session token: {self._database.session_manager.get_session_token()}")
+                logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' logged in with session token: {self._database._session_manager.get_session_token()}")
             else:
                 print("You are already logged in.")
-                logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' is already logged in with session token: {self._database.session_manager.get_session_token()}")
+                logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' is already logged in with session token: {self._database._session_manager.get_session_token()}")
         else:
             print("Account login failed. Please try again")
-            logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' failed to log in with session token: {self._database.session_manager.get_session_token()}")
+            logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' failed to log in with session token: {self._database._session_manager.get_session_token()}")
 
     def user_logout(self) -> None:
-        current_user = self._database.session_manager.get_current_user()
-        session_token = self._database.session_manager.get_session_token()
+        current_user = self._database._session_manager.get_current_user()
+        session_token = self._database._session_manager.get_session_token()
         user_id = None
         username = None
         if current_user is None:
@@ -121,17 +121,17 @@ class LoginManager:
 
     def _execute_login_operations(self, user: UserAccount) -> None:
         # Load the user into the session manager
-        self._database.session_manager.set_current_user(user)
+        self._database._session_manager.set_current_user(user)
         # Generate a session token and start the session
         self._session_token_manager.generate_session_token()
-        self._database.session_manager.start_session()
+        self._database._session_manager.start_session()
     
     def _execute_logout_operations(self) -> None:
         # Unload the user from the session manager
-        self._database.session_manager.set_current_user(None)
+        self._database._session_manager.set_current_user(None)
         # Clear the session token and close the session
         self._session_token_manager.clear_session_token()
-        self._database.session_manager.close_session()
+        self._database._session_manager.close_session()
 
 
 if __name__ == "__main__":

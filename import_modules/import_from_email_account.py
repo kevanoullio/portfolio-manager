@@ -189,7 +189,7 @@ def import_from_email_account(database: Database) -> int:
     from user_interface.user_input import UserInput
     user_input = UserInput()
     # Fetch all email addresses of usage "import" from the user
-    import_email_accounts = database.query_executor.get_user_email_accounts_by_usage("import")
+    import_email_accounts = database._query_executor.get_user_email_accounts_by_usage("import")
     
     # Check if any import email addresses are found
     if import_email_accounts is None or len(import_email_accounts) <= 0:
@@ -212,7 +212,7 @@ def import_from_email_account(database: Database) -> int:
     # Prompt the user for the email account password
     provided_password_hash = user_input.password_prompt(prompt="Verify your email credentials by entering your email password: ", confirm=False)
     # Get the selected email account's password hash
-    selected_import_email_account_password_hash = database.query_executor.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
+    selected_import_email_account_password_hash = database._query_executor.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
 
     # Check if the selected email account's password hash is found
     if selected_import_email_account_password_hash is None:
