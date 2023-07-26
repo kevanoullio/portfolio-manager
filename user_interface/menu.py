@@ -235,7 +235,7 @@ class PortfolioManager(Menu):
         # Add menu options
         self.add_option(verb="View", subject="Portfolio")
         self.add_option(verb="Manage", subject="Portfolio")
-        self.add_option(subject="Market Data")
+        self.add_option(verb="Manage", subject="Market Data")
         self.add_option(subject="Statistical Analysis")
         self.add_option(subject="Trading Strategies")
         self.add_option(subject="Reports")
@@ -247,7 +247,7 @@ class PortfolioManager(Menu):
         self.menu_mapping = {
             1: ViewPortfolio,
             2: ManagePortfolio,
-            3: None,
+            3: ManageMarketData,
             4: None,
             5: None,
             6: None,
@@ -259,7 +259,7 @@ class PortfolioManager(Menu):
         self.menu_logic = {
             1: self.dashboard.view_portfolio,
             2: self.dashboard.manage_portfolio,
-            3: self.dashboard.market_data,
+            3: self.dashboard.manage_market_data,
             4: self.dashboard.statistical_analysis,
             5: self.dashboard.trading_strategies,
             6: self.dashboard.reports,
@@ -554,27 +554,122 @@ class ManageMarketData(Menu):
         self.title = "MANAGE MARKET DATA"
         self.previous_menu = PortfolioManager(dashboard)
         # Add menu options
+        self.add_option(verb="View", subject="Market Data")
+        self.add_option(verb="Initialize", subject="Market Data")
+        self.add_option(verb="Import", subject="Custom Market Data")
+        self.add_option(verb="Modify", subject="Market Data")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
+            1: ViewMarketData,
+            2: InitializeMarketData,
+            3: ImportCustomMarketData,
+            4: ModifyMarketData,
+            0: PortfolioManager
+        }
+        self.menu_logic = {
+            1: self.dashboard.view_market_data,
+            2: self.dashboard.initialize_market_data,
+            3: self.dashboard.import_custom_market_data,
+            4: self.dashboard.modify_market_data,
+            0: self.dashboard.previous_menu
+        }
+
+
+# ViewMarketData Menu class for managing the view market data menu
+class ViewMarketData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "VIEW MARKET DATA"
+        self.previous_menu = ManageMarketData(dashboard)
+        self.options = {} # TODO - Add dynamic list of scripts to choose from
+
+
+# InitializeMarketData Menu class for managing the initialize market data menu
+class InitializeMarketData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "INITIALIZE MARKET DATA"
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
+        self.add_option(verb="Initialize", subject="Exchange Listings Data")
+        self.add_option(verb="Initialize", subject="Index Holdings Data")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
+            1: InitializeExchangeListingsData,
+            2: InitializeIndexHoldingsData,
+            0: ManageMarketData
+        }
+        self.menu_logic = {
+            1: self.dashboard.initialize_exchange_listings_data,
+            2: self.dashboard.initialize_index_holdings_data,
+            0: self.dashboard.previous_menu
+        }
+
+
+# InitializeExchangeListingsData Menu class for managing the initialize exchange listings data menu
+class InitializeExchangeListingsData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "INITIALIZE EXCHANGE LISTINGS DATA"
+        self.previous_menu = InitializeMarketData(dashboard)
+        # Add menu options # TODO - add options
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = { # TODO - add mapping
+            0: ManageMarketData
+        }
+        self.menu_logic = { # TODO - add logic
+            0: self.dashboard.previous_menu
+        }
+
+
+# InitializeIndexHoldingsData Menu class for managing the initialize index holdings data menu
+class InitializeIndexHoldingsData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "INITIALIZE INDEX HOLDINGS DATA"
+        self.previous_menu = InitializeMarketData(dashboard)
+        # Add menu options # TODO - add options
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = { # TODO - add mapping
+            0: ManageMarketData
+        }
+        self.menu_logic = { # TODO - add logic
+            0: self.dashboard.previous_menu
+        }
+
+
+# ManageMarketData Menu class for managing the manage market data menu
+class ImportCustomMarketData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "IMPORT CUSTOM MARKET DATA"
+        self.previous_menu = ManageMarketData(dashboard)
+        # Add menu options
         self.add_option(verb="Import", subject="Market Data from CSV")
         self.add_option(verb="Import", subject="Market Data from Excel")
+        self.add_option(verb="Import", subject="Market Data from Database")
         self.add_option(verb="Import", subject="Market Data from an API")
         self.add_option(verb="Import", subject="Market Data from Online Source")
-        self.add_option(verb="Modify", subject="Market Data Entry")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
             1: ImportMarketDataFromCSV,
             2: ImportMarketDataFromExcel,
-            3: ImportMarketDataFromAPI,
-            4: ImportMarketDataFromOnlineSource,
-            5: ModifyMarketDataEntry,
-            0: PortfolioManager
+            3: ImportMarketDataFromDatabase,
+            4: ImportMarketDataFromAPI,
+            5: ImportMarketDataFromOnlineSource,
+            0: ManageMarketData
         }
         self.menu_logic = {
             1: self.dashboard.import_market_data_from_csv,
             2: self.dashboard.import_market_data_from_excel,
-            3: self.dashboard.import_market_data_from_api,
-            4: self.dashboard.import_market_data_from_online_source,
-            5: self.dashboard.modify_market_data_entry,
+            3: self.dashboard.import_market_data_from_database,
+            4: self.dashboard.import_market_data_from_api,
+            5: self.dashboard.import_market_data_from_online_source,
             0: self.dashboard.previous_menu
         }
 
@@ -584,7 +679,7 @@ class ImportMarketDataFromCSV(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM CSV"
-        self.previous_menu = ManageMarketData(dashboard)
+        self.previous_menu = ImportCustomMarketData(dashboard)
         # Add menu options
         self.options = {} # TODO - Add dynamic list of CSV files to choose from
         # TODO - finish this menu
@@ -595,9 +690,20 @@ class ImportMarketDataFromExcel(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM EXCEL"
-        self.previous_menu = ManageMarketData(dashboard)
+        self.previous_menu = ImportCustomMarketData(dashboard)
         # Add menu options
         self.options = {} # TODO - Add dynamic list of Excel files to choose from
+        # TODO - finish this menu
+
+
+# ImportMarketDataFromDatabase Menu class for managing the import market data from Excel menu
+class ImportMarketDataFromDatabase(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "IMPORT MARKET DATA FROM DATABASE"
+        self.previous_menu = ImportCustomMarketData(dashboard)
+        # Add menu options
+        self.options = {} # TODO - Add dynamic list of Database files to choose from
         # TODO - finish this menu
 
 
@@ -606,7 +712,7 @@ class ImportMarketDataFromAPI(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM API"
-        self.previous_menu = ManageMarketData(dashboard)
+        self.previous_menu = ImportCustomMarketData(dashboard)
         # Add menu options
         self.options = {} # TODO - Add dynamic list of APIs to choose from
         # TODO - finish this menu
@@ -617,20 +723,68 @@ class ImportMarketDataFromOnlineSource(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "IMPORT MARKET DATA FROM ONLINE SOURCE"
-        self.previous_menu = ManageMarketData(dashboard)
+        self.previous_menu = ImportCustomMarketData(dashboard)
         # Add menu options
         self.options = {} # TODO - Add dynamic list of online sources to choose from
         # TODO - finish this menu
 
 
-# ModifyMarketDataEntry Menu class for managing the modify market data entry menu
-class ModifyMarketDataEntry(Menu):
+# ModifyMarketData Menu class for managing the import market data from online source menu
+class ModifyMarketData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
-        self.title = "MODIFY MARKET DATA ENTRY"
-        self.previous_menu = PortfolioManager(dashboard)
+        self.title = "MODIFY MARKET DATA"
+        self.previous_menu = ManageMarketData(dashboard)
         # Add menu options
-        self.options = {} # TODO - Add dynamic list of market data to choose from
+        self.add_option(verb="Modify", subject="Single Market Data Entry")
+        self.add_option(verb="Modify", subject="Entire Market Data Column")
+        self.add_option(verb="Modify", subject="Entire Market Data Table")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
+            1: ModifySingleMarketDataEntry,
+            2: ModifyEntireMarketDataColumn,
+            3: ModifyEntireMarketDataTable,
+            0: ManageMarketData
+        }
+        self.menu_logic = {
+            1: self.dashboard.modify_single_market_data_entry,
+            2: self.dashboard.modify_entire_market_data_column,
+            3: self.dashboard.modify_entire_market_data_table,
+            0: self.dashboard.previous_menu
+        }
+
+
+# ModifySingleMarketDataEntry Menu class for managing the modify single market data entry menu
+class ModifySingleMarketDataEntry(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "MODIFY SINGLE MARKET DATA ENTRY"
+        self.previous_menu = ModifyMarketData(dashboard)
+        # Add menu options
+        self.options = {} # TODO - Add dynamic list of online sources to choose from
+        # TODO - finish this menu
+
+
+# ModifyEntireMarketDataColumn Menu class for managing the modify entire market data column menu
+class ModifyEntireMarketDataColumn(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "MODIFY ENTIRE MARKET DATA COLUMN"
+        self.previous_menu = ModifyMarketData(dashboard)
+        # Add menu options
+        self.options = {} # TODO - Add dynamic list of online sources to choose from
+        # TODO - finish this menu
+
+
+# ModifyEntireMarketDataTable Menu class for managing the modify entire market data table menu
+class ModifyEntireMarketDataTable(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "MODIFY ENTIRE MARKET DATA TABLE"
+        self.previous_menu = ModifyMarketData(dashboard)
+        # Add menu options
+        self.options = {} # TODO - Add dynamic list of online sources to choose from
         # TODO - finish this menu
 
 

@@ -83,35 +83,6 @@ class ExchangeListingsExtractor:
         result_df.columns = ["symbol", "company name"]
         return result_df
 
-    def print_all_tables(self) -> None:
-        """Prints all tables from the list of tables.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        tables = self.eoddata_to_dataframe()
-        for idx, table in enumerate(tables):
-            print(f"Table {idx+1}:")
-            print(table)
-            print("\n")
-
-    def print_dataframe(self) -> None:
-        """Prints the dataframe.
-
-        Args:
-            None
-        
-        Returns:
-            None
-        """
-        df = self.eoddata_to_dataframe()
-        print(f"Dataframe:")
-        print(df)
-        print("\n")
-
 
 class AssetInfoExtractor:
     def __init__(self, symbols: list[str]) -> None:
@@ -147,17 +118,6 @@ class HistoricalDataExtractor:
         return data[["Date", "Ticker", "Stock Split"]]
 
 
-def save_to_db(table: str, data: pd.DataFrame) -> None:
-    conn = sqlite3.connect("historical_data.db")
-    cursor = conn.cursor()
-
-    for row in data:
-        cursor.execute("INSERT INTO asset_price_history ([date], open, high, low, close, adj_close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)", row)
-        conn.commit()
-
-    conn.close()
-
-
 class IndexData(TypedDict):
     name: str
     symbol: str
@@ -190,6 +150,8 @@ def main():
     df_tsx = tsx.eoddata_to_dataframe()
     print(df_tsx)
 
+    ImportMarketData(DatabaseConnection("database.db")).pandas_to_existing_sql_table(df_tsx, "tsx")
+
     # TODO - grab all info for each stock from yfinance and store in the database
 
     wiki = "https://en.wikipedia.org/wiki/"
@@ -220,4 +182,5 @@ def main():
     }
 
     
-
+if __name__ == "__main__":
+    main()

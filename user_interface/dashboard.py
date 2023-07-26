@@ -131,7 +131,7 @@ class Dashboard:
         logging.info("Managing portfolio...")
 
 
-    def market_data(self):
+    def manage_market_data(self):
         print("Market Data logic goes here...")
 
 
@@ -285,12 +285,36 @@ class Dashboard:
         print("Remove Custom Import Script logic goes here...")
 
 
+    def view_market_data(self):
+        print("View Market Data logic goes here...")
+
+    
+    def initialize_market_data(self):
+        print("Initialize Market Data logic goes here...")
+
+    
+    def initialize_exchange_listings_data(self):
+        print("Initialize Exchange Listings Data logic goes here...")
+    
+
+    def initialize_index_holdings_data(self):
+        print("Initialize Index Holdings Data logic goes here...")
+    
+
+    def import_custom_market_data(self):
+        print("Import Custom Market Data logic goes here...")
+
+
     def import_market_data_from_csv(self):
         print("Import Market Data from CSV logic goes here...")
 
     
     def import_market_data_from_excel(self):
         print("Import Market Data from Excel logic goes here...")
+
+
+    def import_market_data_from_database(self):
+        print("Import Market Data from Database logic goes here...")
 
     
     def import_market_data_from_api(self):
@@ -301,8 +325,20 @@ class Dashboard:
         print("Import Market Data from Online Source logic goes here...")
 
 
-    def modify_market_data_entry(self):
+    def modify_market_data(self):
         print("Modify Market Data Entry logic goes here...")
+
+    
+    def modify_single_market_data_entry(self):
+        print("Modify Single Market Data Entry logic goes here...")
+
+    
+    def modify_entire_market_data_column(self):
+        print("Modify Entire Market Data Column logic goes here...")
+    
+
+    def modify_entire_market_data_table(self):
+        print("Modify Entire Market Data Table logic goes here...")
 
 
     def portfolio_overview(self):
