@@ -594,16 +594,19 @@ class InitializeMarketData(Menu):
         # Add menu options
         self.add_option(verb="Initialize", subject="Exchange Listings Data")
         self.add_option(verb="Initialize", subject="Index Holdings Data")
+        self.add_option(verb="Initialize", subject="Macro Data")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
             1: InitializeExchangeListingsData,
             2: InitializeIndexHoldingsData,
+            3: InitializeMacroData,
             0: ManageMarketData
         }
         self.menu_logic = {
             1: self.dashboard.initialize_exchange_listings_data,
             2: self.dashboard.initialize_index_holdings_data,
+            3: self.dashboard.initialize_macro_data,
             0: self.dashboard.previous_menu
         }
 
@@ -630,6 +633,23 @@ class InitializeIndexHoldingsData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "INITIALIZE INDEX HOLDINGS DATA"
+        self.previous_menu = InitializeMarketData(dashboard)
+        # Add menu options # TODO - add options
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = { # TODO - add mapping
+            0: ManageMarketData
+        }
+        self.menu_logic = { # TODO - add logic
+            0: self.dashboard.previous_menu
+        }
+
+
+# InitializeMacroData Menu class for managing the initialize macro data menu
+class InitializeMacroData(Menu):
+    def __init__(self, dashboard: Dashboard) -> None:
+        super().__init__(dashboard)
+        self.title = "INITIALIZE MACRO DATA"
         self.previous_menu = InitializeMarketData(dashboard)
         # Add menu options # TODO - add options
         # Format option 0

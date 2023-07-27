@@ -299,6 +299,10 @@ class Dashboard:
 
     def initialize_index_holdings_data(self):
         print("Initialize Index Holdings Data logic goes here...")
+
+
+    def initialize_macro_data(self):
+        print("Initialize Macro Data logic goes here...")
     
 
     def import_custom_market_data(self):
