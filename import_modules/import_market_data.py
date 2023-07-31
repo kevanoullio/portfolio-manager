@@ -10,44 +10,23 @@ import pandas as pd
 import yfinance as yf
 
 # Local Modules
-from database_management.connection import DatabaseConnection, DatabaseConnectionError
+from database_management.connection import DatabaseConnection
+from import_modules.web_scraper import WebScraper
 
 # Configure logging
 import logging
 
 
-# ImportMarketData class for importing market data as a Pandas DataFrame and storing it directly to the database
-class ImportMarketData:
-    def __init__(self, db_connection: DatabaseConnection) -> None:
-        self._db_connection = db_connection
-
-    def pandas_to_existing_sql_table(self, dataframe: pd.DataFrame, table_name: str) -> None:
-        # Check if the dataframe is not None
-        if dataframe is not None:
-            # Access the underlying database connection object
-            conn = self._db_connection.connection
-            # Check if the connection is None or not
-            if conn is not None:
-                try:
-                    # Insert all rows from the dataframe into the existing database table
-                    dataframe.to_sql(table_name, conn, index=False, if_exists="append")
-                    logging.info(f"Dataframe inserted into the {table_name} table.")
-                except sqlite3.IntegrityError as e:
-                    logging.error(f"Dataframe could not be inserted into the {table_name} table. {e}")
-            else:
-                raise DatabaseConnectionError(self._db_connection, "Database connection is None.")
-        else:
-            logging.error("Dataframe is None.")
-
-
+# ExchangeListingsExtractor class for extracting exchange listings from various websites
 class ExchangeListingsExtractor:
-    def __init__(self, base_url: str, exchange_in_url: str, url_iterables: list[str] | None=None) -> None:
+    def __init__(self, base_url: str, exchange_in_url: str | None=None, url_iterables: list[str] | None=None, url_ending: str | None=None, table_index: int | None=None) -> None:
         """Function to extract exchange listings from various websites.
 
         Args:
             base_url (str): Base URL for the website to read from.
-            exchange (str): Exchange as it's listed in the URL.
-            iterables (list[str]): List of iterables to iterate through (example A-Z).
+            exchange_in_url (str): Exchange as it's listed in the URL.
+            url_iterables (list[str]): List of iterables to iterate through (example A-Z).
+            url_ending (str): Ending of the URL.
 
         Returns:
             None
@@ -55,32 +34,44 @@ class ExchangeListingsExtractor:
         self._base_url = base_url
         self._exchange_in_url = exchange_in_url
         self._url_iterables = url_iterables
+        self._url_ending = url_ending
+        self._table_index = table_index
+        self._web_scraper = WebScraper(user_agent=True)
 
-    def _format_eod_url(self, iterable_index: int | None=None) -> str:
+    def _format_url(self, iterable_index: int | None=None) -> str:
         if self._url_iterables is None:
-            return f"{self._base_url}/{self._exchange_in_url}.htm"
+            return f"{self._base_url}/{self._exchange_in_url}{self._url_ending}"
         else:
             if iterable_index is None:
                 raise ValueError("Iterable index must be specified when there are iterables.")
-            return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}.htm"
+            return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
-    def eoddata_to_dataframe(self) -> pd.DataFrame:
-        # If there are no iterables, read data from the URL and return the DataFrame from the 5th table
+    def data_to_dataframe(self) -> pd.DataFrame | None:
+        if self._table_index is None:
+            self._table_index = 0
+
+        # If there are no iterables, read data from the URL and return the DataFrame from the specified table index
         if self._url_iterables is None:
-            return pd.read_html(self._format_eod_url())[4]
+            html_text = self._web_scraper.get_html_content_as_text(self._format_url())
+            if html_text is None:
+                return None
+            return pd.read_html(html_text)[self._table_index]
         
         # Iterate over the url iterables, read data from each URL, and store the DataFrames in a list
         dataframes_list = []
         for i, iterable in enumerate(self._url_iterables):
-            tables = pd.read_html(self._format_eod_url(i))
+            html_text = self._web_scraper.get_html_content_as_text(self._format_url(i))
+            if html_text is None:
+                return None
+            tables = pd.read_html(html_text)
             # Grab the 5th table and keep only the columns we want, "Code" and "Name"
-            table = tables[4][["Code", "Name"]]
+            table = tables[self._table_index][["Code", "Name"]]
             dataframes_list.append(table)
 
         # Concatenate all DataFrames in the list
         result_df = pd.concat(dataframes_list, ignore_index=True)
         # Rename the columns
-        result_df.columns = ["symbol", "company name"]
+        result_df.columns = ["symbol", "company_name"]
         return result_df
 
 
@@ -130,28 +121,24 @@ class IndexHoldingsExtractor:
     def __init__(self, index_data: IndexData) -> None:
         self._index_data = index_data
 
-    def get_holdings_from_index(self) -> pd.DataFrame:
-        # Read the HTML tables from the specified URL
-        html_tables = pd.read_html(self._index_data["website_url"])
+    def get_holdings_from_index(self) -> pd.DataFrame | None:
+        # Reate the HTML text from the specified URL
+        html_text = WebScraper(user_agent=True).get_html_content_as_text(self._index_data["website_url"])
+        if html_text is None:
+            return None
+        # Extract the tables from the HTML text
+        html_tables = pd.read_html(html_text)
         # Access the specific table based on the table_index
         index_table = html_tables[self._index_data["table_index"]]
         # Extract the column indicated by "ticker_column" and convert to a list
         index_holdings = index_table[self._index_data["symbol_column"]].tolist()
-        
         # Create a DataFrame from the list of tickers
         index_holdings_df = pd.DataFrame(index_holdings, columns=["symbol"])
         return index_holdings_df
 
 
 
-
 def main():
-    tsx = ExchangeListingsExtractor("https://eoddata.com/stocklist/", "TSX/", list("A")) # list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-    df_tsx = tsx.eoddata_to_dataframe()
-    print(df_tsx)
-
-    ImportMarketData(DatabaseConnection("database.db")).pandas_to_existing_sql_table(df_tsx, "tsx")
-
     # TODO - grab all info for each stock from yfinance and store in the database
 
     wiki = "https://en.wikipedia.org/wiki/"
@@ -183,4 +170,4 @@ def main():
 
     
 if __name__ == "__main__":
-    main()
+    print("This module is not meant to be executed directly...")

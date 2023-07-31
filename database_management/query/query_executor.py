@@ -21,7 +21,40 @@ class QueryExecutor:
         self._db_connection = db_connection
         self._session_manager = session_manager
         self._complex_queries_file = "./database_management/query/complex_queries.sql"
-        logging.debug(f"Query executor initialized. Database: {self._db_connection.db_filename}")
+        logging.debug(f"Query executor initialized. Database: {self._db_connection._db_filename}")
+
+    def initialize_database_schema(self, db_schema_filename: str) -> None:
+        try:
+            with self._db_connection as connection:
+                try:
+                    with connection.cursor() as cursor:
+                        with open(db_schema_filename, "r") as database_schema_file:
+                            schema = database_schema_file.read()
+                            # Execute the schema SQL statements
+                            cursor.executescript(schema)
+                            logging.info("Database schema initialized using the schema.sql file.")
+                except sqlite3.Error as e:
+                    logging.debug("Database schema initialization failed.")
+                    raise DatabaseQueryError(self._db_connection, "Error executing SQL query", e)
+        except DatabaseConnectionError as e:
+            logging.debug("Database connection is closed.")
+            raise DatabaseConnectionError(self._db_connection, "Database connection is closed.")
+
+    def dataframe_to_existing_sql_table(self, dataframe: pd.DataFrame, table_name: str) -> None:
+        # Check if the dataframe is None or not
+        if dataframe is not None:
+            try:
+                connection = sqlite3.connect(self._db_connection._db_filename)
+                try:
+                    # Insert all rows from the dataframe into the existing database table
+                    dataframe.to_sql(table_name, connection, index=False, if_exists="append")
+                    logging.info(f"Dataframe inserted into the {table_name} table.")
+                except sqlite3.IntegrityError as e:
+                    logging.error(f"Dataframe could not be inserted into the {table_name} table. {e}")
+            except sqlite3.Error as e:
+                raise DatabaseConnectionError(self._db_connection, "Error opening the database connection", e)
+        else:
+            logging.error("Dataframe is None.")
 
     def execute_query(self, query: str, params: tuple | None=None) -> list[tuple] | None:
         with self._db_connection as connection:
@@ -36,15 +69,15 @@ class QueryExecutor:
         for i, query in enumerate(individual_queries):
             query = query.strip()
             query = query
-            print(f"query: {query}")
+            logging.debug(f"query: {query}")
             if query_title in query:
-                print(f"Found query: {individual_queries[i].strip()}")
+                logging.debug(f"Found query: {individual_queries[i].strip()}")
                 return individual_queries[i].strip()
             # if query.startswith(" --"):
             #     comment = query[2:].strip()
-            #     print(f"comment: {comment}")
+            #     logging.debug(f"comment: {comment}")
             #     if query_title in comment:
-            #         print(f"Found query: {individual_queries[i + 1].strip()}")
+            #         logging.debug(f"Found query: {individual_queries[i + 1].strip()}")
             #         return individual_queries[i + 1].strip()
         return None
 
@@ -68,24 +101,6 @@ class QueryExecutor:
             # Execute the selected query with variable substitution
             result = self.execute_query(self.__replace_variables(selected_query, args))
             return result
-
-    def pandas_to_existing_sql_table(self, dataframe: pd.DataFrame, table_name: str) -> None:
-        # Check if the dataframe is not None
-        if dataframe is not None:
-            # Access the underlying database connection object
-            conn = self._db_connection.connection
-            # Check if the connection is None or not
-            if conn is not None:
-                try:
-                    # Insert all rows from the dataframe into the existing database table
-                    dataframe.to_sql(table_name, conn, index=False, if_exists="append")
-                    logging.info(f"Dataframe inserted into the {table_name} table.")
-                except sqlite3.IntegrityError as e:
-                    logging.error(f"Dataframe could not be inserted into the {table_name} table. {e}")
-            else:
-                raise DatabaseConnectionError(self._db_connection, "Database connection is None.")
-        else:
-            logging.error("Dataframe is None.")
 
 
 # Create Table: Creating a new table in the database.
@@ -379,6 +394,43 @@ class QueryExecutor:
         return result is None  # Returns True if no row is returned, indicating the table is empty
 
 
+    ###############
+    # MARKET DATA #
+    ###############
+
+    def get_country_id_by_country_iso_code(self, country_iso_code: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_country_id_by_country_iso_code_query = f"{query_type} id FROM country WHERE iso_code = ?"
+        params = (country_iso_code,)
+        # Execute the query
+        result = self.execute_query(get_country_id_by_country_iso_code_query, params)
+        # Check whether the result is None (None means the country doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_exchange_id_by_exchange_acronym_query = f"{query_type} id FROM exchange WHERE acronym = ?"
+        params = (exchange_acronym,)
+        # Execute the query
+        result = self.execute_query(get_exchange_id_by_exchange_acronym_query, params)
+        # Check whether the result is None (None means the exchange doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def insert_exchange(self, country_id: int, exchange_name: str, exchange_acronym: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_exchange_query = f"{query_type} INTO exchange (country_id, [name], acronym) VALUES (?, ?, ?)"
+        params = (country_id, exchange_name, exchange_acronym)
+        # Execute the query
+        self.execute_query(insert_exchange_query, params)
 
 
     ###########################
@@ -392,8 +444,8 @@ class QueryExecutor:
         store_username_and_password_query = f"{query_type} INTO user (user_role_id, username, password_hash) VALUES (?, ?, ?)"
         # Set the query parameters
         params = (2, username, password_hash)
-        print(f"query: {store_username_and_password_query}")
-        print(f"params: {params}")
+        logging.debug(f"query: {store_username_and_password_query}")
+        logging.debug(f"params: {params}")
         # Execute the query
         self.execute_query(store_username_and_password_query, params)
 

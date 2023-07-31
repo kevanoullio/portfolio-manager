@@ -53,9 +53,11 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                 # Restore from the backup file
                 self._backup_manager.restore_from_backup()
             else:
+                print("Initializing new database file...")
+                logging.info("Initializing new database file...")
                 # Create a new database file by opening and closing a connection
                 # Create a Database Schema object and initialize the database using the schema file
-                db_schema = DatabaseSchema(self._db_connection, self._db_schema_filename)
+                db_schema = DatabaseSchema(self._query_executor, self._db_schema_filename)
                 db_schema.initialize_database()
                 print(f"Database file created and initialized successfully.")
                 logging.info(f"Database file created and initialized successfully. Database: {self._db_filename}")

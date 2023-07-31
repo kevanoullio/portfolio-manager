@@ -56,7 +56,7 @@ class LoginManager:
             # Run the login_management function to log the user in
             self._execute_login_operations(user_account)
             # Print the success message
-            print("Account creation success!")
+            print("Account creation successful!")
             print(f"You are now logged in as '{user_account.username}'")
             logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' created and logged in with session token: {self._database._session_manager.get_session_token()}")
             # self.redirect_to_dashboard(session_token)

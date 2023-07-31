@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 # Standard Libraries
 
 # Third-party Libraries
+import pandas as pd
 
 # Local Modules
 from access_management.login_manager import LoginManager
@@ -14,6 +15,7 @@ from database_management.database import Database
 from user_interface.query_results import QueryResults
 from user_interface.user_input import UserInput
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
+from import_modules import import_market_data
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -74,6 +76,9 @@ class Dashboard:
     # menu_logic is a list of functions that are executed based on the user's choice
     # Without this function, instead of going back to the previous menu, the program would exit
     def previous_menu(self):
+        pass
+
+    def menu_without_logic(self):
         pass
 
     # Login Menu Functions
@@ -292,10 +297,118 @@ class Dashboard:
     def initialize_market_data(self):
         print("Initialize Market Data logic goes here...")
 
+
+    def _initialize_eoddata_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> pd.DataFrame:
+        # Get the exchange_id from the database
+        exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        # If the exchange doesn't exist in the database, insert it
+        if exchange_id is None:
+            # Get the country_id from the database
+            country_id = self.database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
+            if country_id is None:
+                raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
+            self.database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
+            exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+
+        # Extract the exchange listings from the website
+        url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        exchange_listings = import_market_data.ExchangeListingsExtractor("https://eoddata.com/stocklist/", exchange_acronym, url_iterables, ".htm", 4)
+        df_exchange_listings = exchange_listings.data_to_dataframe()
+        df_exchange_listings["exchange_id"] = exchange_id
+
+        return df_exchange_listings
+
+
+    def initialize_nasdaq_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "NASDAQ Stock Exchange", "NASDAQ")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("NASDAQ listings initialized successfully.")
+        logging.info("NASDAQ listings initialized successfully.")
     
-    def initialize_exchange_listings_data(self):
-        print("Initialize Exchange Listings Data logic goes here...")
     
+    def initialize_nyse_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "New York Stock Exchange", "NYSE")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("NYSE listings initialized successfully.")
+        logging.info("NYSE listings initialized successfully.")
+
+    
+    def initialize_amex_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "American Stock Exchange", "AMEX")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("AMEX listings initialized successfully.")
+        logging.info("AMEX listings initialized successfully.")
+
+    
+    def initialize_lse_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("GBR", "London Stock Exchange", "LSE")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("LSE listings initialized successfully.")
+        logging.info("LSE listings initialized successfully.")
+
+
+    def initialize_tsx_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "Toronto Stock Exchange", "TSX")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("TSX listings initialized successfully.")
+        logging.info("TSX listings initialized successfully.")
+
+
+    def initialize_tsxv_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "TSX Venture Exchange", "TSXV")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("TSXV listings initialized successfully.")
+        logging.info("TSXV listings initialized successfully.")
+
+
+    def initialize_neo_listings_data(self):
+        # Extract the exchange listings from the website
+        df_exchange_listings = None
+        # TODO - fix this to work with new website  
+        exchange_listings = import_market_data.ExchangeListingsExtractor("https://www.cboe.ca/en/live/listed-securities", table_index=0)
+        df_exchange_listings = exchange_listings.data_to_dataframe()
+
+        # Get the exchange_id from the database
+        exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym("NEO")
+        # Add the exchange_id to the dataframe
+        df_exchange_listings["exchange_id"] = exchange_id
+
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+
+        print("NEO listings initialized successfully.")
+        logging.info("NEO listings initialized successfully.")
+
+
+    def initialize_asx_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("AUS", "Australian Securities Exchange", "ASX")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("ASX listings initialized successfully.")
+        logging.info("ASX listings initialized successfully.")
+
+
+    def initialize_sgx_listings_data(self):
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_eoddata_exchange_listings("SGP", "Singapore Exchange", "SGX")
+        # Insert the exchange listings into the database
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        print("SGX listings initialized successfully.")
+        logging.info("SGX listings initialized successfully.")
+
 
     def initialize_index_holdings_data(self):
         print("Initialize Index Holdings Data logic goes here...")

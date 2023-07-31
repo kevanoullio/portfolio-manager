@@ -100,20 +100,22 @@ CREATE TABLE IF NOT EXISTS currency (
     iso_code VARCHAR(255) NOT NULL UNIQUE
 );
 
--- Create table for asset exchange data
+-- Create table for exchange data
 CREATE TABLE IF NOT EXISTS exchange (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    country_id INTEGER NOT NULL REFERENCES country (id),
     [name] VARCHAR(255) NOT NULL UNIQUE,
     acronym VARCHAR(255) NOT NULL UNIQUE
 );
 
--- # TODO - replace this with function that imports exchange data from csv file
--- Insert default exchanges
-INSERT OR IGNORE INTO exchange ([name], acronym) VALUES ('New York Stock Exchange', 'NYSE');
-INSERT OR IGNORE INTO exchange ([name], acronym) VALUES ('Nasdaq', 'NASDAQ');
-INSERT OR IGNORE INTO exchange ([name], acronym) VALUES ('Toronto Stock Exchange', 'TSX');
-INSERT OR IGNORE INTO exchange ([name], acronym) VALUES ('Neo Exchange', 'NEO');
--- https://www.nasdaq.com/market-activity/stocks/screener
+-- Create table for exchange listings data
+CREATE TABLE IF NOT EXISTS exchange_listings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exchange_id INTEGER NOT NULL REFERENCES exchange (id),
+    symbol VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    UNIQUE (exchange_id, symbol)
+);
 
 -- Create table for asset data
 CREATE TABLE IF NOT EXISTS asset_info (
@@ -213,6 +215,7 @@ CREATE TABLE IF NOT EXISTS asset_transaction (
 -- Create table for index data
 CREATE TABLE IF NOT EXISTS index_info (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exchange_id INTEGER NOT NULL REFERENCES exchange (id),
     [name] VARCHAR(255) NOT NULL UNIQUE,
     symbol VARCHAR(255) NOT NULL UNIQUE,
     [description] VARCHAR(1023) NOT NULL,

@@ -604,7 +604,7 @@ class InitializeMarketData(Menu):
             0: ManageMarketData
         }
         self.menu_logic = {
-            1: self.dashboard.initialize_exchange_listings_data,
+            1: self.dashboard.menu_without_logic,
             2: self.dashboard.initialize_index_holdings_data,
             3: self.dashboard.initialize_macro_data,
             0: self.dashboard.previous_menu
@@ -617,13 +617,40 @@ class InitializeExchangeListingsData(Menu):
         super().__init__(dashboard)
         self.title = "INITIALIZE EXCHANGE LISTINGS DATA"
         self.previous_menu = InitializeMarketData(dashboard)
-        # Add menu options # TODO - add options
+        # Add menu options
+        self.add_option(verb="Initialize", subject="NASDAQ Listings Data")
+        self.add_option(verb="Initialize", subject="NYSE Listings Data")
+        self.add_option(verb="Initialize", subject="AMEX Listings Data")
+        self.add_option(verb="Initialize", subject="LSE Listings Data")
+        self.add_option(verb="Initialize", subject="TSX Listings Data")
+        self.add_option(verb="Initialize", subject="TSXV Listings Data")
+        self.add_option(verb="Initialize", subject="NEO Listings Data")
+        self.add_option(verb="Initialize", subject="ASX Listings Data")
+        self.add_option(verb="Initialize", subject="SGX Listings Data")
         # Format option 0
         self.format_return_to_previous_menu_option()
-        self.menu_mapping = { # TODO - add mapping
-            0: ManageMarketData
+        self.menu_mapping = {
+            1: InitializeExchangeListingsData,
+            2: InitializeExchangeListingsData,
+            3: InitializeExchangeListingsData,
+            4: InitializeExchangeListingsData,
+            5: InitializeExchangeListingsData,
+            6: InitializeExchangeListingsData,
+            7: InitializeExchangeListingsData,
+            8: InitializeExchangeListingsData,
+            9: InitializeExchangeListingsData,
+            0: InitializeMarketData
         }
         self.menu_logic = { # TODO - add logic
+            1: self.dashboard.initialize_nasdaq_listings_data,
+            2: self.dashboard.initialize_nyse_listings_data,
+            3: self.dashboard.initialize_amex_listings_data,
+            4: self.dashboard.initialize_lse_listings_data,
+            5: self.dashboard.initialize_tsx_listings_data,
+            6: self.dashboard.initialize_tsxv_listings_data,
+            7: self.dashboard.initialize_neo_listings_data,
+            8: self.dashboard.initialize_asx_listings_data,
+            9: self.dashboard.initialize_sgx_listings_data,
             0: self.dashboard.previous_menu
         }
 
