@@ -19,7 +19,7 @@ import logging
 
 # ExchangeListingsExtractor class for extracting exchange listings from various websites
 class ExchangeListingsExtractor:
-    def __init__(self, base_url: str, exchange_in_url: str | None=None, url_iterables: list[str] | None=None, url_ending: str | None=None, table_index: int | None=None) -> None:
+    def __init__(self, base_url: str, exchange_in_url: str | None=None, url_iterables: list[str] | None=None, url_ending: str | None=None) -> None:
         """Function to extract exchange listings from various websites.
 
         Args:
@@ -35,7 +35,6 @@ class ExchangeListingsExtractor:
         self._exchange_in_url = exchange_in_url
         self._url_iterables = url_iterables
         self._url_ending = url_ending
-        self._table_index = table_index
         self._web_scraper = WebScraper(user_agent=True)
 
     def _format_url(self, iterable_index: int | None=None) -> str:
@@ -46,16 +45,16 @@ class ExchangeListingsExtractor:
                 raise ValueError("Iterable index must be specified when there are iterables.")
             return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
-    def data_to_dataframe(self) -> pd.DataFrame | None:
-        if self._table_index is None:
-            self._table_index = 0
+    def html_table_to_dataframe(self, table_index: int | None=None) -> pd.DataFrame | None:
+        if table_index is None:
+            table_index = 0
 
         # If there are no iterables, read data from the URL and return the DataFrame from the specified table index
         if self._url_iterables is None:
             html_text = self._web_scraper.get_html_content_as_text(self._format_url())
             if html_text is None:
                 return None
-            return pd.read_html(html_text)[self._table_index]
+            return pd.read_html(html_text)[table_index]
         
         # Iterate over the url iterables, read data from each URL, and store the DataFrames in a list
         dataframes_list = []
@@ -65,7 +64,7 @@ class ExchangeListingsExtractor:
                 return None
             tables = pd.read_html(html_text)
             # Grab the 5th table and keep only the columns we want, "Code" and "Name"
-            table = tables[self._table_index][["Code", "Name"]]
+            table = tables[table_index][["Code", "Name"]]
             dataframes_list.append(table)
 
         # Concatenate all DataFrames in the list
@@ -73,6 +72,10 @@ class ExchangeListingsExtractor:
         # Rename the columns
         result_df.columns = ["symbol", "company_name"]
         return result_df
+    
+    def csv_to_dataframe(self, csv_file: list[dict[str, str]]) -> pd.DataFrame | None:
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv(csv_file)
 
 
 class AssetInfoExtractor:

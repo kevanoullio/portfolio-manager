@@ -624,7 +624,8 @@ class InitializeExchangeListingsData(Menu):
         self.add_option(verb="Initialize", subject="LSE Listings Data")
         self.add_option(verb="Initialize", subject="TSX Listings Data")
         self.add_option(verb="Initialize", subject="TSXV Listings Data")
-        self.add_option(verb="Initialize", subject="NEO Listings Data")
+        self.add_option(verb="Initialize", subject="CSE Listings Data")
+        self.add_option(verb="Initialize", subject="Cboe Canada Listings Data")
         self.add_option(verb="Initialize", subject="ASX Listings Data")
         self.add_option(verb="Initialize", subject="SGX Listings Data")
         # Format option 0
@@ -639,6 +640,7 @@ class InitializeExchangeListingsData(Menu):
             7: InitializeExchangeListingsData,
             8: InitializeExchangeListingsData,
             9: InitializeExchangeListingsData,
+            10: InitializeExchangeListingsData,
             0: InitializeMarketData
         }
         self.menu_logic = { # TODO - add logic
@@ -648,9 +650,10 @@ class InitializeExchangeListingsData(Menu):
             4: self.dashboard.initialize_lse_listings_data,
             5: self.dashboard.initialize_tsx_listings_data,
             6: self.dashboard.initialize_tsxv_listings_data,
-            7: self.dashboard.initialize_neo_listings_data,
-            8: self.dashboard.initialize_asx_listings_data,
-            9: self.dashboard.initialize_sgx_listings_data,
+            7: self.dashboard.initialize_cse_listings_data,
+            8: self.dashboard.initialize_cboe_canada_listings_data,
+            9: self.dashboard.initialize_asx_listings_data,
+            10: self.dashboard.initialize_sgx_listings_data,
             0: self.dashboard.previous_menu
         }
 
