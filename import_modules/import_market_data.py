@@ -50,7 +50,7 @@ class ExchangeListingsExtractor:
                 raise ValueError("Iterable index must be specified when there are iterables.")
             return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
-    def html_table_to_dataframe(self, table_index: int | None = None, desired_columns: list[str] | None = None, rename_desired_columns: list[str] | None = None) -> None:
+    def html_table_to_dataframe(self, table_index: int | None = None) -> None:
         if table_index is None:
             table_index = 0
 
@@ -72,28 +72,20 @@ class ExchangeListingsExtractor:
 
                 # Grab the nth table
                 table = tables[table_index]
-
-                # Only keep the desired columns if specified
-                if desired_columns is not None:
-                    table = table[desired_columns]
                 
                 # Append the DataFrame to the list
                 dataframes_list.append(table)
 
             # Concatenate all DataFrames in the list
             result_df = pd.concat(dataframes_list, ignore_index=True)
-
-            # Rename the desired columns if specified
-            if rename_desired_columns is not None:
-                result_df.columns = rename_desired_columns
             
             # Store the result DataFrame
             self._dataframe = result_df
     
-    def csv_link_to_dataframe(self, header_first_column: str, sort_by_column: str | None = None) -> None:
+    def csv_link_to_dataframe(self, first_column_in_header: str, sort_by_column: str | None = None) -> None:
         # Read the CSV file from the specified URL
         csv_file = CSVFileManager()
-        csv_file.set_first_column_in_header(header_first_column)
+        csv_file.set_first_column_in_header(first_column_in_header)
         csv_file.read_csv_from_url(self._base_url)
 
         if csv_file.get_data() is None:
@@ -105,14 +97,23 @@ class ExchangeListingsExtractor:
 
         # Convert the CSVFileManager object to a DataFrame
         self._dataframe = csv_file.to_dataframe()
-    
+
+    def filter_and_rename_dataframe_columns(self, desired_columns: list[str], rename_desired_columns: list[str] | None = None) -> None:
+        if self._dataframe is None:
+            raise ValueError("DataFrame must be initialized before filtering.")
+        # Only keep the desired columns if specified
+        self._dataframe = self._dataframe[desired_columns]
+        # Rename the desired columns if specified
+        if rename_desired_columns is not None:
+            self._dataframe.columns = rename_desired_columns
+
     def filter_dataframe_by_exchange(self, exchange: str) -> None:
         if self._dataframe is None:
             raise ValueError("DataFrame must be initialized before filtering.")
-        # Filter the DataFrame by the exchange
-        for i, row in self._dataframe.iterrows():
-            if row["mic"] != f".{exchange}":
-                self._dataframe.drop(i, inplace=True)
+        # Create a boolean mask based on the condition
+        mask = self._dataframe["mic"] == exchange
+        # Filter the DataFrame using the boolean mask
+        self._dataframe = self._dataframe[mask]
 
 
 class AssetInfoExtractor:

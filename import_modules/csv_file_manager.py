@@ -84,8 +84,16 @@ class CSVFileManager:
         # Check if the header row was found
         if header_index is None:
             raise ValueError(f"Header row with first column '{self._first_column_in_header}' not found.")
-        self._header = data.pop(header_index)
+        
+        # Remove all rows before the header row
+        if header_index > 0:
+            logging.debug(f"Removing {header_index} rows before the header row.")
+            logging.debug(f"Data: {data[:header_index]}")
+            data = data[header_index:]
+        self._header = data.pop(0)
         self._data = data
+        logging.debug(f"Header: {self._header}")
+        logging.debug(f"Data: {data}")
 
     def sort_data_by_column(self, column_name: str) -> None:
         column_index = self._header.index(column_name)

@@ -15,7 +15,7 @@ from html.parser import HTMLParser
 
 # Local Modules
 from database_management.database import Database
-from import_modules.csv_file_handler import CSVFileHandler
+from import_modules.csv_file_manager import CSVFileHandler
 from import_modules.uid_handler import UIDHandler
 
 # Local modules imported for Type Checking purposes only
