@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS exchange (
     acronym VARCHAR(255) NOT NULL UNIQUE
 );
 
--- Create table for exchange listings data
-CREATE TABLE IF NOT EXISTS exchange_listings (
+-- Create table for exchange listing data
+CREATE TABLE IF NOT EXISTS exchange_listing (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     exchange_id INTEGER NOT NULL REFERENCES exchange (id),
     symbol VARCHAR(255) NOT NULL,

@@ -12,6 +12,7 @@ import yfinance as yf
 # Local Modules
 from database_management.connection import DatabaseConnection
 from import_modules.web_scraper import WebScraper
+from import_modules.csv_file_manager import CSVFileManager
 
 # Configure logging
 import logging
@@ -36,8 +37,12 @@ class ExchangeListingsExtractor:
         self._url_iterables = url_iterables
         self._url_ending = url_ending
         self._web_scraper = WebScraper(user_agent=True)
+        self._dataframe: pd.DataFrame | None = None
+    
+    def get_dataframe(self) -> pd.DataFrame | None:
+        return self._dataframe
 
-    def _format_url(self, iterable_index: int | None=None) -> str:
+    def _format_url(self, iterable_index: int | None = None) -> str:
         if self._url_iterables is None:
             return f"{self._base_url}/{self._exchange_in_url}{self._url_ending}"
         else:
@@ -45,7 +50,7 @@ class ExchangeListingsExtractor:
                 raise ValueError("Iterable index must be specified when there are iterables.")
             return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
-    def html_table_to_dataframe(self, table_index: int | None=None) -> pd.DataFrame | None:
+    def html_table_to_dataframe(self, table_index: int | None = None, desired_columns: list[str] | None = None, rename_desired_columns: list[str] | None = None) -> None:
         if table_index is None:
             table_index = 0
 
@@ -53,29 +58,61 @@ class ExchangeListingsExtractor:
         if self._url_iterables is None:
             html_text = self._web_scraper.get_html_content_as_text(self._format_url())
             if html_text is None:
-                return None
-            return pd.read_html(html_text)[table_index]
-        
-        # Iterate over the url iterables, read data from each URL, and store the DataFrames in a list
-        dataframes_list = []
-        for i, iterable in enumerate(self._url_iterables):
-            html_text = self._web_scraper.get_html_content_as_text(self._format_url(i))
-            if html_text is None:
-                return None
-            tables = pd.read_html(html_text)
-            # Grab the 5th table and keep only the columns we want, "Code" and "Name"
-            table = tables[table_index][["Code", "Name"]]
-            dataframes_list.append(table)
+                self._dataframe = None
+            else:
+                self._dataframe = pd.read_html(html_text)[table_index]
+        else:
+            # Iterate over the url iterables, read data from each URL, and store the DataFrames in a list
+            dataframes_list = []
+            for i, iterable in enumerate(self._url_iterables):
+                html_text = self._web_scraper.get_html_content_as_text(self._format_url(i))
+                if html_text is None:
+                    return None
+                tables = pd.read_html(html_text)
 
-        # Concatenate all DataFrames in the list
-        result_df = pd.concat(dataframes_list, ignore_index=True)
-        # Rename the columns
-        result_df.columns = ["symbol", "company_name"]
-        return result_df
+                # Grab the nth table
+                table = tables[table_index]
+
+                # Only keep the desired columns if specified
+                if desired_columns is not None:
+                    table = table[desired_columns]
+                
+                # Append the DataFrame to the list
+                dataframes_list.append(table)
+
+            # Concatenate all DataFrames in the list
+            result_df = pd.concat(dataframes_list, ignore_index=True)
+
+            # Rename the desired columns if specified
+            if rename_desired_columns is not None:
+                result_df.columns = rename_desired_columns
+            
+            # Store the result DataFrame
+            self._dataframe = result_df
     
-    def csv_to_dataframe(self, csv_file: list[dict[str, str]]) -> pd.DataFrame | None:
-        # Read the CSV file into a DataFrame
-        df = pd.read_csv(csv_file)
+    def csv_link_to_dataframe(self, header_first_column: str, sort_by_column: str | None = None) -> None:
+        # Read the CSV file from the specified URL
+        csv_file = CSVFileManager()
+        csv_file.set_first_column_in_header(header_first_column)
+        csv_file.read_csv_from_url(self._base_url)
+
+        if csv_file.get_data() is None:
+            return None       
+
+        if sort_by_column is not None:
+            # Sort the data by the sort_by_column
+            csv_file.sort_data_by_column(sort_by_column)
+
+        # Convert the CSVFileManager object to a DataFrame
+        self._dataframe = csv_file.to_dataframe()
+    
+    def filter_dataframe_by_exchange(self, exchange: str) -> None:
+        if self._dataframe is None:
+            raise ValueError("DataFrame must be initialized before filtering.")
+        # Filter the DataFrame by the exchange
+        for i, row in self._dataframe.iterrows():
+            if row["mic"] != f".{exchange}":
+                self._dataframe.drop(i, inplace=True)
 
 
 class AssetInfoExtractor:

@@ -48,9 +48,9 @@ class QueryExecutor:
                 try:
                     # Insert all rows from the dataframe into the existing database table
                     dataframe.to_sql(table_name, connection, index=False, if_exists="append")
-                    logging.info(f"Dataframe inserted into the {table_name} table.")
+                    logging.info(f"Dataframe inserted into the '{table_name}' table.")
                 except sqlite3.IntegrityError as e:
-                    logging.error(f"Dataframe could not be inserted into the {table_name} table. {e}")
+                    logging.error(f"Dataframe could not be inserted into the '{table_name}' table. {e}")
             except sqlite3.Error as e:
                 raise DatabaseConnectionError(self._db_connection, "Error opening the database connection", e)
         else:

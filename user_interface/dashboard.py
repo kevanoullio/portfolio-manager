@@ -298,7 +298,7 @@ class Dashboard:
         print("Initialize Market Data logic goes here...")
 
 
-    def _initialize_eoddata_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> pd.DataFrame:
+    def _get_exchange_id_by_exchange_acronym_or_insert(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> int | None:
         # Get the exchange_id from the database
         exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
         # If the exchange doesn't exist in the database, insert it
@@ -309,21 +309,66 @@ class Dashboard:
                 raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
             self.database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
             exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        return exchange_id
 
+
+    def _initialize_eoddata_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> pd.DataFrame:
+        # Get the exchange_id from the database
+        exchange_id = self._get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+        # If the exchange doesn't exist in the database, insert it
+        if exchange_id is None:
+            raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
         # Extract the exchange listings from the website
         url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        exchange_listings = import_market_data.ExchangeListingsExtractor("https://eoddata.com/stocklist/", exchange_acronym, url_iterables, ".htm", 4)
-        df_exchange_listings = exchange_listings.html_table_to_dataframe()
+        exchange_listings = import_market_data.ExchangeListingsExtractor("https://eoddata.com/stocklist/", exchange_acronym, url_iterables, ".htm")
+        exchange_listings.html_table_to_dataframe(4, ["Code", "Name"], ["symbol", "company_name"])
+        df_exchange_listings = exchange_listings.get_dataframe()
+        if df_exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
         df_exchange_listings["exchange_id"] = exchange_id
+        # Remove rows with missing values
+        df_clean = df_exchange_listings.dropna()
+        # Remove rows with duplicate values
+        df_clean = df_clean.drop_duplicates(subset=["exchange_id", "symbol"])
+        return df_clean
 
-        return df_exchange_listings
+
+    def _initialize_cboe_canada_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> pd.DataFrame:
+        # Get the exchange_id from the database
+        exchange_id = self._get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+        # If the exchange doesn't exist in the database, insert it
+        if exchange_id is None:
+            raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
+        # Extract the exchange listings from the website
+        exchange_listings = import_market_data.ExchangeListingsExtractor("https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv")
+        exchange_listings.csv_link_to_dataframe("company_name", sort_by_column="symbol")
+        exchange_listings.filter_dataframe_by_exchange("NEOE")
+        df_exchange_listings = exchange_listings.get_dataframe()
+        if df_exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
+        df_exchange_listings["exchange_id"] = exchange_id
+        # Remove rows with missing values
+        df_clean = df_exchange_listings.dropna()
+        # Remove rows with duplicate values
+        df_clean = df_clean.drop_duplicates(subset=["exchange_id", "symbol"])
+        return df_clean
 
 
+    # def initialize_nasdaq_listings_data(self):
+    #     # Get the exchange listings from the website
+    #     df_exchange_listings = pd.DataFrame()
+    #     df_exchange_listings.insert(0, "symbol", ["MSFT"])
+    #     df_exchange_listings.insert(0, "company_name", ["Microsoft Corp."])
+    #     df_exchange_listings.insert(0, "exchange_id", [1])
+    #     # Insert the exchange listings into the database
+    #     self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+    #     print("NASDAQ listings initialized successfully.")
+    #     logging.info("NASDAQ listings initialized successfully.")
     def initialize_nasdaq_listings_data(self):
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "NASDAQ Stock Exchange", "NASDAQ")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("NASDAQ listings initialized successfully.")
         logging.info("NASDAQ listings initialized successfully.")
     
@@ -332,7 +377,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "New York Stock Exchange", "NYSE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("NYSE listings initialized successfully.")
         logging.info("NYSE listings initialized successfully.")
 
@@ -341,7 +386,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "American Stock Exchange", "AMEX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("AMEX listings initialized successfully.")
         logging.info("AMEX listings initialized successfully.")
 
@@ -350,7 +395,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("GBR", "London Stock Exchange", "LSE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("LSE listings initialized successfully.")
         logging.info("LSE listings initialized successfully.")
 
@@ -359,7 +404,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "Toronto Stock Exchange", "TSX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("TSX listings initialized successfully.")
         logging.info("TSX listings initialized successfully.")
 
@@ -368,7 +413,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "TSX Venture Exchange", "TSXV")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("TSXV listings initialized successfully.")
         logging.info("TSXV listings initialized successfully.")
 
@@ -376,26 +421,16 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "Canadian Securities Exchange", "CSE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("CSE listings initialized successfully.")
         logging.info("CSE listings initialized successfully.")
 
 
     def initialize_cboe_canada_listings_data(self):
-        # Extract the exchange listings from the website
-        df_exchange_listings = None
-        # TODO - fix this to work with new website  
-        exchange_listings = import_market_data.ExchangeListingsExtractor("https://www.cboe.ca/en/live/listed-securities")
-        df_exchange_listings = exchange_listings.html_table_to_dataframe()
-
-        # Get the exchange_id from the database
-        exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym("Cboe Canada")
-        # Add the exchange_id to the dataframe
-        df_exchange_listings["exchange_id"] = exchange_id
-
+        # Get the exchange listings from the website
+        df_exchange_listings = self._initialize_cboe_canada_exchange_listings("CAN", "Cboe Canada", "Cboe Canada")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
-
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("Cboe Canada listings initialized successfully.")
         logging.info("Cboe Canada listings initialized successfully.")
 
@@ -404,7 +439,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("AUS", "Australian Securities Exchange", "ASX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("ASX listings initialized successfully.")
         logging.info("ASX listings initialized successfully.")
 
@@ -413,7 +448,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("SGP", "Singapore Exchange", "SGX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listings")
+        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("SGX listings initialized successfully.")
         logging.info("SGX listings initialized successfully.")
 
