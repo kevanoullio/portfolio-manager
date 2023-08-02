@@ -10,7 +10,7 @@ import pandas as pd
 import yfinance as yf
 
 # Local Modules
-from database_management.connection import DatabaseConnection
+from database_management.database import Database
 from import_modules.web_scraper import WebScraper
 from import_modules.csv_file_manager import CSVFileManager
 
@@ -20,27 +20,26 @@ import logging
 
 # ExchangeListingsExtractor class for extracting exchange listings from various websites
 class ExchangeListingsExtractor:
-    def __init__(self, base_url: str, exchange_in_url: str | None=None, url_iterables: list[str] | None=None, url_ending: str | None=None) -> None:
+    def __init__(self, database: Database) -> None:
         """Function to extract exchange listings from various websites.
 
         Args:
-            base_url (str): Base URL for the website to read from.
-            exchange_in_url (str): Exchange as it's listed in the URL.
-            url_iterables (list[str]): List of iterables to iterate through (example A-Z).
-            url_ending (str): Ending of the URL.
+            database (Database): Database object for managing the database.
 
         Returns:
             None
         """
-        self._base_url = base_url
-        self._exchange_in_url = exchange_in_url
-        self._url_iterables = url_iterables
-        self._url_ending = url_ending
+        self._database = database
+        self._base_url: str | None = None
+        self._exchange_in_url: str | None = None
+        self._url_iterables: list[str] | None = None
+        self._url_ending: str | None = None
         self._web_scraper = WebScraper(user_agent=True)
-        self._dataframe: pd.DataFrame | None = None
+        self._exchange_listings: pd.DataFrame | None = None
+        self._exchange_id: int | None = None
     
     def get_dataframe(self) -> pd.DataFrame | None:
-        return self._dataframe
+        return self._exchange_listings
 
     def _format_url(self, iterable_index: int | None = None) -> str:
         if self._url_iterables is None:
@@ -50,7 +49,7 @@ class ExchangeListingsExtractor:
                 raise ValueError("Iterable index must be specified when there are iterables.")
             return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
-    def html_table_to_dataframe(self, table_index: int | None = None) -> None:
+    def _html_table_to_dataframe(self, table_index: int | None = None) -> None:
         if table_index is None:
             table_index = 0
 
@@ -58,9 +57,9 @@ class ExchangeListingsExtractor:
         if self._url_iterables is None:
             html_text = self._web_scraper.get_html_content_as_text(self._format_url())
             if html_text is None:
-                self._dataframe = None
+                self._exchange_listings = None
             else:
-                self._dataframe = pd.read_html(html_text)[table_index]
+                self._exchange_listings = pd.read_html(html_text)[table_index]
         else:
             # Iterate over the url iterables, read data from each URL, and store the DataFrames in a list
             dataframes_list = []
@@ -80,12 +79,14 @@ class ExchangeListingsExtractor:
             result_df = pd.concat(dataframes_list, ignore_index=True)
             
             # Store the result DataFrame
-            self._dataframe = result_df
+            self._exchange_listings = result_df
     
-    def csv_link_to_dataframe(self, first_column_in_header: str, sort_by_column: str | None = None) -> None:
+    def _csv_link_to_dataframe(self, first_column_in_header: str, sort_by_column: str | None = None) -> None:
         # Read the CSV file from the specified URL
         csv_file = CSVFileManager()
         csv_file.set_first_column_in_header(first_column_in_header)
+        if self._base_url is None:
+            raise ValueError("Base URL must be specified.")
         csv_file.read_csv_from_url(self._base_url)
 
         if csv_file.get_data() is None:
@@ -96,24 +97,95 @@ class ExchangeListingsExtractor:
             csv_file.sort_data_by_column(sort_by_column)
 
         # Convert the CSVFileManager object to a DataFrame
-        self._dataframe = csv_file.to_dataframe()
+        self._exchange_listings = csv_file.to_dataframe()
 
-    def filter_and_rename_dataframe_columns(self, desired_columns: list[str], rename_desired_columns: list[str] | None = None) -> None:
-        if self._dataframe is None:
+    def _filter_and_rename_dataframe_columns(self, desired_columns: list[str], rename_desired_columns: list[str] | None = None) -> None:
+        if self._exchange_listings is None:
             raise ValueError("DataFrame must be initialized before filtering.")
         # Only keep the desired columns if specified
-        self._dataframe = self._dataframe[desired_columns]
+        self._exchange_listings = self._exchange_listings[desired_columns]
         # Rename the desired columns if specified
         if rename_desired_columns is not None:
-            self._dataframe.columns = rename_desired_columns
+            self._exchange_listings.columns = rename_desired_columns
 
-    def filter_dataframe_by_exchange(self, exchange: str) -> None:
-        if self._dataframe is None:
+    def _filter_dataframe_by_exchange(self, exchange: str) -> None:
+        if self._exchange_listings is None:
             raise ValueError("DataFrame must be initialized before filtering.")
         # Create a boolean mask based on the condition
-        mask = self._dataframe["mic"] == exchange
+        mask = self._exchange_listings["mic"] == exchange
         # Filter the DataFrame using the boolean mask
-        self._dataframe = self._dataframe[mask]
+        self._exchange_listings = self._exchange_listings[mask]
+
+    def get_exchange_id_by_exchange_acronym_or_insert(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> int | None:
+        # Get the exchange_id from the database
+        exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        # If the exchange doesn't exist in the database, insert it
+        if exchange_id is None:
+            # Get the country_id from the database
+            country_id = self._database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
+            if country_id is None:
+                raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
+            self._database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
+            exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        # Check if the exchange_id was successfully retrieved or inserted
+        if exchange_id is None:
+            raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
+        self._exchange_id = exchange_id
+
+    def initialize_eoddata_exchange_listings(self, exchange_acronym: str) -> None:
+        # Assign eoddata.com specific variables
+        self._base_url = "https://eoddata.com/stocklist/"
+        self._exchange_in_url = exchange_acronym
+        self._url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        self._url_ending = ".htm"
+        
+        # Extract the exchange listings from the website
+        self._html_table_to_dataframe(table_index=4)
+        self._filter_and_rename_dataframe_columns(["Code", "Name"], ["symbol", "company_name"])
+        if self._exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
+        
+        # Add the exchange_id column
+        self._exchange_listings["exchange_id"] = self._exchange_id
+        # Remove rows with missing values
+        self._exchange_listings.dropna()
+        # Remove rows with duplicate values
+        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
+
+        # Insert the exchange listings into the database
+        self._database._query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
+
+    def initialize_cboe_canada_exchange_listings(self, exchange_acronym: str, mic_filter: str) -> None:
+        # Assign cdn.cboe.com specific variables
+        self._base_url = "https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv"
+
+        # Extract the exchange listings from the website
+        self._csv_link_to_dataframe(first_column_in_header="company_name", sort_by_column="symbol")
+        self._filter_dataframe_by_exchange(mic_filter)
+        self._filter_and_rename_dataframe_columns(["symbol", "company_name"])
+        if self._exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
+        logging.debug(f"df_exchange_listings after filtering:\n{self._exchange_listings}")
+        
+        # Add the exchange_id column
+        self._exchange_listings["exchange_id"] = self._exchange_id
+
+        # Remove rows with missing values
+        self._exchange_listings.dropna()
+        # Remove rows with duplicate values
+        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
+        # Remove rows without a company name
+        self._exchange_listings = self._exchange_listings[self._exchange_listings["company_name"] != ""]
+        # Remove the test symbol entry
+        self._exchange_listings = self._exchange_listings[self._exchange_listings["symbol"] != "ZYZ.C"]
+
+        # Define the regular expression pattern to match " AT [...]" with any four-letter acronym
+        pattern = r"\sAT\s[A-Z]{4}\b$"
+        # Remove the pattern from the "company_name" column using regular expressions
+        self._exchange_listings["company_name"] = self._exchange_listings["company_name"].str.replace(pattern, "", regex=True)
+        
+        # Insert the exchange listings into the database
+        self._database._query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
 
 
 class AssetInfoExtractor:
