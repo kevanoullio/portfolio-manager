@@ -125,7 +125,7 @@ CREATE TABLE IF NOT EXISTS currency (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     [name] VARCHAR(255) NOT NULL UNIQUE,
     iso_code VARCHAR(255) NOT NULL UNIQUE,
-    symbol VARCHAR(255) NOT NULL
+    symbol NVARCHAR(10) NOT NULL
 );
 
 -- Create table for exchange data
