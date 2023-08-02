@@ -18,19 +18,28 @@ import logging
 # CSVFileManager class for handling CSV file operations
 class CSVFileManager:
     def __init__(self):
-        self._header = []
-        self._data = []
-        self._first_column_in_header = ""
+        self._header: list[str] = []
+        self._data: list[list[str]] = []
+        self._first_column_in_header: str = ""
         self._web_scraper = WebScraper(user_agent=True)
+    
+    def get_header(self) -> list[str]:
+        return self._header
+    
+    def set_header(self, header: list[str]) -> None:
+        self._header = header
+    
+    def get_data(self) -> list[list[str]]:
+        return self._data
+    
+    def get_first_column_in_header(self) -> str:
+        return self._first_column_in_header
 
     def set_first_column_in_header(self, first_column_in_header: str) -> None:
         self._first_column_in_header = first_column_in_header
     
-    def get_header(self) -> list:
-        return self._header
-    
-    def get_data(self) -> list:
-        return self._data
+    def set_data(self, data: list[list[str]]) -> None:
+        self._data = data
 
     def _find_header_row(self, csv_content: list[list[str]]) -> int | None:
         for i, row in enumerate(csv_content):
@@ -69,6 +78,20 @@ class CSVFileManager:
             for row in new_data:
                 writer.writerow(row)
     
+    def append_unique_entry_to_csv_file(self, file_path: str, entry: list) -> None:
+        file_exists = os.path.exists(file_path)
+        if file_exists:
+            existing_data = self.read_csv_file(file_path)
+            if entry not in existing_data:
+                with open(file_path, mode="a") as csv_file:
+                    writer = csv.writer(csv_file)
+                    writer.writerow(entry)
+        else:
+            with open(file_path, mode="w") as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(self._header)
+                writer.writerow(entry)
+    
     def read_csv_from_url(self, url: str) -> None:
         # Read the CSV file from the URL
         content = self._web_scraper.get_html_content_as_text(url)
@@ -97,7 +120,7 @@ class CSVFileManager:
 
     def sort_data_by_column(self, column_name: str) -> None:
         column_index = self._header.index(column_name)
-        self._data.sort(key=lambda x: x[column_index])
+        self._data.sort(key=lambda row: row[column_index])
 
     def to_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame(self._data, columns=self._header)

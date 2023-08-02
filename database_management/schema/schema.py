@@ -78,30 +78,61 @@ class DatabaseSchema:
         # Insert the default country codes into the database
         self._query_executor.dataframe_to_existing_sql_table(country_codes, "country")
 
+    # def _insert_default_currency_codes(self) -> None:
+    #     # Get the currency codes from Wikipedia and format them into a pandas dataframe
+    #     url = "https://en.wikipedia.org/wiki/ISO_4217"
+    #     # TODO - replace with (add symbol) https://en.wikipedia.org/wiki/List_of_circulating_currencies
+    #     tables = pd.read_html(url)
+
+    #     # The second table contains the country codes
+    #     currency_codes = tables[1]
+    #     # Rename the columns we want to keep
+    #     currency_codes = currency_codes.rename(columns={"Currency": "name", "Code": "iso_code"})
+    #     # Rebuild a new dataframe with only the columns we want to keep
+    #     currency_codes = currency_codes[["name", "iso_code"]]
+
+    #     # Filter out the rows that have "Unit " or "(funds code)" or (complementary currency)" in the currency column
+    #     mask = ~currency_codes["name"].str.extract(r"(Unit |funds code|complementary currency)").notna().any(axis=1)
+
+    #     # mask = ~currency_codes["name"].str.contains(r"Unit |(funds code)|(complementary currency)", regex=True)
+    #     currency_codes = currency_codes[mask]
+    #     # Filter out these specific currencies: ["XXX", "XTS", "XSU", "XDR"]
+    #     mask = ~currency_codes["iso_code"].isin(["XXX", "XTS", "XSU", "XDR"])
+    #     currency_codes = currency_codes[mask]
+
+    #     # Remove all the citation references from the name column
+    #     currency_codes["name"] = currency_codes["name"].str.replace(r"\[.*\]", "", regex=True)
+
+    #     # Insert the default currency codes into the database
+    #     self._query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
+
     def _insert_default_currency_codes(self) -> None:
         # Get the currency codes from Wikipedia and format them into a pandas dataframe
-        url = "https://en.wikipedia.org/wiki/ISO_4217"
-        # TODO - replace with (add symbol) https://en.wikipedia.org/wiki/List_of_circulating_currencies
+        url = "https://en.wikipedia.org/wiki/List_of_circulating_currencies"
         tables = pd.read_html(url)
 
         # The second table contains the country codes
         currency_codes = tables[1]
+
         # Rename the columns we want to keep
-        currency_codes = currency_codes.rename(columns={"Currency": "name", "Code": "iso_code"})
+        currency_codes = currency_codes.rename(columns={"Currency[1][2]": "name", "ISO code[2]": "iso_code", "Symbol[D] or Abbrev.[3]": "symbol"})
         # Rebuild a new dataframe with only the columns we want to keep
-        currency_codes = currency_codes[["name", "iso_code"]]
+        currency_codes = currency_codes[["name", "iso_code", "symbol"]]
 
-        # Filter out the rows that have "Unit " or "(funds code)" or (complementary currency)" in the currency column
-        mask = ~currency_codes["name"].str.extract(r"(Unit |funds code|complementary currency)").notna().any(axis=1)
-
-        # mask = ~currency_codes["name"].str.contains(r"Unit |(funds code)|(complementary currency)", regex=True)
-        currency_codes = currency_codes[mask]
-        # Filter out these specific currencies: ["XXX", "XTS", "XSU", "XDR"]
-        mask = ~currency_codes["iso_code"].isin(["XXX", "XTS", "XSU", "XDR"])
+        # Filter out the rows that have "(none)" for their iso_code
+        mask = currency_codes["iso_code"] != "(none)"
         currency_codes = currency_codes[mask]
 
-        # Remove all the citation references from the name column
+        # Remove any duplicate entries
+        currency_codes = currency_codes.drop_duplicates(subset=["name", "iso_code"])
+
+        # Remove any citation references "[...]" from the name column
         currency_codes["name"] = currency_codes["name"].str.replace(r"\[.*\]", "", regex=True)
+        # Remove any " or ..." from the symbol column
+        currency_codes["symbol"] = currency_codes["symbol"].str.replace(r" or .*$", "", regex=True)
+
+        # Order the dataframe by the name column
+        currency_codes = currency_codes.sort_values(by=["name"])
 
         # Insert the default currency codes into the database
         self._query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")

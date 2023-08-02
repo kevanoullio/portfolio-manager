@@ -19,7 +19,7 @@ class UIDHandler:
     # Function for saving the UID of the last processed email to a file
     def save_last_uid(uid):
         try:
-            with open("./data/last_uid.txt", "w") as f:
+            with open("./data/email_import/last_uid.txt", "w") as f:
                 f.write(str(uid))
         except Exception as e:
             print(f"Error saving last UID: {e}")
@@ -29,7 +29,7 @@ class UIDHandler:
     def read_last_uid(last_uid_cache: str | None = None):
         if last_uid_cache is not None:
             return last_uid_cache
-        if os.path.isfile("./data/email_import/last_uid.txt") and os.path.getsize("./data/last_uid.txt") > 0:
+        if os.path.isfile("./data/email_import/last_uid.txt") and os.path.getsize("./data/email_import/last_uid.txt") > 0:
             try:
                 with open("./data/email_import/last_uid.txt", "r") as f:
                     last_uid = f.read()

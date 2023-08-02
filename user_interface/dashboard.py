@@ -28,13 +28,13 @@ import logging
 # Dashboard class for managing the user interface and all menu navigation
 class Dashboard:
     def __init__(self, database: Database, login_manager: LoginManager) -> None:
-        self.database = database
-        self.login_manager = login_manager
-        self.query_results = QueryResults()
-        self.user_input = UserInput()
-        self.user_account_operation = UserAccountOperation(self.database)
-        self.email_account_operation = EmailAccountOperation(self.database)
-        self.is_running = False
+        self._database = database
+        self._login_manager = login_manager
+        self._query_results = QueryResults()
+        self._user_input = UserInput()
+        self._user_account_operation = UserAccountOperation(self._database)
+        self._email_account_operation = EmailAccountOperation(self._database)
+        self._is_running = False
  
     def __print_welcome_screen(self):
         print("\n====================================")
@@ -53,7 +53,7 @@ class Dashboard:
         logging.info("Login Dashboard has started running.")
 
         # Main loop for the dashboard
-        while self.current_menu and self.is_running:
+        while self.current_menu and self._is_running:
             # Print the menu options
             self.current_menu.print_options()
             # Get the user's choice
@@ -65,7 +65,7 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self.database._session_manager.get_current_user() is not None:
+                if self._database._session_manager.get_current_user() is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
@@ -83,23 +83,23 @@ class Dashboard:
 
     # Login Menu Functions
     def create_account(self):
-        self.login_manager.create_account()
-        if self.database._session_manager.get_current_user() is not None:
-            logging.debug(f"User login: {self.database._session_manager.get_current_user()}")
+        self._login_manager.create_account()
+        if self._database._session_manager.get_current_user() is not None:
+            logging.debug(f"User login: {self._database._session_manager.get_current_user()}")
         else:
             logging.debug("User login failed.")
 
     def login(self):
-        self.login_manager.user_login()
+        self._login_manager.user_login()
 
     def start_program(self):
         # Start the Dashboard
-        self.is_running = True
+        self._is_running = True
         logging.info("Dashboard has started running.")
 
     def exit_program(self):
         # Stop the Dashboard
-        self.is_running = False
+        self._is_running = False
         logging.info("Dashboard has stopped running.")
 
 
@@ -125,7 +125,7 @@ class Dashboard:
     
 
     def logout(self):
-        self.login_manager.user_logout()
+        self._login_manager.user_logout()
 
 
     def view_portfolio(self):
@@ -166,8 +166,8 @@ class Dashboard:
     
     def view_current_portfolio(self):
         # TODO - review and finish this function
-        results = self.database._query_executor.execute_complex_query_by_title("view_current_portfolio")
-        self.query_results.print(results)
+        results = self._database._query_executor.execute_complex_query_by_title("view_current_portfolio")
+        self._query_results.print(results)
     
 
     def view_entire_portfolio_history(self):
@@ -186,7 +186,7 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        self.database._query_executor.execute_complex_query_by_title("query_net_ticker_summary", ticker)
+        self._database._query_executor.execute_complex_query_by_title("query_net_ticker_summary", ticker)
 
 
     def build_portfolio_from_data_set(self):
@@ -231,7 +231,7 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        current_user = self.database._session_manager.get_current_user() 
+        current_user = self._database._session_manager.get_current_user() 
         # if current_user is not None:
         #     if current_user.user_id is not None:
         #         # self.database.import_file(current_user.user_id, "database", [".db"])
@@ -241,11 +241,16 @@ class Dashboard:
 
     def import_existing_portfolio_from_email_account(self):
         # TODO - Use AvailableEmailAccount class instead???
-        print("Importing existing portfolio from email account...")
         # Call the import_from_email_account script
         from import_modules.import_from_email_account import import_from_email_account
-        import_from_email_account(self.database)
+        import_from_email_account(self._database)
         
+    
+    # def get_available_email_accounts(self) -> list[EmailAccount] | None:
+    #     # Fetch all email addresses of usage "import" from the user
+    #     import_email_accounts = self._database._query_executor.get_user_email_accounts_by_usage("import")
+    #     # Return the list of email accounts, if there's no emails, it returns None
+    #     return import_email_accounts
         
 
     def view_custom_import_scripts(self):
@@ -300,15 +305,15 @@ class Dashboard:
 
     def _get_exchange_id_by_exchange_acronym_or_insert(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> int | None:
         # Get the exchange_id from the database
-        exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
         # If the exchange doesn't exist in the database, insert it
         if exchange_id is None:
             # Get the country_id from the database
-            country_id = self.database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
+            country_id = self._database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
             if country_id is None:
                 raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
-            self.database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
-            exchange_id = self.database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+            self._database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
+            exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
         return exchange_id
 
 
@@ -365,7 +370,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "NASDAQ Stock Exchange", "NASDAQ")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("NASDAQ listings initialized successfully.")
         logging.info("NASDAQ listings initialized successfully.")
     
@@ -374,7 +379,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "New York Stock Exchange", "NYSE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("NYSE listings initialized successfully.")
         logging.info("NYSE listings initialized successfully.")
 
@@ -383,7 +388,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("USA", "American Stock Exchange", "AMEX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("AMEX listings initialized successfully.")
         logging.info("AMEX listings initialized successfully.")
 
@@ -392,7 +397,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("GBR", "London Stock Exchange", "LSE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("LSE listings initialized successfully.")
         logging.info("LSE listings initialized successfully.")
 
@@ -401,7 +406,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "Toronto Stock Exchange", "TSX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("TSX listings initialized successfully.")
         logging.info("TSX listings initialized successfully.")
 
@@ -410,7 +415,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("CAN", "TSX Venture Exchange", "TSXV")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("TSXV listings initialized successfully.")
         logging.info("TSXV listings initialized successfully.")
 
@@ -418,7 +423,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_cboe_canada_exchange_listings("CAN", "Canadian Securities Exchange", "CSE", "XCNQ")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("CSE listings initialized successfully.")
         logging.info("CSE listings initialized successfully.")
 
@@ -427,7 +432,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_cboe_canada_exchange_listings("CAN", "Cboe Canada", "Cboe Canada", "NEOE")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("Cboe Canada listings initialized successfully.")
         logging.info("Cboe Canada listings initialized successfully.")
 
@@ -436,7 +441,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("AUS", "Australian Securities Exchange", "ASX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("ASX listings initialized successfully.")
         logging.info("ASX listings initialized successfully.")
 
@@ -445,7 +450,7 @@ class Dashboard:
         # Get the exchange listings from the website
         df_exchange_listings = self._initialize_eoddata_exchange_listings("SGP", "Singapore Exchange", "SGX")
         # Insert the exchange listings into the database
-        self.database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
+        self._database._query_executor.dataframe_to_existing_sql_table(df_exchange_listings, "exchange_listing")
         print("SGX listings initialized successfully.")
         logging.info("SGX listings initialized successfully.")
 
@@ -643,7 +648,7 @@ class Dashboard:
 
 
     def view_current_email_accounts(self):
-        email_accounts = self.database._query_executor.get_all_current_user_email_accounts()
+        email_accounts = self._database._query_executor.get_all_current_user_email_accounts()
         logging.debug(f"Current email accounts: {email_accounts}")
         if email_accounts is not None:
             title = "CURRENT EMAIL ACCOUNTS"
@@ -661,7 +666,7 @@ class Dashboard:
         print(f"\n{title}")
         print("-" * len(title))
         # Run through the prompts to get the email address and password
-        self.email_account_operation.add_email_account()    
+        self._email_account_operation.add_email_account()    
 
     def remove_email_account(self):
         print("Remove Email Account logic goes here...")

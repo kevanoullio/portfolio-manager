@@ -368,7 +368,7 @@ class ImportExistingPortfolio(Menu):
             3: ImportFromExcelFile,
             4: ImportFromPDFFile,
             5: ImportFromDatabaseFile,
-            6: ImportFromEmail,
+            6: ImportExistingPortfolio,
             0: ManagePortfolio
         }
         self.menu_logic = {
@@ -437,25 +437,33 @@ class ImportFromDatabaseFile(Menu):
         # TODO - finish this menu
 
 
-# ImportFromEmail Menu class for managing the import from email menu
-class ImportFromEmail(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM EMAIL ACCOUNT"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of emails to choose from
-        # TODO - finish this menu
-
-        # Add menu options
-        # Format option 0
-        self.format_return_to_previous_menu_option()
-        self.menu_mapping = {
-            0: ImportExistingPortfolio
-        }
-        self.menu_logic = {
-            0: self.dashboard.previous_menu
-        }
+# # ImportFromEmail Menu class for managing the import from email menu
+# class ImportFromEmail(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM EMAIL ACCOUNT"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         self.menu_options = {}
+#         # Get available email accounts
+#         email_accounts = dashboard.get_available_email_accounts()
+#         if email_accounts is None or len(email_accounts) == 0:
+#             print("No available email accounts for importing.")
+#             print("Please add an email account in the account settings.")
+#             self.menu_mapping = {}
+#             self.menu_logic = {}
+#         else:
+#             # Add menu options
+#             for _, email_account in enumerate(email_accounts):
+#                 self.add_option(subject=email_account.address)
+#             # Format option 0
+#             self.format_return_to_previous_menu_option()
+#             self.menu_mapping = {
+#                 0: ImportExistingPortfolio
+#             }
+#             self.menu_logic = {
+#                 0: self.dashboard.import_existing_portfolio_from_email_account
+#             }
+#         self.format_return_to_previous_menu_option()
 
 
 # class AvailableEmailAccounts(Menu): # TODO - finish this menu
@@ -467,6 +475,12 @@ class ImportFromEmail(Menu):
 #         email_accounts = dashboard.get_available_email_accounts()
 #         if email_accounts is None or len(email_accounts) == 0:
 #             self.menu_options[1] = "No Available Email Accounts"
+#             self.menu_mapping = {
+#                 0: ImportExistingPortfolio
+#             }
+#             self.menu_logic = {
+#             0: self.dashboard.previous_menu
+#             }
 #         else:
 #             for _, email_account in enumerate(email_accounts):
 #                 self.add_option(subject=email_account.address)

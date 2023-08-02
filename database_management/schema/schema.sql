@@ -44,6 +44,33 @@ CREATE TABLE IF NOT EXISTS email (
     password_hash BLOB
 );
 
+-- Create table for import email settings and uid
+CREATE TABLE IF NOT EXISTS import_email_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES user (id),
+    email_id INTEGER NOT NULL REFERENCES email (id),
+    email_folder VARCHAR(255) NOT NULL,
+    last_uid INT NOT NULL,
+    last_uid_updated_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger to ensure email_id references an email with 'import' usage
+CREATE TRIGGER enforce_import_email
+BEFORE INSERT ON import_email_settings
+FOR EACH ROW
+BEGIN
+    SELECT RAISE(ABORT, 'Invalid email_id. The email must have usage type "import"')
+    WHERE (SELECT usage FROM email_usage WHERE id = NEW.email_id) != 'import';
+END;
+
+-- Only keep the last 100 import email settings for a given user's email and folder combination
+DELETE FROM import_email_settings
+WHERE (user_id, email_id, email_folder, id) NOT IN (
+    SELECT user_id, email_id, email_folder, id FROM import_email_settings
+    ORDER BY id DESC
+    LIMIT 10000
+);
+
 -----------------------------
 -- ASSETS AND TRANSACTIONS --
 -----------------------------
@@ -97,7 +124,8 @@ CREATE TABLE IF NOT EXISTS city (
 CREATE TABLE IF NOT EXISTS currency (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     [name] VARCHAR(255) NOT NULL UNIQUE,
-    iso_code VARCHAR(255) NOT NULL UNIQUE
+    iso_code VARCHAR(255) NOT NULL UNIQUE,
+    symbol VARCHAR(255) NOT NULL
 );
 
 -- Create table for exchange data

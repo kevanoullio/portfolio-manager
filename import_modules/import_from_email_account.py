@@ -15,7 +15,7 @@ from html.parser import HTMLParser
 
 # Local Modules
 from database_management.database import Database
-from import_modules.csv_file_manager import CSVFileHandler
+from import_modules.csv_file_manager import CSVFileManager
 from import_modules.uid_handler import UIDHandler
 
 # Local modules imported for Type Checking purposes only
@@ -184,7 +184,7 @@ def extract_from_email(data: dict, email_body) -> dict:
     return data
 
 
-# TODO - make this function a class object?
+# TODO - make this function a class object???
 def import_from_email_account(database: Database) -> int:
     from user_interface.user_input import UserInput
     user_input = UserInput()
@@ -194,15 +194,16 @@ def import_from_email_account(database: Database) -> int:
     # Check if any import email addresses are found
     if import_email_accounts is None or len(import_email_accounts) <= 0:
         print("No email accounts for importing portfolios found.")
+        print("Please add an email account in the account settings.")
         return 1
 
-    # TODO - Use AvailableEmailAccount class instead
+    # TODO - Replace with AvailableEmailAccount class???
     # Print the available email accounts
     title = "AVAILABLE EMAIL ACCOUNTS:"
     print(f"\n{title}")
     print("-" * len(title))
     for i, email_account in enumerate(import_email_accounts, start=1):
-        print(f"{i}: {email_account}")
+        print(f"{i}: {email_account.address}")
 
     # Get the user's choice
     choice = user_input.get_valid_menu_choice(len(import_email_accounts), "Choose the email account you would like to import from: ")
@@ -239,11 +240,12 @@ def import_from_email_account(database: Database) -> int:
     # TODO - replace with AvailableFolder menu class???
     # List available folders
     folder_list = imap_client.list_folders()
-    print("------------------")
-    print("Available folders:")
+    title = "Available folders:"
+    print(f"\n{title}")
+    print("-" * len(title))
     for folder in folder_list:
         print(folder)
-    print("------------------")
+    print("\n")
 
     # TODO - Replace with UserInput class???
     folder_name = input("Enter the folder name (copy/paste from above): ")
@@ -254,13 +256,15 @@ def import_from_email_account(database: Database) -> int:
         print(f"Failed to select folder: {folder_name}")
         return 1
     
+    print(f"Scanning emails from '{selected_import_email_account.address}' in the '{folder_name}' folder...")
+    
 
 
     # TODO - change from .csv to directly into the database
     # Set the names of the CSV files to save the data to
-    csv_file_sec = "./data/email_import/ws-securities.csv"
-    csv_file_divs = "./data/email_import/ws-divs.csv"
-    csv_file_crypto = "./data/email_import/ws-crypto.csv"
+    csv_file_sec = "./old_data/ws-securities.csv"
+    csv_file_divs = "./old_data/ws-divs.csv"
+    csv_file_crypto = "./old_data/ws-crypto.csv"
 
 
 
@@ -305,16 +309,16 @@ def import_from_email_account(database: Database) -> int:
             # The first element is a string that indicates the status of the command execution
             # ('OK' if the command was successful, or 'NO' or 'BAD' if there was an error). The
             # 2nd element is a list of data returned by the server in response to the command.
-            print(f"Error fetching email, typ: {typ}")
+            logging.info(f"Error fetching email, typ: {typ}")
             continue
 
         # If the data is None, skip the email
         if data is None:
-            print(f"Error fetching email, data is None")
+            logging.info(f"Error fetching email, data is None")
             continue
         # If the data[0] is None, skip the email
         if data[0] is None:
-            print(f"Error fetching email, data[0] is None")
+            logging.info(f"Error fetching email, data[0] is None")
             continue
 
         # Parse the email
@@ -376,17 +380,21 @@ def import_from_email_account(database: Database) -> int:
             data = extract_from_email(data, body)
         
         if not csv_file:
-            print(f"Email subject did not match any of the expected subjects: {subject}")
+            logging.info(f"Email subject did not match any of the expected subjects: {subject}")
         else:
             # Write to csv
-            print(data)
-            CSVFileHandler.write_to_csv(data, csv_file)
+            logging.debug(data)
+            csv_file_manager = CSVFileManager()
+            csv_file_manager.set_header(list(data.keys()))
+            csv_file_manager.set_first_column_in_header(list(data.keys())[0])
+            csv_file_manager.append_unique_entry_to_csv_file(csv_file, list(data.values()))
 
         # Save the UID of the last processed email to a file
         last_uid = num.decode("utf-8")
         UIDHandler.save_last_uid(last_uid)
 
-    print("No new emails to process")
+    print("No new emails to process.")
+    print("Import complete!")
 
     # Close the connection to the Outlook IMAP server
     mail.close()
