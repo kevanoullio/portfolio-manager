@@ -29,8 +29,8 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         self._db_schema_filename = db_schema_filename
         self._db_connection = DatabaseConnection(db_filename)
         self._backup_manager = BackupManager(self._db_filename)
-        self._session_manager = SessionManager()
-        self._query_executor = QueryExecutor(self._db_connection, self._session_manager)
+        self.session_manager = SessionManager()
+        self.query_executor = QueryExecutor(self._db_connection, self.session_manager)
 
     def start(self) -> None:
         # Check if the database file exists
@@ -57,7 +57,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
                 logging.info("Initializing new database file...")
                 # Create a new database file by opening and closing a connection
                 # Create a Database Schema object and initialize the database using the schema file
-                db_schema = DatabaseSchema(self._query_executor, self._db_schema_filename)
+                db_schema = DatabaseSchema(self.query_executor, self._db_schema_filename)
                 db_schema.initialize_database()
                 print(f"Database file created and initialized successfully.")
                 logging.info(f"Database file created and initialized successfully. Database: {self._db_filename}")

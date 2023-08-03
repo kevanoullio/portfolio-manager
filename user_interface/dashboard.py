@@ -65,7 +65,7 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self._database._session_manager.get_current_user() is not None:
+                if self._database.session_manager.get_current_user() is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
@@ -84,8 +84,8 @@ class Dashboard:
     # Login Menu Functions
     def create_account(self):
         self._login_manager.create_account()
-        if self._database._session_manager.get_current_user() is not None:
-            logging.debug(f"User login: {self._database._session_manager.get_current_user()}")
+        if self._database.session_manager.get_current_user() is not None:
+            logging.debug(f"User login: {self._database.session_manager.get_current_user()}")
         else:
             logging.debug("User login failed.")
 
@@ -166,7 +166,7 @@ class Dashboard:
     
     def view_current_portfolio(self):
         # TODO - review and finish this function
-        results = self._database._query_executor.execute_complex_query_by_title("view_current_portfolio")
+        results = self._database.query_executor.execute_complex_query_by_title("view_current_portfolio")
         self._query_results.print(results)
     
 
@@ -186,7 +186,7 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        self._database._query_executor.execute_complex_query_by_title("query_net_ticker_summary", ticker)
+        self._database.query_executor.execute_complex_query_by_title("query_net_ticker_summary", ticker)
 
 
     def build_portfolio_from_data_set(self):
@@ -231,7 +231,7 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        current_user = self._database._session_manager.get_current_user() 
+        current_user = self._database.session_manager.get_current_user() 
         # if current_user is not None:
         #     if current_user.user_id is not None:
         #         # self.database.import_file(current_user.user_id, "database", [".db"])
@@ -710,7 +710,7 @@ class Dashboard:
 
 
     def view_current_email_accounts(self):
-        email_accounts = self._database._query_executor.get_all_current_user_email_accounts()
+        email_accounts = self._database.query_executor.get_all_current_user_email_accounts()
         logging.debug(f"Current email accounts: {email_accounts}")
         if email_accounts is not None:
             title = "CURRENT EMAIL ACCOUNTS"

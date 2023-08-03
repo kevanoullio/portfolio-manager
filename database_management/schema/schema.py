@@ -1,6 +1,7 @@
 # Purpose: Database Schema module for creating and initializing the database schema.
 
 # Standard Libraries
+from dataclasses import dataclass
 
 # Third-party Libraries
 import pandas as pd
@@ -180,19 +181,45 @@ class DatabaseSchema:
         self._query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
 
 
-# Function for printing all the tables from a url (used for debugging)
-def _print_all_tables(url: str) -> None:
-    tables = pd.read_html(url)
-    for idx, table in enumerate(tables):
-        print(f"Table {idx+1}:")
-        print(table)
-        print("\n")
+# AssetTransaction dataclass for storing asset transaction data
+@dataclass
+class AssetTransaction:
+    user_id: int
+    asset_id: int
+    transaction_type_id: int
+    brokerage_id: int
+    asset_account_id: int
+    quantity: float
+    avg_price: float
+    total: float
+    transaction_date: str
+    imported_from: str
+    imported_date: str
 
-def _print_one_table(url: str, table_index: int) -> None:
-    tables = pd.read_html(url)
-    print(f"Table {table_index}:")
-    print(tables[table_index])
-    print("\n")
+    def __post_init__(self) -> None:
+        logging.debug(f"Creating AssetTransaction object: {self}")
+
+    def __str__(self) -> str:
+        return f"AssetTransaction(user_id={self.user_id}, asset_id={self.asset_id}, " \
+               f"transaction_type_id={self.transaction_type_id}, brokerage_id={self.brokerage_id}, " \
+               f"asset_account_id={self.asset_account_id}, quantity={self.quantity}, avg_price={self.avg_price}, " \
+               f"total={self.total}, transaction_date={self.transaction_date}, imported_from={self.imported_from}, " \
+               f"imported_date={self.imported_date})"
+    
+    def to_dict(self):
+        return {
+            'user_id': self.user_id,
+            'asset_id': self.asset_id,
+            'transaction_type_id': self.transaction_type_id,
+            'brokerage_id': self.brokerage_id,
+            'asset_account_id': self.asset_account_id,
+            'quantity': self.quantity,
+            'avg_price': self.avg_price,
+            'total': self.total,
+            'transaction_date': self.transaction_date,
+            'imported_from': self.imported_from,
+            'imported_date': self.imported_date
+        }
 
 
 if __name__ == "__main__":

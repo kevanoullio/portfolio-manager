@@ -118,15 +118,15 @@ class ExchangeListingsExtractor:
 
     def get_exchange_id_by_exchange_acronym_or_insert(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> int | None:
         # Get the exchange_id from the database
-        exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        exchange_id = self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
         # If the exchange doesn't exist in the database, insert it
         if exchange_id is None:
             # Get the country_id from the database
-            country_id = self._database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
+            country_id = self._database.query_executor.get_country_id_by_country_iso_code(country_iso_code)
             if country_id is None:
                 raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
-            self._database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
-            exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+            self._database.query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
+            exchange_id = self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
         # Check if the exchange_id was successfully retrieved or inserted
         if exchange_id is None:
             raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
@@ -153,7 +153,7 @@ class ExchangeListingsExtractor:
         self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
 
         # Insert the exchange listings into the database
-        self._database._query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
+        self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
 
     def initialize_cboe_canada_exchange_listings(self, exchange_acronym: str, mic_filter: str) -> None:
         # Assign cdn.cboe.com specific variables
@@ -185,7 +185,7 @@ class ExchangeListingsExtractor:
         self._exchange_listings["company_name"] = self._exchange_listings["company_name"].str.replace(pattern, "", regex=True)
         
         # Insert the exchange listings into the database
-        self._database._query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
+        self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
 
 
 class AssetInfoExtractor:

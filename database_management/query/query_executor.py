@@ -394,44 +394,6 @@ class QueryExecutor:
         return result is None  # Returns True if no row is returned, indicating the table is empty
 
 
-    ###############
-    # MARKET DATA #
-    ###############
-
-    def get_country_id_by_country_iso_code(self, country_iso_code: str) -> int | None:
-        # Define the query parameters
-        query_type = "SELECT"
-        get_country_id_by_country_iso_code_query = f"{query_type} id FROM country WHERE iso_code = ?"
-        params = (country_iso_code,)
-        # Execute the query
-        result = self.execute_query(get_country_id_by_country_iso_code_query, params)
-        # Check whether the result is None (None means the country doesn't exist)
-        if result is not None and len(result) > 0:
-            return result[0][0]
-        else:
-            return None
-
-    def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
-        # Define the query parameters
-        query_type = "SELECT"
-        get_exchange_id_by_exchange_acronym_query = f"{query_type} id FROM exchange WHERE acronym = ?"
-        params = (exchange_acronym,)
-        # Execute the query
-        result = self.execute_query(get_exchange_id_by_exchange_acronym_query, params)
-        # Check whether the result is None (None means the exchange doesn't exist)
-        if result is not None and len(result) > 0:
-            return result[0][0]
-        else:
-            return None
-
-    def insert_exchange(self, country_id: int, exchange_name: str, exchange_acronym: str) -> None:
-        # Define the query parameters
-        query_type = "INSERT"
-        insert_exchange_query = f"{query_type} INTO exchange (country_id, [name], acronym) VALUES (?, ?, ?)"
-        params = (country_id, exchange_name, exchange_acronym)
-        # Execute the query
-        self.execute_query(insert_exchange_query, params)
-
 
     ###########################
     # USER ACCOUNT OPERATIONS #
@@ -490,7 +452,7 @@ class QueryExecutor:
 
 
     ############################
-    # Email ACCOUNT OPERATIONS #
+    # EMAIL ACCOUNT OPERATIONS #
     ############################
 
     def store_email_address_only(self, email_usage_id: int, email_address: str) -> None:
@@ -670,6 +632,102 @@ class QueryExecutor:
             result = self.execute_query(get_email_account_password_hash_by_email_address_query, params)
             return result[0][0] if result is not None else None
         
+
+    ###############
+    # MARKET DATA #
+    ###############
+
+    def get_country_id_by_country_iso_code(self, country_iso_code: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_country_id_by_country_iso_code_query = f"{query_type} id FROM country WHERE iso_code = ?"
+        params = (country_iso_code,)
+        # Execute the query
+        result = self.execute_query(get_country_id_by_country_iso_code_query, params)
+        # Check whether the result is None (None means the country doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_exchange_id_by_exchange_acronym_query = f"{query_type} id FROM exchange WHERE acronym = ?"
+        params = (exchange_acronym,)
+        # Execute the query
+        result = self.execute_query(get_exchange_id_by_exchange_acronym_query, params)
+        # Check whether the result is None (None means the exchange doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def insert_exchange(self, country_id: int, exchange_name: str, exchange_acronym: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_exchange_query = f"{query_type} INTO exchange (country_id, [name], acronym) VALUES (?, ?, ?)"
+        params = (country_id, exchange_name, exchange_acronym)
+        # Execute the query
+        self.execute_query(insert_exchange_query, params)
+
+
+    ###########################
+    # ASSETS AND TRANSACTIONS #
+    ###########################
+
+    def get_asset_id_by_asset_symbol(self, asset_symbol: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_asset_id_by_asset_symbol_query = f"{query_type} id FROM asset WHERE symbol = ?"
+        params = (asset_symbol,)
+        # Execute the query
+        result = self.execute_query(get_asset_id_by_asset_symbol_query, params)
+        # Check whether the result is None (None means the asset doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+        
+    def get_transaction_type_id_by_transaction_type_name(self, transaction_type_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_transaction_type_id_by_transaction_type_name_query = f"{query_type} id FROM transaction_type WHERE name = ?"
+        params = (transaction_type_name,)
+        # Execute the query
+        result = self.execute_query(get_transaction_type_id_by_transaction_type_name_query, params)
+        # Check whether the result is None (None means the transaction type doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def get_brokerage_id_by_brokerage_name(self, brokerage_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_brokerage_id_by_brokerage_name_query = f"{query_type} id FROM brokerage WHERE name = ?"
+        params = (brokerage_name,)
+        # Execute the query
+        result = self.execute_query(get_brokerage_id_by_brokerage_name_query, params)
+        # Check whether the result is None (None means the brokerage doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def get_asset_account_id_by_asset_account_name(self, asset_account_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_asset_account_id_by_asset_account_name_query = f"{query_type} id FROM asset_account WHERE name = ?"
+        params = (asset_account_name,)
+        # Execute the query
+        result = self.execute_query(get_asset_account_id_by_asset_account_name_query, params)
+        # Check whether the result is None (None means the asset account doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
 
 
 

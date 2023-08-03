@@ -11,12 +11,14 @@ import imaplib
 import os
 
 # Third-party Libraries
+import pandas as pd
 from html.parser import HTMLParser
 
 # Local Modules
 from database_management.database import Database
 from import_modules.csv_file_manager import CSVFileManager
 from import_modules.uid_handler import UIDHandler
+from database_management.schema.schema import AssetTransaction
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -126,20 +128,6 @@ class IMAPClient:
             return []
 
 
-# Class definition for parsing HTML
-class MyHTMLParser(HTMLParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text = ""
-
-    def feed(self, data):
-        self.text = ""
-        super().feed(data)
-
-    def handle_data(self, data):
-        self.text += data
-
-
 # Function to extract the data from the email body
 def extract_from_email(data: dict, email_body) -> dict:
     email_body_split = email_body.splitlines()
@@ -184,12 +172,58 @@ def extract_from_email(data: dict, email_body) -> dict:
     return data
 
 
+# Class definition for parsing HTML
+class MyHTMLParser(HTMLParser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.text = ""
+
+    def feed(self, data):
+        self.text = ""
+        super().feed(data)
+
+    def handle_data(self, data):
+        self.text += data
+
+
+# AssetTransactionManager class for managing asset transactions
+class AssetTransactionManager:
+    def __init__(self, database: Database):
+        self._database = database
+        self._asset_transactions: list[AssetTransaction] = []  # Initialize as an empty list
+
+    def get_user_id(self) -> int:
+        return self._database.session_manager.get_current_user_id()
+
+    def get_asset_id(self, asset_symbol: str) -> int | None:
+        return self._database.query_executor.get_asset_id_by_asset_symbol(asset_symbol)
+
+    def get_transaction_type_id(self, transaction_type: str) -> int | None:
+        return self._database.query_executor.get_transaction_type_id_by_transaction_type_name(transaction_type)
+
+    def get_brokerage_id(self, brokerage_name: str) -> int | None:
+        return self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
+
+    def get_asset_account_id(self, asset_account_name: str) -> int | None:
+        return self._database.query_executor.get_asset_account_id_by_asset_account_name(asset_account_name)
+
+    def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
+        # Append the new transaction to the list of asset transactions
+        self._asset_transactions.append(asset_transaction)
+
+    def convert_asset_transactions_to_dataframe(self) -> pd.DataFrame:
+        # Convert the list of objects to a list of dictionaries
+        transactions_dict = [t.to_dict() for t in self._asset_transactions]
+        # Convert the list of dictionaries to a dataframe
+        return pd.DataFrame(transactions_dict)
+
+
 # TODO - make this function a class object???
 def import_from_email_account(database: Database) -> int:
     from user_interface.user_input import UserInput
     user_input = UserInput()
     # Fetch all email addresses of usage "import" from the user
-    import_email_accounts = database._query_executor.get_user_email_accounts_by_usage("import")
+    import_email_accounts = database.query_executor.get_user_email_accounts_by_usage("import")
     
     # Check if any import email addresses are found
     if import_email_accounts is None or len(import_email_accounts) <= 0:
@@ -213,7 +247,7 @@ def import_from_email_account(database: Database) -> int:
     # Prompt the user for the email account password
     provided_password_hash = user_input.password_prompt(prompt="Verify your email credentials by entering your email password: ", confirm=False)
     # Get the selected email account's password hash
-    selected_import_email_account_password_hash = database._query_executor.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
+    selected_import_email_account_password_hash = database.query_executor.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
 
     # Check if the selected email account's password hash is found
     if selected_import_email_account_password_hash is None:
@@ -237,7 +271,6 @@ def import_from_email_account(database: Database) -> int:
     if mail is None:
         return 3
 
-    # TODO - replace with AvailableFolder menu class???
     # List available folders
     folder_list = imap_client.list_folders()
     title = "Available folders:"
@@ -247,7 +280,6 @@ def import_from_email_account(database: Database) -> int:
         print(folder)
     print("\n")
 
-    # TODO - Replace with UserInput class???
     folder_name = input("Enter the folder name (copy/paste from above): ")
 
     # Select the specified folder
@@ -265,7 +297,6 @@ def import_from_email_account(database: Database) -> int:
     csv_file_sec = "./old_data/ws-securities.csv"
     csv_file_divs = "./old_data/ws-divs.csv"
     csv_file_crypto = "./old_data/ws-crypto.csv"
-
 
 
 

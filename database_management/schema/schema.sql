@@ -71,9 +71,9 @@ WHERE (user_id, email_id, email_folder, id) NOT IN (
     LIMIT 10000
 );
 
------------------------------
--- ASSETS AND TRANSACTIONS --
------------------------------
+--------------------------------
+-- ASSETS AND HISTORICAL DATA --
+--------------------------------
 
 -- Create table for asset class data (e.g. equity, fixed income, etc.)
 CREATE TABLE IF NOT EXISTS asset_class (
@@ -195,6 +195,10 @@ CREATE TABLE IF NOT EXISTS split_history (
     UNIQUE (asset_id, [date])
 );
 
+------------------------
+-- ASSET TRANSACTIONS --
+------------------------
+
 -- Create table for asset transaction types
 CREATE TABLE IF NOT EXISTS transaction_type (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -232,13 +236,17 @@ CREATE TABLE IF NOT EXISTS asset_transaction (
     transaction_type_id INTEGER NOT NULL REFERENCES transaction_type (id),
     brokerage_id INTEGER NOT NULL REFERENCES brokerage (id),
     asset_account_id VARCHAR(255) NOT NULL REFERENCES asset_account (id),
-    quantity INT NOT NULL,
+    quantity DECIMAL (10, 2) NOT NULL,
     avg_price DECIMAL(10, 2) NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
     transaction_date DATE NOT NULL,
     imported_from VARCHAR(255),
     import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+----------------
+-- INDEX DATA --
+----------------
 
 -- Create table for index data
 CREATE TABLE IF NOT EXISTS index_info (
@@ -275,9 +283,9 @@ CREATE TABLE IF NOT EXISTS index_price_history (
     UNIQUE (index_id, [date])
 );
 
-------------------------
--- FOR DATA IMPORTING --
-------------------------
+--------------------
+-- DATA IMPORTING --
+--------------------
 
 -- Create table for data types
 CREATE TABLE IF NOT EXISTS data_type (
@@ -294,8 +302,3 @@ CREATE TABLE IF NOT EXISTS imported_data (
     filepath VARCHAR(255) NOT NULL,
     import_date VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
 );
-
-
-
--- Create indices or other constraints as needed
--- Add more table definitions and constraints as required
