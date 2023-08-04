@@ -666,15 +666,156 @@ class QueryExecutor:
     def insert_exchange(self, country_id: int, exchange_name: str, exchange_acronym: str) -> None:
         # Define the query parameters
         query_type = "INSERT"
-        insert_exchange_query = f"{query_type} INTO exchange (country_id, [name], acronym) VALUES (?, ?, ?)"
+        insert_exchange_query = f"{query_type} INTO exchange (country_id, name, acronym) VALUES (?, ?, ?)"
         params = (country_id, exchange_name, exchange_acronym)
         # Execute the query
         self.execute_query(insert_exchange_query, params)
 
 
-    ###########################
-    # ASSETS AND TRANSACTIONS #
-    ###########################
+    ##############
+    # ASSET INFO #
+    ##############
+
+    def get_asset_class_id_by_asset_class_name(self, asset_class_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_asset_class_id_by_asset_class_name_query = f"{query_type} id FROM asset_class WHERE name = ?"
+        params = (asset_class_name,)
+        # Execute the query
+        result = self.execute_query(get_asset_class_id_by_asset_class_name_query, params)
+        # Check whether the result is None (None means the asset class doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def get_sector_id_by_sector_name(self, sector_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_sector_id_by_sector_name_query = f"{query_type} id FROM sector WHERE name = ?"
+        params = (sector_name,)
+        # Execute the query
+        result = self.execute_query(get_sector_id_by_sector_name_query, params)
+        # Check whether the result is None (None means the sector doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+        
+    def insert_sector(self, sector_name: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_sector_query = f"{query_type} INTO sector (name) VALUES (?)"
+        params = (sector_name,)
+        # Execute the query
+        self.execute_query(insert_sector_query, params)
+
+    def get_industry_id_by_industry_name(self, industry_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_industry_id_by_industry_name_query = f"{query_type} id FROM industry WHERE name = ?"
+        params = (industry_name,)
+        # Execute the query
+        result = self.execute_query(get_industry_id_by_industry_name_query, params)
+        # Check whether the result is None (None means the industry doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+
+    def insert_industry(self, industry_name: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_industry_query = f"{query_type} INTO industry (name) VALUES (?)"
+        params = (industry_name,)
+        # Execute the query
+        self.execute_query(insert_industry_query, params)
+
+    def get_country_id_by_country_name(self, country_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_country_id_by_country_name_query = f"{query_type} id FROM country WHERE name = ?"
+        params = (country_name,)
+        # Execute the query
+        result = self.execute_query(get_country_id_by_country_name_query, params)
+        # Check whether the result is None (None means the country doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+        
+    def get_currency_id_by_currency_iso_code(self, currency_iso_code: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_currency_id_by_currency_iso_code_query = f"{query_type} id FROM currency WHERE iso_code = ?"
+        params = (currency_iso_code,)
+        # Execute the query
+        result = self.execute_query(get_currency_id_by_currency_iso_code_query, params)
+        # Check whether the result is None (None means the currency doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+        
+    
+
+
+    ######################
+    # ASSET TRANSACTIONS #
+    ######################
+
+    def get_last_uid_by_email_address_and_folder_name(self, email_address: str, folder_name: str) -> int | None:
+        # Define the first query parameters
+        query_type = "SELECT"
+        get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND address = ?"
+        current_user_id = self._session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            # Execute the query
+            result = self.execute_query(get_email_id_by_email_address_query, (current_user_id, email_address))
+            # Check whether the result is None (None means the email doesn't exist)
+            if result is None or len(result) == 0:
+                return None
+            else:
+                email_id = result[0][0]
+                # Define the second query parameters
+                query_type = "SELECT"
+                get_last_uid_by_email_address_and_folder_name_query = f"{query_type} last_uid FROM imported_email_log WHERE user_id = ? AND email_id = ? AND folder_name = ?"
+                params = (current_user_id, email_id, folder_name)
+                # Execute the query
+                result = self.execute_query(get_last_uid_by_email_address_and_folder_name_query, params)
+                # Check whether the result is None (None means the email doesn't exist)
+                if result is not None and len(result) > 0:
+                    return result[0][0]
+                else:
+                    return None
+    
+    def insert_uid_by_email_address_and_folder_name(self, email_address: str, folder_name: str, last_uid: int) -> None:
+        # Define the first query parameters
+        query_type = "SELECT"
+        get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND address = ?"
+        current_user_id = self._session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            # Execute the query
+            result = self.execute_query(get_email_id_by_email_address_query, (current_user_id, email_address))
+            # Check whether the result is None (None means the email doesn't exist)
+            if result is None or len(result) == 0:
+                return None
+            else:
+                email_id = result[0][0]
+                # Define the second query parameters
+                query_type = "INSERT"
+                insert_uid_by_email_address_and_folder_name_query = f"{query_type} INTO imported_email_log (user_id, email_id, folder_name, last_uid) VALUES (?, ?, ?, ?)"
+                params = (current_user_id, email_id, folder_name, last_uid)
+                # Execute the query
+                self.execute_query(insert_uid_by_email_address_and_folder_name_query, params)
 
     def get_asset_id_by_asset_symbol(self, asset_symbol: str) -> int | None:
         # Define the query parameters
@@ -714,6 +855,20 @@ class QueryExecutor:
             return result[0][0]
         else:
             return None
+        
+    def insert_brokerage(self, brokerage_name: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_brokerage_query = f"{query_type} INTO brokerage (user_id, name) VALUES (?, ?)"
+        current_user_id = self._session_manager.get_current_user_id()
+        logging.debug(f"Current user id: {current_user_id}")
+        if current_user_id is None:
+            print("No user is currently logged in.")
+            return None
+        else:
+            params = (current_user_id, brokerage_name)
+            # Execute the query
+            self.execute_query(insert_brokerage_query, params)
 
     def get_asset_account_id_by_asset_account_name(self, asset_account_name: str) -> int | None:
         # Define the query parameters

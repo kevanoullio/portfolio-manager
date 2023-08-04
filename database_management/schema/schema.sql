@@ -44,19 +44,19 @@ CREATE TABLE IF NOT EXISTS email (
     password_hash BLOB
 );
 
--- Create table for import email settings and uid
-CREATE TABLE IF NOT EXISTS import_email_settings (
+-- Create table for imported email log
+CREATE TABLE IF NOT EXISTS imported_email_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES user (id),
     email_id INTEGER NOT NULL REFERENCES email (id),
-    email_folder VARCHAR(255) NOT NULL,
+    folder_name VARCHAR(255) NOT NULL,
     last_uid INT NOT NULL,
     last_uid_updated_at VARCHAR(255) DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Trigger to ensure email_id references an email with 'import' usage
 CREATE TRIGGER enforce_import_email
-BEFORE INSERT ON import_email_settings
+BEFORE INSERT ON imported_email_log
 FOR EACH ROW
 BEGIN
     SELECT RAISE(ABORT, 'Invalid email_id. The email must have usage type "import"')
@@ -64,11 +64,11 @@ BEGIN
 END;
 
 -- Only keep the last 100 import email settings for a given user's email and folder combination
-DELETE FROM import_email_settings
-WHERE (user_id, email_id, email_folder, id) NOT IN (
-    SELECT user_id, email_id, email_folder, id FROM import_email_settings
+DELETE FROM imported_email_log
+WHERE (user_id, email_id, folder_name, id) NOT IN (
+    SELECT user_id, email_id, folder_name, id FROM imported_email_log
     ORDER BY id DESC
-    LIMIT 10000
+    LIMIT 100
 );
 
 --------------------------------
@@ -219,12 +219,14 @@ INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('dividend');
 -- Create table for brokerage data
 CREATE TABLE IF NOT EXISTS brokerage (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES user (id),
     [name] VARCHAR(255) NOT NULL UNIQUE
 );
 
 -- Create table for asset account data
 CREATE TABLE IF NOT EXISTS asset_account (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES user (id),
     [name] VARCHAR(255) NOT NULL UNIQUE
 );
 

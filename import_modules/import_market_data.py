@@ -13,6 +13,7 @@ import yfinance as yf
 from database_management.database import Database
 from import_modules.web_scraper import WebScraper
 from import_modules.csv_file_manager import CSVFileManager
+from import_modules.txt_file_manager import TXTFileManager
 
 # Configure logging
 import logging
@@ -43,11 +44,11 @@ class ExchangeListingsExtractor:
 
     def _format_url(self, iterable_index: int | None = None) -> str:
         if self._url_iterables is None:
-            return f"{self._base_url}/{self._exchange_in_url}{self._url_ending}"
+            return f"{self._base_url}{self._exchange_in_url}{self._url_ending}"
         else:
             if iterable_index is None:
                 raise ValueError("Iterable index must be specified when there are iterables.")
-            return f"{self._base_url}/{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
+            return f"{self._base_url}{self._exchange_in_url}/{self._url_iterables[iterable_index]}{self._url_ending}"
  
     def _html_table_to_dataframe(self, table_index: int | None = None) -> None:
         if table_index is None:
@@ -82,11 +83,14 @@ class ExchangeListingsExtractor:
             self._exchange_listings = result_df
     
     def _csv_link_to_dataframe(self, first_column_in_header: str, sort_by_column: str | None = None) -> None:
-        # Read the CSV file from the specified URL
+        # Create a CSVFileManager object
         csv_file = CSVFileManager()
+        # Set the first column in the header
         csv_file.set_first_column_in_header(first_column_in_header)
         if self._base_url is None:
             raise ValueError("Base URL must be specified.")
+        
+        # Read the CSV file from the specified URL
         csv_file.read_csv_from_url(self._base_url)
 
         if csv_file.get_data() is None:
@@ -98,6 +102,19 @@ class ExchangeListingsExtractor:
 
         # Convert the CSVFileManager object to a DataFrame
         self._exchange_listings = csv_file.to_dataframe()
+    
+    def _txt_link_to_dataframe(self, first_column_in_header: str, delimiter: str, sort_by_column: str | None = None) -> None:
+        # Create a TXTFileManager object
+        txt_file = TXTFileManager()
+        # Set the first column in the header
+        txt_file.set_first_column_in_header(first_column_in_header)
+        # Set the delimiters
+        txt_file.set_delimiter(delimiter)
+        if self._base_url is None:
+            raise ValueError("Base URL must be specified.")
+        
+        # Read the TXT file from the specified URL
+        txt_file.read_txt_from_url(self._base_url)
 
     def _filter_and_rename_dataframe_columns(self, desired_columns: list[str], rename_desired_columns: list[str] | None = None) -> None:
         if self._exchange_listings is None:
@@ -155,13 +172,36 @@ class ExchangeListingsExtractor:
         # Insert the exchange listings into the database
         self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
 
-    def initialize_cboe_canada_exchange_listings(self, exchange_acronym: str, mic_filter: str) -> None:
+    def initialize_nasdaq_trader_exchange_listings(self, exchange_name: str, exchange_filter: str) -> None:
+        # Assign nasdaqtrader.com specific variables
+        self._base_url = "http://ftp.nasdaqtrader.com/dynamic/SymDir/"
+        self._exchange_in_url = exchange_name
+        self._url_ending = "listed.txt"
+        
+        # Extract the exchange listings from the website
+        self._csv_link_to_dataframe(first_column_in_header="Symbol", sort_by_column="Symbol")
+        self._filter_dataframe_by_exchange(exchange_filter)
+        self._filter_and_rename_dataframe_columns(["Symbol", "Security Name"], ["symbol", "company_name"])
+        if self._exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_name}' could not be retrieved from the website.")
+        
+        # Add the exchange_id column
+        self._exchange_listings["exchange_id"] = self._exchange_id
+        # Remove rows with missing values
+        self._exchange_listings.dropna()
+        # Remove rows with duplicate values
+        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
+
+        # Insert the exchange listings into the database
+        self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
+
+    def initialize_cboe_canada_exchange_listings(self, exchange_acronym: str, exchange_filter: str) -> None:
         # Assign cdn.cboe.com specific variables
         self._base_url = "https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv"
 
         # Extract the exchange listings from the website
         self._csv_link_to_dataframe(first_column_in_header="company_name", sort_by_column="symbol")
-        self._filter_dataframe_by_exchange(mic_filter)
+        self._filter_dataframe_by_exchange(exchange_filter)
         self._filter_and_rename_dataframe_columns(["symbol", "company_name"])
         if self._exchange_listings is None:
             raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")

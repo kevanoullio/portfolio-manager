@@ -181,6 +181,48 @@ class DatabaseSchema:
         self._query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
 
 
+# AssetInfo dataclass for storing asset information
+@dataclass
+class AssetInfo:
+    asset_class_id: int
+    sector_id: int
+    industry_id: int
+    country_id: int
+    city_id: int
+    currency_id: int
+    exchange_id: int
+    symbol: str
+    company_name: str
+    business_summary: str
+    website: str
+    logo_url: str
+
+    def __post_init__(self) -> None:
+        logging.debug(f"Creating AssetInfo object: {self}")
+    
+    def __str__(self) -> str:
+        return f"AssetInfo(asset_class_id={self.asset_class_id}, sector_id={self.sector_id}, " \
+               f"industry_id={self.industry_id}, country_id={self.country_id}, city_id={self.city_id}, " \
+               f"currency_id={self.currency_id}, exchange_id={self.exchange_id}, symbol={self.symbol}, " \
+               f"company_name={self.company_name}, business_summary={self.business_summary}, " \
+               f"website={self.website}, logo_url={self.logo_url})"
+    
+    def to_dict(self) -> dict:
+        return {
+            "asset_class_id": self.asset_class_id,
+            "sector_id": self.sector_id,
+            "industry_id": self.industry_id,
+            "country_id": self.country_id,
+            "city_id": self.city_id,
+            "currency_id": self.currency_id,
+            "exchange_id": self.exchange_id,
+            "symbol": self.symbol,
+            "company_name": self.company_name,
+            "business_summary": self.business_summary,
+            "website": self.website,
+            "logo_url": self.logo_url
+        }
+
 # AssetTransaction dataclass for storing asset transaction data
 @dataclass
 class AssetTransaction:

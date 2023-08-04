@@ -13,12 +13,15 @@ import os
 # Third-party Libraries
 import pandas as pd
 from html.parser import HTMLParser
+import yfinance as yf
 
 # Local Modules
 from database_management.database import Database
 from import_modules.csv_file_manager import CSVFileManager
 from import_modules.uid_handler import UIDHandler
-from database_management.schema.schema import AssetTransaction
+from database_management.schema.schema import AssetInfo, AssetTransaction
+from account_management.account_operations import UserAccountOperation, EmailAccountOperation
+from access_management.account_authenticator import AccountAuthenticator
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -29,7 +32,7 @@ import logging
 
 
 # Global variables
-last_uid_cache = None
+last_uid_cache: int | None = None
 
     
 # Class to handle IMAP connection and login
@@ -186,14 +189,65 @@ class MyHTMLParser(HTMLParser):
         self.text += data
 
 
+# AssetInfoExtractor class for extracting asset information from yahoo finance
+class AssetInfoExtractor:
+    def __init__(self, database: Database) -> None:
+        self._database = database
+        self._asset_info: AssetInfo | None = None
+
+    def get_asset_class_id(self, asset_class: str) -> int | None:
+        return self._database.query_executor.get_asset_class_id_by_asset_class_name(asset_class)
+    
+    def get_sector_id_or_insert(self, sector: str) -> int | None:
+        sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector)
+        if sector_id is None:
+            self._database.query_executor.insert_sector(sector)
+        sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector)
+        return sector_id
+    
+    def get_industry_id_or_insert(self, industry: str) -> int | None:
+        industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry)
+        if industry_id is None:
+            self._database.query_executor.insert_industry(industry)
+        industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry)
+        return industry_id
+    
+    def get_country_id_by_country_name(self, country: str) -> int | None:
+        return self._database.query_executor.get_country_id_by_country_name(country)
+    
+    def get_currency_id_by_currency_iso_code(self, currency_iso_code: str) -> int | None:
+        return self._database.query_executor.get_currency_id_by_currency_iso_code(currency_iso_code)
+    
+    def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
+        return self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+    
+    def get_asset_info_from_yf(self, asset_symbol: str) -> dict[str, str | int] | None:
+        df_asset_info = yf.Ticker(asset_symbol).info
+        if df_asset_info:
+            asset_info_dict = {
+                "asset_class": df_asset_info.get("quoteType"),
+                "sector": df_asset_info.get("sector"),
+                "industry": df_asset_info.get("industry"),
+                "country": df_asset_info.get("country"),
+                "city": df_asset_info.get("city"),
+                "currency": df_asset_info.get("currency"),
+                "exchange": df_asset_info.get("exchange"),
+                "symbol": asset_symbol,
+                "company_name": df_asset_info.get("shortName")
+            }
+            for item in asset_info_dict:
+                if asset_info_dict[item] is None:
+                    asset_info_dict[item] = ""
+            return asset_info_dict
+        else:
+            return None
+
+
 # AssetTransactionManager class for managing asset transactions
 class AssetTransactionManager:
     def __init__(self, database: Database):
         self._database = database
         self._asset_transactions: list[AssetTransaction] = []  # Initialize as an empty list
-
-    def get_user_id(self) -> int:
-        return self._database.session_manager.get_current_user_id()
 
     def get_asset_id(self, asset_symbol: str) -> int | None:
         return self._database.query_executor.get_asset_id_by_asset_symbol(asset_symbol)
@@ -201,8 +255,12 @@ class AssetTransactionManager:
     def get_transaction_type_id(self, transaction_type: str) -> int | None:
         return self._database.query_executor.get_transaction_type_id_by_transaction_type_name(transaction_type)
 
-    def get_brokerage_id(self, brokerage_name: str) -> int | None:
-        return self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
+    def get_brokerage_id_or_insert(self, brokerage_name: str) -> int | None:
+        brokerage_id = self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
+        if brokerage_id is None:
+            self._database.query_executor.insert_brokerage(brokerage_name)
+        brokerage_id = self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
+        return brokerage_id
 
     def get_asset_account_id(self, asset_account_name: str) -> int | None:
         return self._database.query_executor.get_asset_account_id_by_asset_account_name(asset_account_name)
@@ -255,8 +313,6 @@ def import_from_email_account(database: Database) -> int:
         return 2
 
     # Validate the user's email credentials
-    from account_management.account_operations import UserAccountOperation, EmailAccountOperation
-    from access_management.account_authenticator import AccountAuthenticator
     user_account_operation = UserAccountOperation(database)
     email_account_operation = EmailAccountOperation(database)
     email_authenticated = AccountAuthenticator(user_account_operation, email_account_operation)
@@ -287,25 +343,36 @@ def import_from_email_account(database: Database) -> int:
     if not select_result:
         print(f"Failed to select folder: {folder_name}")
         return 1
-    
-    print(f"Scanning emails from '{selected_import_email_account.address}' in the '{folder_name}' folder...")
-    
+
+    # Create a new AssetTransactionManager object
+    asset_transaction_manager = AssetTransactionManager(database)
+
+    # Prompt the user for the brokerage
+    brokerage_name = input("Enter the brokerage name: ")
+    brokerage_id = asset_transaction_manager.get_brokerage_id_or_insert(brokerage_name)
+    if brokerage_id is None:
+        print("Failed to get brokerage ID.")
+        return 1
+
+    print(f"Scanning '{brokerage_name}' emails from '{selected_import_email_account.address}' in the '{folder_name}' folder...")
 
 
-    # TODO - change from .csv to directly into the database
-    # Set the names of the CSV files to save the data to
-    csv_file_sec = "./old_data/ws-securities.csv"
-    csv_file_divs = "./old_data/ws-divs.csv"
-    csv_file_crypto = "./old_data/ws-crypto.csv"
+
+    # # TODO - change from .csv to directly into the database
+    # # Set the names of the CSV files to save the data to
+    # csv_file_sec = "./old_data/ws-securities.csv"
+    # csv_file_divs = "./old_data/ws-divs.csv"
+    # csv_file_crypto = "./old_data/ws-crypto.csv"
 
 
+    # Get the UID of the last email in the selected folder
+    last_uid = database.query_executor.get_last_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name)
 
-    # Read the UID of the last processed email from the file
-    last_uid = UIDHandler.read_last_uid()
+    last_uid_cache = last_uid
 
     # Search for emails with a UID greater than the last processed email in the selected folder
-    if last_uid is not None:
-        search_query = f"UID {int(last_uid) + 1}:*"
+    if last_uid_cache is not None:
+        search_query = f"UID {int(last_uid_cache) + 1}:*"
     else:
         search_query = "ALL"
 
@@ -315,7 +382,7 @@ def import_from_email_account(database: Database) -> int:
         return 1
 
     for num in search_data:
-        if num.decode("utf-8") == last_uid:
+        if num.decode("utf-8") == last_uid_cache:
             continue
         # Get the email
         try:
@@ -388,7 +455,6 @@ def import_from_email_account(database: Database) -> int:
 
         # Initialize the data dictionary and csv_file
         data = {}
-        csv_file = ""
 
         # Check if the email is a crypto or security email
         if ("order" and "filled") in subject.lower():
@@ -396,33 +462,25 @@ def import_from_email_account(database: Database) -> int:
             data = {"Date (UTC)" : date, "Account" : "", "Type" : "", "Symbol" : "", "Shares" : "", "Average price" : "", "Total" : ""}
             # Extract the data from the email body
             data = extract_from_email(data, body)
-            # Check if the email is a crypto email
-            if "Cryptocurrency" in body:
-                csv_file = csv_file_crypto
-            # Otherwise, it is a security email
-            else:
-                csv_file = csv_file_sec
+
         # Check if the email is a dividend email
         elif ("You" and "a dividend") in subject.lower():
-            csv_file = csv_file_divs
             # Specify the desired order of the keys and initialize their values
             data = {"Date (UTC)" : date, "Account" : "", "Type" : "Dividend", "Symbol" : "", "Amount" : ""}
             # Extract the data from the email body
             data = extract_from_email(data, body)
         
-        if not csv_file:
-            logging.info(f"Email subject did not match any of the expected subjects: {subject}")
         else:
-            # Write to csv
-            logging.debug(data)
-            csv_file_manager = CSVFileManager()
-            csv_file_manager.set_header(list(data.keys()))
-            csv_file_manager.set_first_column_in_header(list(data.keys())[0])
-            csv_file_manager.append_unique_entry_to_csv_file(csv_file, list(data.values()))
+            logging.info(f"Email subject did not match any of the expected subjects: {subject}")
+
+        logging.debug(data)
 
         # Save the UID of the last processed email to a file
-        last_uid = num.decode("utf-8")
-        UIDHandler.save_last_uid(last_uid)
+        last_uid_cache = num.decode("utf-8")
+
+    # Update the last processed email UID in the database
+    if last_uid_cache is not None:
+        database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
 
     print("No new emails to process.")
     print("Import complete!")
