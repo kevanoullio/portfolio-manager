@@ -302,68 +302,21 @@ class Dashboard:
     def initialize_market_data(self):
         print("Initialize Market Data logic goes here...")
 
-
-    # def _get_exchange_id_by_exchange_acronym_or_insert(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> int | None:
-    #     # Get the exchange_id from the database
-    #     exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
-    #     # If the exchange doesn't exist in the database, insert it
-    #     if exchange_id is None:
-    #         # Get the country_id from the database
-    #         country_id = self._database._query_executor.get_country_id_by_country_iso_code(country_iso_code)
-    #         if country_id is None:
-    #             raise ValueError(f"Country ISO Code '{country_iso_code}' does not exist in the database.")
-    #         self._database._query_executor.insert_exchange(country_id, exchange_name, exchange_acronym)
-    #         exchange_id = self._database._query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
-    #     return exchange_id
-
-
-    # def _initialize_eoddata_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str) -> pd.DataFrame:
-    #     # Get the exchange_id from the database
-    #     exchange_id = self._get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
-    #     # If the exchange doesn't exist in the database, insert it
-    #     if exchange_id is None:
-    #         raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
-    #     # Extract the exchange listings from the website
-    #     url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    #     exchange_listings = import_market_data.ExchangeListingsExtractor("https://eoddata.com/stocklist/", exchange_acronym, url_iterables, ".htm")
-    #     exchange_listings.html_table_to_dataframe(table_index=4)
-    #     exchange_listings.filter_and_rename_dataframe_columns(["Code", "Name"], ["symbol", "company_name"])
-    #     df_exchange_listings = exchange_listings.get_dataframe()
-    #     if df_exchange_listings is None:
-    #         raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
-    #     df_exchange_listings["exchange_id"] = exchange_id
-    #     # Remove rows with missing values
-    #     df_clean = df_exchange_listings.dropna()
-    #     # Remove rows with duplicate values
-    #     df_clean = df_clean.drop_duplicates(subset=["exchange_id", "symbol"])
-    #     return df_clean
-
-
-    # def _initialize_cboe_canada_exchange_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str, mic_filter: str) -> pd.DataFrame:
-    #     # Get the exchange_id from the database
-    #     exchange_id = self._get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
-    #     # If the exchange doesn't exist in the database, insert it
-    #     if exchange_id is None:
-    #         raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
-    #     # Extract the exchange listings from the website
-    #     exchange_listings = import_market_data.ExchangeListingsExtractor("https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv")
-    #     exchange_listings.csv_link_to_dataframe(first_column_in_header="company_name", sort_by_column="symbol")
-    #     exchange_listings.filter_dataframe_by_exchange(mic_filter)
-    #     exchange_listings.filter_and_rename_dataframe_columns(["symbol", "company_name"])
-    #     df_exchange_listings = exchange_listings.get_dataframe()
-    #     if df_exchange_listings is None:
-    #         raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
-    #     logging.debug(f"df_exchange_listings after filtering:\n{df_exchange_listings}")
-    #     df_exchange_listings["exchange_id"] = exchange_id
-    #     # Remove rows with missing values
-    #     df_clean = df_exchange_listings.dropna()
-    #     # Remove rows with duplicate values
-    #     df_clean = df_clean.drop_duplicates(subset=["exchange_id", "symbol"])
-    #     # Define the regular expression pattern to match " AT [...]" with any four-letter acronym
-    #     pattern = r"\sAT\s[A-Z]{4}\b$"
-    #     # Remove the pattern from the "company_name" column using regular expressions
-    #     df_clean["company_name"] = df_clean["company_name"].str.replace(pattern, "", regex=True)
-    #     return df_clean
+    
+    def initialize_all_exchange_listings_data(self):
+        self.initialize_nasdaq_listings_data()
+        self.initialize_nyse_listings_data()
+        self.initialize_nyse_mkt_listings_data()
+        self.initialize_nyse_arca_listings_data()
+        self.initialize_bats_listings_data()
+        # self.initialize_iex_listings_data()
+        self.initialize_tsx_listings_data()
+        self.initialize_tsxv_listings_data()
+        self.initialize_cse_listings_data()
+        self.initialize_cboe_canada_listings_data()
+        # self.initialize_lse_listings_data()
+        # self.initialize_asx_listings_data()
+        # self.initialize_sgx_listings_data()
 
 
     def initialize_nasdaq_listings_data(self):
@@ -373,10 +326,11 @@ class Dashboard:
         country_iso_code = "USA"
         exchange_name = "NASDAQ Stock Exchange"
         exchange_acronym = "NASDAQ"
+        exchange_in_url = "nasdaq"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+        exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url)
         print("NASDAQ listings initialized successfully.")
         logging.info("NASDAQ listings initialized successfully.")
     
@@ -388,42 +342,76 @@ class Dashboard:
         country_iso_code = "USA"
         exchange_name = "New York Stock Exchange"
         exchange_acronym = "NYSE"
+        exchange_in_url = "other"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+        exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url, "N")
         print("NYSE listings initialized successfully.")
         logging.info("NYSE listings initialized successfully.")
 
     
-    def initialize_amex_listings_data(self):
+    def initialize_nyse_mkt_listings_data(self):
         # Initialize the exchange listings object
         exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
         # Set the exchange variables
         country_iso_code = "USA"
-        exchange_name = "American Stock Exchange"
-        exchange_acronym = "AMEX"
+        exchange_name = "NYSE American"
+        exchange_acronym = "NYSE MKT"
+        exchange_in_url = "other"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
-        print("AMEX listings initialized successfully.")
-        logging.info("AMEX listings initialized successfully.")
+        exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url, "A")
+        print("NYSE MKT listings initialized successfully.")
+        logging.info("NYSE MKT listings initialized successfully.")
 
-    
-    def initialize_lse_listings_data(self):
+
+    def initialize_nyse_arca_listings_data(self):
         # Initialize the exchange listings object
         exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
         # Set the exchange variables
-        country_iso_code = "GBR"
-        exchange_name = "London Stock Exchange"
-        exchange_acronym = "LSE"
+        country_iso_code = "USA"
+        exchange_name = "NYSE Arca"
+        exchange_acronym = "NYSE ARCA"
+        exchange_in_url = "other"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
-        print("LSE listings initialized successfully.")
-        logging.info("LSE listings initialized successfully.")
+        exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url, "P")
+        print("NYSE ARCA listings initialized successfully.")
+        logging.info("NYSE ARCA listings initialized successfully.")
+
+    def initialize_bats_listings_data(self):
+        # Initialize the exchange listings object
+        exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "BATS Global Markets"
+        exchange_acronym = "BATS"
+        exchange_in_url = "other"
+        # Get the exchange_id from the database, or insert it if it doesn't exist
+        exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+        # Get the exchange listings from the website
+        exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url, "Z")
+        print("BATS listings initialized successfully.")
+        logging.info("BATS listings initialized successfully.")
+
+
+    # def initialize_iex_listings_data(self):
+    #     # Initialize the exchange listings object
+    #     exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "Investors' Exchange, LLC"
+    #     exchange_acronym = "IEX"
+    #     exchange_in_url = "other"
+    #     # Get the exchange_id from the database, or insert it if it doesn't exist
+    #     exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+    #     # Get the exchange listings from the website
+    #     exchange_listings.initialize_nasdaq_trader_exchange_listings(exchange_in_url, "V")
+    #     print("IEX listings initialized successfully.")
+    #     logging.info("IEX listings initialized successfully.")
 
 
     def initialize_tsx_listings_data(self):
@@ -433,10 +421,11 @@ class Dashboard:
         country_iso_code = "CAN"
         exchange_name = "Toronto Stock Exchange"
         exchange_acronym = "TSX"
+        exchange_in_csv = "XTSE"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+        exchange_listings.initialize_cboe_canada_exchange_listings(exchange_acronym, exchange_in_csv)
         print("TSX listings initialized successfully.")
         logging.info("TSX listings initialized successfully.")
 
@@ -448,10 +437,11 @@ class Dashboard:
         country_iso_code = "CAN"
         exchange_name = "TSX Venture Exchange"
         exchange_acronym = "TSXV"
+        exchange_in_csv = "XTSX"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
         # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+        exchange_listings.initialize_cboe_canada_exchange_listings(exchange_acronym, exchange_in_csv)
         print("TSXV listings initialized successfully.")
         logging.info("TSXV listings initialized successfully.")
 
@@ -477,7 +467,7 @@ class Dashboard:
         # Set the exchange variables
         country_iso_code = "CAN"
         exchange_name = "Cboe Canada"
-        exchange_acronym = "Cboe Canada"
+        exchange_acronym = "Cboe CA"
         exchange_in_csv = "NEOE"
         # Get the exchange_id from the database, or insert it if it doesn't exist
         exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
@@ -486,35 +476,50 @@ class Dashboard:
         print("Cboe Canada listings initialized successfully.")
         logging.info("Cboe Canada listings initialized successfully.")
 
+    
+    # def initialize_lse_listings_data(self):
+    #     # Initialize the exchange listings object
+    #     exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
+    #     # Set the exchange variables
+    #     country_iso_code = "GBR"
+    #     exchange_name = "London Stock Exchange"
+    #     exchange_acronym = "LSE"
+    #     # Get the exchange_id from the database, or insert it if it doesn't exist
+    #     exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+    #     # Get the exchange listings from the website
+    #     exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+    #     print("LSE listings initialized successfully.")
+    #     logging.info("LSE listings initialized successfully.")
 
-    def initialize_asx_listings_data(self):
-        # Initialize the exchange listings object
-        exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
-        # Set the exchange variables
-        country_iso_code = "AUS"
-        exchange_name = "Australian Securities Exchange"
-        exchange_acronym = "ASX"
-        # Get the exchange_id from the database, or insert it if it doesn't exist
-        exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
-        # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
-        print("ASX listings initialized successfully.")
-        logging.info("ASX listings initialized successfully.")
+
+    # def initialize_asx_listings_data(self):
+    #     # Initialize the exchange listings object
+    #     exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
+    #     # Set the exchange variables
+    #     country_iso_code = "AUS"
+    #     exchange_name = "Australian Securities Exchange"
+    #     exchange_acronym = "ASX"
+    #     # Get the exchange_id from the database, or insert it if it doesn't exist
+    #     exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+    #     # Get the exchange listings from the website
+    #     exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+    #     print("ASX listings initialized successfully.")
+    #     logging.info("ASX listings initialized successfully.")
 
 
-    def initialize_sgx_listings_data(self):
-        # Initialize the exchange listings object
-        exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
-        # Set the exchange variables
-        country_iso_code = "SGP"
-        exchange_name = "Singapore Exchange"
-        exchange_acronym = "SGX"
-        # Get the exchange_id from the database, or insert it if it doesn't exist
-        exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
-        # Get the exchange listings from the website
-        exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
-        print("SGX listings initialized successfully.")
-        logging.info("SGX listings initialized successfully.")
+    # def initialize_sgx_listings_data(self):
+    #     # Initialize the exchange listings object
+    #     exchange_listings = import_market_data.ExchangeListingsExtractor(self._database)
+    #     # Set the exchange variables
+    #     country_iso_code = "SGP"
+    #     exchange_name = "Singapore Exchange"
+    #     exchange_acronym = "SGX"
+    #     # Get the exchange_id from the database, or insert it if it doesn't exist
+    #     exchange_listings.get_exchange_id_by_exchange_acronym_or_insert(country_iso_code, exchange_name, exchange_acronym)
+    #     # Get the exchange listings from the website
+    #     exchange_listings.initialize_eoddata_exchange_listings(exchange_acronym)
+    #     print("SGX listings initialized successfully.")
+    #     logging.info("SGX listings initialized successfully.")
 
 
     def initialize_index_holdings_data(self):

@@ -39,13 +39,13 @@ class TXTFileManager:
         self._first_column_in_header = first_column_in_header
     
     def set_delimiter(self, delimiter: str) -> None:
-        self._delimiters = delimiter
+        self._delimiter = delimiter
     
     def set_data(self, data: list[list[str]]) -> None:
         self._data = data
 
-    def _find_header_row(self, csv_content: list[list[str]]) -> int | None:
-        for i, row in enumerate(csv_content):
+    def _find_header_row(self, txt_content: list[list[str]]) -> int | None:
+        for i, row in enumerate(txt_content):
             if row and row[0] == self._first_column_in_header:
                 return i
         return None
@@ -104,15 +104,19 @@ class TXTFileManager:
     def read_txt_from_url(self, url: str) -> None:
         # Read the TXT file from the URL
         content = self._web_scraper.get_html_content_as_text(url)
+        logging.debug(f"Content: {content}")
         # Convert the TXT file to a list of lists
         txt_file = io.StringIO(content)
         # Read the TXT file into a list of lists
         data = []
         for row in txt_file:
-            row_data = row.split(self._delimiter)
+            logging.debug(f"Row: {row}")
+            logging.debug(f"Delimiter: {self._delimiter}")
+            row_data = row.strip().split(self._delimiter)
             data.append(row_data)
 
         # Find the header row
+        logging.debug(f"First row in data: {data[0]}")
         header_index = self._find_header_row(data)
 
         # Check if the header row was found
@@ -131,7 +135,17 @@ class TXTFileManager:
 
     def sort_data_by_column(self, column_name: str) -> None:
         column_index = self._header.index(column_name)
-        self._data.sort(key=lambda row: row[column_index])
+        try:
+            self._data.sort(key=lambda row: row[column_index])
+        except IndexError as e:
+            print(f"Error: {e}")
+            print("The row causing the error:")
+            for row in self._data:
+                try:
+                    value = row[column_index]
+                except IndexError:
+                    print(row)
+                    break
 
     def to_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame(self._data, columns=self._header)

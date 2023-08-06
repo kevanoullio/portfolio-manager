@@ -91,7 +91,7 @@ class ExchangeListingsExtractor:
             raise ValueError("Base URL must be specified.")
         
         # Read the CSV file from the specified URL
-        csv_file.read_csv_from_url(self._base_url)
+        csv_file.read_csv_from_url(self._format_url())
 
         if csv_file.get_data() is None:
             return None       
@@ -108,28 +108,41 @@ class ExchangeListingsExtractor:
         txt_file = TXTFileManager()
         # Set the first column in the header
         txt_file.set_first_column_in_header(first_column_in_header)
-        # Set the delimiters
+        # Set the delimiter
         txt_file.set_delimiter(delimiter)
         if self._base_url is None:
             raise ValueError("Base URL must be specified.")
         
         # Read the TXT file from the specified URL
-        txt_file.read_txt_from_url(self._base_url)
+        txt_file.read_txt_from_url(self._format_url())
 
-    def _filter_and_rename_dataframe_columns(self, desired_columns: list[str], rename_desired_columns: list[str] | None = None) -> None:
+        if txt_file.get_data() is None:
+            return None
+        
+        if sort_by_column is not None:
+            # Sort the data by the sort_by_column
+            txt_file.sort_data_by_column(sort_by_column)
+        
+        # Convert the TXTFileManager object to a DataFrame
+        self._exchange_listings = txt_file.to_dataframe()
+
+    def _filter_dataframe_columns(self, desired_columns: list[str]) -> None:
         if self._exchange_listings is None:
             raise ValueError("DataFrame must be initialized before filtering.")
         # Only keep the desired columns if specified
         self._exchange_listings = self._exchange_listings[desired_columns]
-        # Rename the desired columns if specified
-        if rename_desired_columns is not None:
-            self._exchange_listings.columns = rename_desired_columns
 
-    def _filter_dataframe_by_exchange(self, exchange: str) -> None:
+    def _rename_dataframe_columns(self, columns_to_be_renamed: list[str], new_column_names: list[str]) -> None:
+        if self._exchange_listings is None:
+            raise ValueError("DataFrame must be initialized before renaming.")
+        # Rename the desired columns
+        self._exchange_listings.rename(columns=dict(zip(columns_to_be_renamed, new_column_names)), inplace=True)
+
+    def _filter_dataframe_by_exchange(self, exchange_column_name: str, exchange: str) -> None:
         if self._exchange_listings is None:
             raise ValueError("DataFrame must be initialized before filtering.")
         # Create a boolean mask based on the condition
-        mask = self._exchange_listings["mic"] == exchange
+        mask = self._exchange_listings[exchange_column_name] == exchange
         # Filter the DataFrame using the boolean mask
         self._exchange_listings = self._exchange_listings[mask]
 
@@ -149,45 +162,50 @@ class ExchangeListingsExtractor:
             raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
         self._exchange_id = exchange_id
 
-    def initialize_eoddata_exchange_listings(self, exchange_acronym: str) -> None:
-        # Assign eoddata.com specific variables
-        self._base_url = "https://eoddata.com/stocklist/"
-        self._exchange_in_url = exchange_acronym
-        self._url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-        self._url_ending = ".htm"
-        
-        # Extract the exchange listings from the website
-        self._html_table_to_dataframe(table_index=4)
-        self._filter_and_rename_dataframe_columns(["Code", "Name"], ["symbol", "company_name"])
-        if self._exchange_listings is None:
-            raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
-        
-        # Add the exchange_id column
-        self._exchange_listings["exchange_id"] = self._exchange_id
-        # Remove rows with missing values
-        self._exchange_listings.dropna()
-        # Remove rows with duplicate values
-        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
-
-        # Insert the exchange listings into the database
-        self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
-
-    def initialize_nasdaq_trader_exchange_listings(self, exchange_name: str, exchange_filter: str) -> None:
+    def initialize_nasdaq_trader_exchange_listings(self, exchange_in_url: str, exchange_filter: str | None = None) -> None:
         # Assign nasdaqtrader.com specific variables
         self._base_url = "http://ftp.nasdaqtrader.com/dynamic/SymDir/"
-        self._exchange_in_url = exchange_name
+        self._exchange_in_url = exchange_in_url
         self._url_ending = "listed.txt"
         
         # Extract the exchange listings from the website
-        self._csv_link_to_dataframe(first_column_in_header="Symbol", sort_by_column="Symbol")
-        self._filter_dataframe_by_exchange(exchange_filter)
-        self._filter_and_rename_dataframe_columns(["Symbol", "Security Name"], ["symbol", "company_name"])
-        if self._exchange_listings is None:
-            raise ValueError(f"Exchange listings for '{exchange_name}' could not be retrieved from the website.")
+        if exchange_in_url == "nasdaq":
+            first_column_in_header = "Symbol"
+            desired_columns = [first_column_in_header, "Security Name"]
+        elif exchange_in_url == "other":
+            first_column_in_header = "ACT Symbol"
+            desired_columns = [first_column_in_header, "Security Name"]
+        else:
+            raise ValueError(f"Exchange '{exchange_in_url}' is not supported.")
         
+        # Extract the exchange listings from the website
+        self._txt_link_to_dataframe(first_column_in_header, "|", first_column_in_header)
+        # If other listings, filter by exchange
+        if exchange_filter is not None:
+            self._filter_dataframe_by_exchange("Exchange", exchange_filter)
+        
+        # Check if the exchange listings were successfully retrieved
+        if self._exchange_listings is None:
+            raise ValueError(f"Exchange listings for '{exchange_in_url}' could not be retrieved from the website.")
+        
+        # Remove test listings
+        self._exchange_listings = self._exchange_listings[~self._exchange_listings["Security Name"].str.contains("NASDAQ TEST")]
+        self._exchange_listings = self._exchange_listings[~self._exchange_listings["Security Name"].str.contains("Nasdaq Symbology Test")]
+        if exchange_in_url == "other":
+            # Remove all rows where the Test Issue column is "Y"
+            self._exchange_listings = self._exchange_listings[self._exchange_listings["Test Issue"] != "Y"]
+
+        # Remove "File Creation Time" entry at the end of the DataFrame
+        self._exchange_listings = self._exchange_listings[~self._exchange_listings["Security Name"].str.contains("File Creation Time")]
+
+        # Filter the desired columns
+        self._filter_dataframe_columns(desired_columns)
+        # Rename the columns
+        self._rename_dataframe_columns(desired_columns, ["symbol", "company_name"])
         # Add the exchange_id column
         self._exchange_listings["exchange_id"] = self._exchange_id
-        # Remove rows with missing values
+        
+        # Remove rows with missing valuesa
         self._exchange_listings.dropna()
         # Remove rows with duplicate values
         self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
@@ -197,23 +215,24 @@ class ExchangeListingsExtractor:
 
     def initialize_cboe_canada_exchange_listings(self, exchange_acronym: str, exchange_filter: str) -> None:
         # Assign cdn.cboe.com specific variables
-        self._base_url = "https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv"
+        self._base_url = "https://cdn.cboe.com/ca/equities/mnow/"
+        self._exchange_in_url = "symbol_listings"
+        self._url_ending = ".csv"
 
         # Extract the exchange listings from the website
         self._csv_link_to_dataframe(first_column_in_header="company_name", sort_by_column="symbol")
-        self._filter_dataframe_by_exchange(exchange_filter)
-        self._filter_and_rename_dataframe_columns(["symbol", "company_name"])
         if self._exchange_listings is None:
             raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
         logging.debug(f"df_exchange_listings after filtering:\n{self._exchange_listings}")
         
-        # Add the exchange_id column
-        self._exchange_listings["exchange_id"] = self._exchange_id
+        # Remove test listings
+        self._exchange_listings = self._exchange_listings[~self._exchange_listings["cusip"].str.contains("TEST")]
+        
+        # Filter by exchange
+        self._filter_dataframe_by_exchange("mic", exchange_filter)
+        # Filter the desired columns
+        self._filter_dataframe_columns(["symbol", "company_name"])
 
-        # Remove rows with missing values
-        self._exchange_listings.dropna()
-        # Remove rows with duplicate values
-        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
         # Remove rows without a company name
         self._exchange_listings = self._exchange_listings[self._exchange_listings["company_name"] != ""]
         # Remove the test symbol entry
@@ -224,8 +243,44 @@ class ExchangeListingsExtractor:
         # Remove the pattern from the "company_name" column using regular expressions
         self._exchange_listings["company_name"] = self._exchange_listings["company_name"].str.replace(pattern, "", regex=True)
         
+        # Add the exchange_id column
+        self._exchange_listings["exchange_id"] = self._exchange_id
+        
+        # Remove rows with missing values
+        self._exchange_listings.dropna()
+        # Remove rows with duplicate values
+        self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
+
         # Insert the exchange listings into the database
         self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
+
+    # def initialize_eoddata_exchange_listings(self, exchange_acronym: str) -> None:
+    #     # Assign eoddata.com specific variables
+    #     self._base_url = "https://eoddata.com/stocklist/"
+    #     self._exchange_in_url = exchange_acronym
+    #     self._url_iterables = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    #     self._url_ending = ".htm"
+        
+    #     # Extract the exchange listings from the website
+    #     self._html_table_to_dataframe(table_index=4)
+    #     if self._exchange_listings is None:
+    #         raise ValueError(f"Exchange listings for '{exchange_acronym}' could not be retrieved from the website.")
+        
+    #     # Filter the desired columns
+    #     self._filter_dataframe_columns(["Code", "Name"])
+
+    #     # Remove rows with missing values
+    #     self._exchange_listings.dropna()
+    #     # Remove rows with duplicate values
+    #     self._exchange_listings.drop_duplicates(subset=["exchange_id", "symbol"])
+
+    #     # Rename the columns
+    #     self._rename_dataframe_columns(["Code", "Name"], ["symbol", "company_name"])
+    #     # Add the exchange_id column
+    #     self._exchange_listings["exchange_id"] = self._exchange_id
+
+    #     # Insert the exchange listings into the database
+    #     self._database.query_executor.dataframe_to_existing_sql_table(self._exchange_listings, "exchange_listing")
 
 
 class AssetInfoExtractor:

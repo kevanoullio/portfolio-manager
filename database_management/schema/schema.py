@@ -113,12 +113,6 @@ class DatabaseSchema:
         # Insert the default currency codes into the database
         self._query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
 
-    def _get_country_id_by_iso_code(self, country_iso_code: str) -> int | None:
-        # Search for the country_id based on the country's 3-letter iso_code
-        country_id = self._query_executor.execute_query("SELECT id FROM country WHERE iso_code = ?", (country_iso_code,))
-        # Check if the country_id was found
-        return country_id[0][0] if country_id else None
-
     def _insert_default_exchanges(self) -> None:
         # TODO - replace this with function that imports exchange data from csv file
 
@@ -139,7 +133,7 @@ class DatabaseSchema:
         country_id["ESP"] = self._query_executor.get_country_id_by_country_iso_code("ESP")
         country_id["ITA"] = self._query_executor.get_country_id_by_country_iso_code("ITA")
         country_id["BRA"] = self._query_executor.get_country_id_by_country_iso_code("BRA")
-        country_id["TAI"] = self._query_executor.get_country_id_by_country_iso_code("TAI")
+        country_id["TWN"] = self._query_executor.get_country_id_by_country_iso_code("TWN")
         country_id["SGP"] = self._query_executor.get_country_id_by_country_iso_code("SGP")
         country_id["ZAF"] = self._query_executor.get_country_id_by_country_iso_code("ZAF")
 
@@ -147,7 +141,9 @@ class DatabaseSchema:
         exchanges = [
             {"country_id": country_id["USA"], "name": "NASDAQ Stock Exchange", "acronym": "NASDAQ"},
             {"country_id": country_id["USA"], "name": "New York Stock Exchange", "acronym": "NYSE"},
-            {"country_id": country_id["USA"], "name": "American Stock Exchange", "acronym": "AMEX"},
+            {"country_id": country_id["USA"], "name": "New York Stock Exchange American", "acronym": "NYSE MKT"},
+            {"country_id": country_id["USA"], "name": "New York Stock Exchange Arca", "acronym": "NYSE ARCA"},
+            {"country_id": country_id["USA"], "name": "BATS Global Markets", "acronym": "BATS"},
             {"country_id": country_id["USA"], "name": "Chicago Mercantile Exchange", "acronym": "CME"},
             {"country_id": country_id["USA"], "name": "Chicago Board Options Exchange", "acronym": "CBOE"},
             {"country_id": country_id["JPN"], "name": "Tokyo Stock Exchange", "acronym": "TSE"},
@@ -161,7 +157,7 @@ class DatabaseSchema:
             {"country_id": country_id["CAN"], "name": "Toronto Stock Exchange", "acronym": "TSX"},
             {"country_id": country_id["CAN"], "name": "Toronto Venture Exchange", "acronym": "TSXV"},
             {"country_id": country_id["CAN"], "name": "Canadian Securities Exchange", "acronym": "CSE"},
-            {"country_id": country_id["CAN"], "name": "Cboe Canada", "acronym": "Cboe Canada"},
+            {"country_id": country_id["CAN"], "name": "Cboe Canada", "acronym": "Cboe CA"},
             {"country_id": country_id["CHE"], "name": "SIX Swiss Exchange", "acronym": "SIX"},
             {"country_id": country_id["AUS"], "name": "Australian Securities Exchange", "acronym": "ASX"},
             {"country_id": country_id["KOR"], "name": "Korea Exchange", "acronym": "KRX"},
@@ -169,13 +165,14 @@ class DatabaseSchema:
             {"country_id": country_id["ESP"], "name": "Bolsa de Madrid", "acronym": "BME"},
             {"country_id": country_id["ITA"], "name": "Borsa Italiana", "acronym": "BIT"},
             {"country_id": country_id["BRA"], "name": "B3", "acronym": "B3"},
-            {"country_id": country_id["TAI"], "name": "Taiwan Stock Exchange", "acronym": "TWSE"},
+            {"country_id": country_id["TWN"], "name": "Taiwan Stock Exchange", "acronym": "TWSE"},
             {"country_id": country_id["SGP"], "name": "Singapore Exchange", "acronym": "SGX"},
             {"country_id": country_id["ZAF"], "name": "Johannesburg Stock Exchange", "acronym": "JSE"}
         ]
 
         # Convert the exchanges data into a pandas dataframe
         df_exchanges = pd.DataFrame(exchanges)
+        logging.debug(f"df_exchanges: {df_exchanges}")
 
         # Insert the default exchanges into the database
         self._query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
