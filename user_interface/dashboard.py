@@ -427,6 +427,54 @@ class Dashboard:
         exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
 
 
+    def initialize_all_asset_information_data(self):
+        self.initialize_nasdaq_asset_information_data()
+        self.initialize_nyse_asset_information_data()
+        self.initialize_nyse_mkt_asset_information_data()
+        self.initialize_nyse_arca_asset_information_data()
+        self.initialize_bats_asset_information_data()
+        self.initialize_tsx_asset_information_data()
+        self.initialize_tsxv_asset_information_data()
+        self.initialize_cse_asset_information_data()
+        self.initialize_cboe_canada_asset_information_data()
+
+
+    def initialize_nasdaq_asset_information_data(self):
+        print("Initialize Nasdaq Asset Information Data logic goes here...")
+    
+
+    def initialize_nyse_asset_information_data(self):
+        print("Initialize NYSE Asset Information Data logic goes here...")
+
+    
+    def initialize_nyse_mkt_asset_information_data(self):
+        print("Initialize NYSE MKT Asset Information Data logic goes here...")
+
+
+    def initialize_nyse_arca_asset_information_data(self):
+        print("Initialize NYSE ARCA Asset Information Data logic goes here...")
+
+
+    def initialize_bats_asset_information_data(self):
+        print("Initialize BATS Asset Information Data logic goes here...")
+
+
+    def initialize_tsx_asset_information_data(self):
+        print("Initialize TSX Asset Information Data logic goes here...")
+
+
+    def initialize_tsxv_asset_information_data(self):
+        print("Initialize TSXV Asset Information Data logic goes here...")
+
+
+    def initialize_cse_asset_information_data(self):
+        print("Initialize CSE Asset Information Data logic goes here...")
+
+
+    def initialize_cboe_canada_asset_information_data(self):
+        print("Initialize Cboe Canada Asset Information Data logic goes here...")
+
+
     def initialize_index_holdings_data(self):
         print("Initialize Index Holdings Data logic goes here...")
 
