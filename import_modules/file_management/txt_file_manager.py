@@ -133,19 +133,19 @@ class TXTFileManager:
         logging.debug(f"Header: {self._header}")
         logging.debug(f"Data: {data}")
 
-    def sort_data_by_column(self, column_name: str) -> None:
-        column_index = self._header.index(column_name)
-        try:
-            self._data.sort(key=lambda row: row[column_index])
-        except IndexError as e:
-            print(f"Error: {e}")
-            print("The row causing the error:")
-            for row in self._data:
-                try:
-                    value = row[column_index]
-                except IndexError:
-                    print(row)
-                    break
+    # def sort_data_by_column(self, column_name: str) -> None:
+    #     column_index = self._header.index(column_name)
+    #     try:
+    #         self._data.sort(key=lambda row: row[column_index])
+    #     except IndexError as e:
+    #         print(f"Error: {e}")
+    #         print("The row causing the error:")
+    #         for row in self._data:
+    #             try:
+    #                 value = row[column_index]
+    #             except IndexError:
+    #                 print(row)
+    #                 break
 
     def to_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame(self._data, columns=self._header)

@@ -638,14 +638,10 @@ class InitializeExchangeListingsData(Menu):
         self.add_option(verb="Initialize", subject="NYSE MKT Listings Data")
         self.add_option(verb="Initialize", subject="NYSE ARCA Listings Data")
         self.add_option(verb="Initialize", subject="BATS Listings Data")
-        # self.add_option(verb="Initialize", subject="IEX Listings Data")
         self.add_option(verb="Initialize", subject="TSX Listings Data")
         self.add_option(verb="Initialize", subject="TSXV Listings Data")
         self.add_option(verb="Initialize", subject="CSE Listings Data")
         self.add_option(verb="Initialize", subject="Cboe Canada Listings Data")
-        # self.add_option(verb="Initialize", subject="LSE Listings Data")
-        # self.add_option(verb="Initialize", subject="ASX Listings Data")
-        # self.add_option(verb="Initialize", subject="SGX Listings Data")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
@@ -655,14 +651,10 @@ class InitializeExchangeListingsData(Menu):
             4: InitializeExchangeListingsData,
             5: InitializeExchangeListingsData,
             6: InitializeExchangeListingsData,
-            # 7: InitializeExchangeListingsData,
             7: InitializeExchangeListingsData,
             8: InitializeExchangeListingsData,
             9: InitializeExchangeListingsData,
             10: InitializeExchangeListingsData,
-            # 12: InitializeExchangeListingsData,
-            # 13: InitializeExchangeListingsData,
-            # 14: InitializeExchangeListingsData,
             0: InitializeMarketData
         }
         self.menu_logic = { # TODO - add logic
@@ -672,14 +664,10 @@ class InitializeExchangeListingsData(Menu):
             4: self.dashboard.initialize_nyse_mkt_listings_data,
             5: self.dashboard.initialize_nyse_arca_listings_data,
             6: self.dashboard.initialize_bats_listings_data,
-            # 7: self.dashboard.initialize_iex_listings_data,
             7: self.dashboard.initialize_tsx_listings_data,
             8: self.dashboard.initialize_tsxv_listings_data,
             9: self.dashboard.initialize_cse_listings_data,
             10: self.dashboard.initialize_cboe_canada_listings_data,
-            # 12: self.dashboard.initialize_lse_listings_data,
-            # 13: self.dashboard.initialize_asx_listings_data,
-            # 14: self.dashboard.initialize_sgx_listings_data,
             0: self.dashboard.previous_menu
         }
 

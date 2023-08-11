@@ -68,7 +68,7 @@ DELETE FROM imported_email_log
 WHERE (user_id, email_id, folder_name, id) NOT IN (
     SELECT user_id, email_id, folder_name, id FROM imported_email_log
     ORDER BY id DESC
-    LIMIT 100
+    LIMIT 10000
 );
 
 --------------------------------
@@ -140,6 +140,7 @@ CREATE TABLE IF NOT EXISTS exchange (
 CREATE TABLE IF NOT EXISTS exchange_listing (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     exchange_id INTEGER NOT NULL REFERENCES exchange (id),
+    currency_id INTEGER NOT NULL REFERENCES currency (id),
     symbol VARCHAR(255) NOT NULL,
     company_name VARCHAR(255) NOT NULL,
     UNIQUE (exchange_id, symbol)
@@ -149,6 +150,7 @@ CREATE TABLE IF NOT EXISTS exchange_listing (
 CREATE TABLE IF NOT EXISTS asset_info (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     asset_class_id INTEGER NOT NULL REFERENCES asset_class (id),
+    asset_subclass_id INTEGER NOT NULL REFERENCES asset_subclass (id),
     sector_id INTEGER NOT NULL REFERENCES sector (id),
     industry_id INTEGER NOT NULL REFERENCES industry (id),
     country_id INTEGER NOT NULL REFERENCES country (id),
@@ -156,7 +158,7 @@ CREATE TABLE IF NOT EXISTS asset_info (
     currency_id INTEGER NOT NULL REFERENCES currency (id),
     exchange_id INTEGER NOT NULL REFERENCES exchange (id),
     symbol VARCHAR(255) NOT NULL,
-    compamy_name VARCHAR(255) NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
     business_summary VARCHAR(1023),
     website VARCHAR(255),
     logo_url VARCHAR(255),

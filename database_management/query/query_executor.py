@@ -496,7 +496,7 @@ class QueryExecutor:
         else:
             return None
 
-    def get_email_usage_id_by_usage_name(self, email_usage_name: str) -> int | None:
+    def get_email_usage_id_by_email_usage_name(self, email_usage_name: str) -> int | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_usage_id_query = f"{query_type} id FROM email_usage WHERE usage = ?"
@@ -575,7 +575,7 @@ class QueryExecutor:
             print("No user is currently logged in.")
             return None
         else:
-            email_usage_id = self.get_email_usage_id_by_usage_name(email_usage_name)
+            email_usage_id = self.get_email_usage_id_by_email_usage_name(email_usage_name)
             if email_usage_id is None:
                 raise DatabaseQueryError(self._db_connection, f"Email usage '{email_usage_name}' does not exist.")
             else:    
@@ -649,6 +649,19 @@ class QueryExecutor:
             return result[0][0]
         else:
             return None
+    
+    def get_city_id_by_city_name(self, city_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_city_id_by_city_name_query = f"{query_type} id FROM city WHERE name = ?"
+        params = (city_name,)
+        # Execute the query
+        result = self.execute_query(get_city_id_by_city_name_query, params)
+        # Check whether the result is None (None means the city doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
 
     def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
         # Define the query parameters
@@ -662,6 +675,15 @@ class QueryExecutor:
             return result[0][0]
         else:
             return None
+        
+    def insert_city(self, city_name: str, country_name: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_city_query = f"{query_type} INTO city (name, country_id) VALUES (?, ?)"
+        country_id = self.get_country_id_by_country_name(country_name)
+        params = (city_name, country_id)
+        # Execute the query
+        self.execute_query(insert_city_query, params)
 
     def insert_exchange(self, country_id: int, exchange_name: str, exchange_acronym: str) -> None:
         # Define the query parameters
@@ -684,6 +706,19 @@ class QueryExecutor:
         # Execute the query
         result = self.execute_query(get_asset_class_id_by_asset_class_name_query, params)
         # Check whether the result is None (None means the asset class doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+    
+    def get_asset_subclass_id_by_asset_subclass_name(self, asset_subclass_name: str) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_asset_subclass_id_by_asset_subclass_name_query = f"{query_type} id FROM asset_subclass WHERE name = ?"
+        params = (asset_subclass_name,)
+        # Execute the query
+        result = self.execute_query(get_asset_subclass_id_by_asset_subclass_name_query, params)
+        # Check whether the result is None (None means the asset subclass doesn't exist)
         if result is not None and len(result) > 0:
             return result[0][0]
         else:
@@ -767,15 +802,20 @@ class QueryExecutor:
     def get_last_uid_by_email_address_and_folder_name(self, email_address: str, folder_name: str) -> int | None:
         # Define the first query parameters
         query_type = "SELECT"
-        get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND address = ?"
+        get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND email_usage_id = ? AND address = ?"
         current_user_id = self._session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
             return None
         else:
+            # Get the email_usage_id
+            email_usage_id = self.get_email_usage_id_by_email_usage_name("import")
+            if email_usage_id is None:
+                return None
+            
             # Execute the query
-            result = self.execute_query(get_email_id_by_email_address_query, (current_user_id, email_address))
+            result = self.execute_query(get_email_id_by_email_address_query, (current_user_id, email_usage_id, email_address))
             # Check whether the result is None (None means the email doesn't exist)
             if result is None or len(result) == 0:
                 return None
@@ -783,7 +823,8 @@ class QueryExecutor:
                 email_id = result[0][0]
                 # Define the second query parameters
                 query_type = "SELECT"
-                get_last_uid_by_email_address_and_folder_name_query = f"{query_type} last_uid FROM imported_email_log WHERE user_id = ? AND email_id = ? AND folder_name = ?"
+                get_last_uid_by_email_address_and_folder_name_query = f"{query_type} last_uid FROM imported_email_log WHERE user_id = ? \
+                    AND email_id = ? AND folder_name = ? ORDER BY last_uid DESC LIMIT 1;"
                 params = (current_user_id, email_id, folder_name)
                 # Execute the query
                 result = self.execute_query(get_last_uid_by_email_address_and_folder_name_query, params)

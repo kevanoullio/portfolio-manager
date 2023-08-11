@@ -165,8 +165,8 @@ class EmailAccountOperation:
                     return 2
 
         # Get the email usage id by usage name
-        import_id = self._database.query_executor.get_email_usage_id_by_usage_name("import")
-        notification_id = self._database.query_executor.get_email_usage_id_by_usage_name("notification")
+        import_id = self._database.query_executor.get_email_usage_id_by_email_usage_name("import")
+        notification_id = self._database.query_executor.get_email_usage_id_by_email_usage_name("notification")
 
         # Check if the email usage id is None
         if import_id is None or notification_id is None:

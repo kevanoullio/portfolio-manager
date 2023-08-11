@@ -5,23 +5,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 # Standard Libraries
-import csv
 import email
 import imaplib
-import os
+from datetime import datetime, timezone
 
 # Third-party Libraries
 import pandas as pd
 from html.parser import HTMLParser
-import yfinance as yf
 
 # Local Modules
 from database_management.database import Database
-from import_modules.csv_file_manager import CSVFileManager
-from import_modules.uid_handler import UIDHandler
-from database_management.schema.schema import AssetInfo, AssetTransaction
+from database_management.schema.schema import AssetInfoWithNames, AssetInfoWithIDs, AssetTransaction
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 from access_management.account_authenticator import AccountAuthenticator
+from import_modules.web_scraper import WebScraper
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -132,7 +129,7 @@ class IMAPClient:
 
 
 # Function to extract the data from the email body
-def extract_from_email(data: dict, email_body) -> dict:
+def extract_from_email(data: dict, email_body) -> pd.DataFrame:
     email_body_split = email_body.splitlines()
     total_found = False  # Flag to track if "Total cost" or "Total value" is found
 
@@ -142,11 +139,13 @@ def extract_from_email(data: dict, email_body) -> dict:
             key = key.strip().replace("*", "")
             value = value.strip().replace("*", "")
 
+            # Catch rare cases where the key is "Account" is bolded with *
             if "Account" in key and len(key) > 7:
                 key = "Account"
 
             transformations = {
                 "Cryptocurrency": "Symbol",
+                "Shares": "Quantity",
                 "Total cost": "Total",
                 "Total value": "Total"
             }
@@ -160,19 +159,63 @@ def extract_from_email(data: dict, email_body) -> dict:
             if key == "Total cost" or key == "Total value":
                 total_found = True
 
-    if not total_found and data.get("Quantity") and data.get("Average price"):
-        split_value = data["Average price"].split("$")
-        formatted_total = "{:.2f}".format(float(data["Quantity"]) * float(split_value[1]))
-        data["Total"] = split_value[0] + "$" + formatted_total
+    logging.debug(f"Data after extracting from email:\n{data}")
 
+    # Check if email is a standard trade or dividend
+    if data.get("Quantity") and data.get("Average price"):
         split_value = data["Average price"].split("$")
-        quantity = float(data["Quantity"].replace(",", ""))
-        price = float(split_value[1].replace(",", ""))
-        total = quantity * price
-        formatted_total = "${:,.2f}".format(total)
-        data["Total"] = split_value[0] + formatted_total
+        data["currency"] = split_value[0] + "$"
+        data["Average price"] = float(split_value[1].replace(",", ""))
+        if total_found:
+            total = data["Total"].split("$")
+            formatted_total = "{:,.2f}".format(float(total[1].replace(",", "")))
+        # If no "Total..." field exists, need to calculate total manually
+        else:
+            quantity = float(data["Quantity"].replace(",", ""))
+            price = float(split_value[1].replace(",", ""))
+            formatted_total = "{:.2f}".format(quantity * price)
+        data["Total"] = formatted_total
+    elif data.get("Amount"):
+        split_value = data["Amount"].split("$")
+        data["currency"] = split_value[0] + "$"
+        data["Amount"] = float(split_value[1].replace(",", ""))
+        formatted_total = "{:,.2f}".format(float(split_value[1].replace(",", "")))
+        data["Total"] = formatted_total
+    else:
+        raise ValueError("Unknown email type.")
 
-    return data
+    # Convert Date (UTC) to datetime object
+    date_string = data["Date (UTC)"]
+    date_format = "%a, %d %b %Y %H:%M:%S %z (%Z)"
+    data["Date (UTC)"] = datetime.strptime(date_string, date_format)
+
+    # Create cutoff_date as an offset-aware datetime object
+    cutoff_date = datetime(2021, 5, 6, tzinfo=timezone.utc)
+    # Convert Currency column based on date
+    if data["Date (UTC)"] < cutoff_date:
+        if data["currency"] == "CA$":
+            data["currency"] = "CAD"
+        elif data["currency"] == "$":
+            data["currency"] = "USD"
+    else:
+        if data["currency"] == "$":
+            data["currency"] = "CAD"
+        elif data["currency"] == "US$":
+            data["currency"] = "USD"
+
+    # Create a DataFrame from the dictionary
+    df_data = pd.DataFrame([data])
+
+    # Rename all of the columns
+    new_column_names = {"Date (UTC)": "transaction_date", "Type": "transaction_type", "Symbol": "symbol", "Account": "asset_account", "Quantity": "quantity", "Average price": "avg_price", "Total": "total"}
+    df_data = df_data.rename(columns=new_column_names)
+
+    # Add all other missing columns
+    df_data["imported_from"] = "email"
+
+    logging.debug(f"Dataframe after cleanup and transformations:\n{df_data}")
+
+    return df_data
 
 
 # Class definition for parsing HTML
@@ -187,60 +230,6 @@ class MyHTMLParser(HTMLParser):
 
     def handle_data(self, data):
         self.text += data
-
-
-# AssetInfoExtractor class for extracting asset information from yahoo finance
-class AssetInfoExtractor:
-    def __init__(self, database: Database) -> None:
-        self._database = database
-        self._asset_info: AssetInfo | None = None
-
-    def get_asset_class_id(self, asset_class: str) -> int | None:
-        return self._database.query_executor.get_asset_class_id_by_asset_class_name(asset_class)
-    
-    def get_sector_id_or_insert(self, sector: str) -> int | None:
-        sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector)
-        if sector_id is None:
-            self._database.query_executor.insert_sector(sector)
-        sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector)
-        return sector_id
-    
-    def get_industry_id_or_insert(self, industry: str) -> int | None:
-        industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry)
-        if industry_id is None:
-            self._database.query_executor.insert_industry(industry)
-        industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry)
-        return industry_id
-    
-    def get_country_id_by_country_name(self, country: str) -> int | None:
-        return self._database.query_executor.get_country_id_by_country_name(country)
-    
-    def get_currency_id_by_currency_iso_code(self, currency_iso_code: str) -> int | None:
-        return self._database.query_executor.get_currency_id_by_currency_iso_code(currency_iso_code)
-    
-    def get_exchange_id_by_exchange_acronym(self, exchange_acronym: str) -> int | None:
-        return self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
-    
-    def get_asset_info_from_yf(self, asset_symbol: str) -> dict[str, str | int] | None:
-        df_asset_info = yf.Ticker(asset_symbol).info
-        if df_asset_info:
-            asset_info_dict = {
-                "asset_class": df_asset_info.get("quoteType"),
-                "sector": df_asset_info.get("sector"),
-                "industry": df_asset_info.get("industry"),
-                "country": df_asset_info.get("country"),
-                "city": df_asset_info.get("city"),
-                "currency": df_asset_info.get("currency"),
-                "exchange": df_asset_info.get("exchange"),
-                "symbol": asset_symbol,
-                "company_name": df_asset_info.get("shortName")
-            }
-            for item in asset_info_dict:
-                if asset_info_dict[item] is None:
-                    asset_info_dict[item] = ""
-            return asset_info_dict
-        else:
-            return None
 
 
 # AssetTransactionManager class for managing asset transactions
@@ -264,6 +253,11 @@ class AssetTransactionManager:
 
     def get_asset_account_id(self, asset_account_name: str) -> int | None:
         return self._database.query_executor.get_asset_account_id_by_asset_account_name(asset_account_name)
+    
+    def find_asset_in_exchange_listing(self, symbol: str) -> list[tuple] | None:
+        query = f"SELECT * FROM exchange_listing WHERE symbol = '{symbol}'"
+        exchange_listing = self._database.query_executor.execute_query(query)
+        return exchange_listing
 
     def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
         # Append the new transaction to the list of asset transactions
@@ -336,7 +330,7 @@ def import_from_email_account(database: Database) -> int:
         print(folder)
     print("\n")
 
-    folder_name = input("Enter the folder name (copy/paste from above): ")
+    folder_name = input("Enter the folder name (copy/paste from above): ").strip()
 
     # Select the specified folder
     select_result = imap_client.select_folder(folder_name)
@@ -348,7 +342,7 @@ def import_from_email_account(database: Database) -> int:
     asset_transaction_manager = AssetTransactionManager(database)
 
     # Prompt the user for the brokerage
-    brokerage_name = input("Enter the brokerage name: ")
+    brokerage_name = input("Enter the brokerage name: ").strip()
     brokerage_id = asset_transaction_manager.get_brokerage_id_or_insert(brokerage_name)
     if brokerage_id is None:
         print("Failed to get brokerage ID.")
@@ -367,7 +361,6 @@ def import_from_email_account(database: Database) -> int:
 
     # Get the UID of the last email in the selected folder
     last_uid = database.query_executor.get_last_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name)
-
     last_uid_cache = last_uid
 
     # Search for emails with a UID greater than the last processed email in the selected folder
@@ -453,34 +446,82 @@ def import_from_email_account(database: Database) -> int:
         # Check if the email subject matches one of the subject titles
         subject = email_message["Subject"]
 
-        # Initialize the data dictionary and csv_file
+        # Initialize the raw_data dictionary and df_data DataFrame
         data = {}
+        df_data = pd.DataFrame()
+
+        # Add the brokerage ID to the data dictionary
+        data["brokerage_id"] = brokerage_id
 
         # Check if the email is a crypto or security email
         if ("order" and "filled") in subject.lower():
+            logging.debug(f"Email subject matched 'order' and 'filled': {subject}")
+            logging.debug(f"Email body: {body}")
             # Specify the desired order of the keys and initialize their values
-            data = {"Date (UTC)" : date, "Account" : "", "Type" : "", "Symbol" : "", "Shares" : "", "Average price" : "", "Total" : ""}
+            data = {"Date (UTC)" : date, "Account" : "", "Type" : "", "Symbol" : "", "Quantity" : "", "Average price" : ""}
             # Extract the data from the email body
-            data = extract_from_email(data, body)
+            df_data = extract_from_email(data, body)
 
         # Check if the email is a dividend email
         elif ("You" and "a dividend") in subject.lower():
             # Specify the desired order of the keys and initialize their values
-            data = {"Date (UTC)" : date, "Account" : "", "Type" : "Dividend", "Symbol" : "", "Amount" : ""}
+            data = {"Date (UTC)" : date, "Account" : "", "Type" : "dividend", "Symbol" : "", "Amount" : ""}
             # Extract the data from the email body
-            data = extract_from_email(data, body)
-        
+            df_data = extract_from_email(data, body)
+
         else:
             logging.info(f"Email subject did not match any of the expected subjects: {subject}")
+            # Save the UID of the last processed email to a file
+            last_uid_cache = num.decode("utf-8")
 
-        logging.debug(data)
+            # Update the last processed email UID in the database
+            if last_uid_cache is not None:
+                database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
+            continue
+
+        # Find the given asset in the exchange_listing table
+        exchange_listing = asset_transaction_manager.find_asset_in_exchange_listing(df_data["symbol"][0])
+
+        # If the exchange listing is not found, skip the email
+        if exchange_listing is None or len(exchange_listing) == 0:
+            logging.info(f"Exchange listing not found for symbol: {df_data['symbol']}")
+            
+            # Save the UID of the last processed email to a file
+            last_uid_cache = num.decode("utf-8")
+
+            # Update the last processed email UID in the database
+            if last_uid_cache is not None:
+                database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
+            continue
+            
+        # If there are multiple exchange listings with the same symbol, prompt the user to select the correct one
+        if len(exchange_listing) > 1:
+            matches = 0
+            for i, exchange in enumerate(exchange_listing):
+                if exchange[2] == database.query_executor.get_currency_id_by_currency_iso_code(df_data["currency"][0]):
+                    matches += 1
+                if i == len(exchange_listing) - 1 and matches == 1:
+                    exchange_listing = exchange
+            if matches != 1:
+                print(f"Multiple exchange listings found for symbol: {df_data['symbol']}")
+                # Print df_data exctracted from the email
+                print("Data extracted from the email:")
+                print(df_data)
+                # Print the exchange listings info
+                print("Please select the correct exchange listing:")
+                for i, exchange in enumerate(exchange_listing):
+                    print(f"{i + 1}: {exchange}")
+                selection = int(input("Enter the number of the correct exchange listing: "))
+                exchange_listing = exchange_listing[selection - 1]
+        elif len(exchange_listing) == 1:
+            exchange_listing = exchange_listing[0]
 
         # Save the UID of the last processed email to a file
         last_uid_cache = num.decode("utf-8")
 
-    # Update the last processed email UID in the database
-    if last_uid_cache is not None:
-        database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
+        # Update the last processed email UID in the database
+        if last_uid_cache is not None:
+            database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
 
     print("No new emails to process.")
     print("Import complete!")
