@@ -127,7 +127,7 @@ class ExchangeListingsExtractor:
         # Rename the desired columns
         self._df_exchange_listing.rename(columns=dict(zip(columns_to_be_renamed, new_column_names)), inplace=True)
 
-    def add_dataframe_column(self, column_name: str, column_data) -> None:
+    def _add_dataframe_column(self, column_name: str, column_data) -> None:
         if self._df_exchange_listing is None:
             raise ValueError("DataFrame must be initialized before adding columns.")
         # Add the column to the DataFrame
@@ -189,10 +189,10 @@ class ExchangeListingsExtractor:
             raise ValueError(f"Exchange listings for '{exchange_in_url}' could not be retrieved from the website.")
         
         # Add the exchange_id column
-        self.add_dataframe_column("exchange_id", self._exchange_id)
+        self._add_dataframe_column("exchange_id", self._exchange_id)
         # Add the currency_id column
         usd_currency_id = self._database.query_executor.get_currency_id_by_currency_iso_code("USD")
-        self.add_dataframe_column("currency_id", usd_currency_id)
+        self._add_dataframe_column("currency_id", usd_currency_id)
     
     def _cleanup_nasdaq_trader_exchange_listings(self) -> None:
         # Check if the exchange listings have been extracted

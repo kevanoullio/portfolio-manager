@@ -15,7 +15,22 @@ import logging
 # YahooFinanceDataExtractor class for extracting data from Yahoo Finance using the yfinance library
 class YahooFinanceDataExtractor:
     def __init__(self) -> None:
-        pass
+        self._asset_info_names_dict = {
+                    "sector_name": "",
+                    "industry_name": "",
+                    "country_name": "",
+                    "city_name": "",
+                    "currency_iso_code": "",
+                    "exchange_acronym": "",
+                    "symbol": "",
+                    "company_name": "",
+                    "business_summary": "",
+                    "website": "",
+                    "logo_url": ""
+                }
+
+    def get_asset_info_names_dict(self) -> dict[str, str]:
+        return self._asset_info_names_dict
 
     def _format_symbol_for_yf(self, original_symbol: str) -> str:
         # Check if the symbol has ".___" in it, yfinance requires it to be "-___"
@@ -35,8 +50,8 @@ class YahooFinanceDataExtractor:
             df_asset_info = yf.Ticker(self._format_symbol_for_yf(asset_symbol)).info
             if df_asset_info:
                 asset_info_names_dict = {
-                    # "asset_class_name": df_asset_info.get("quoteType"),
-                    # "asset_subclass_name": df_asset_info.get("quoteType"),
+                    "asset_class_name": df_asset_info.get("quoteType"),
+                    "asset_subclass_name": df_asset_info.get("quoteType"),
                     "sector_name": df_asset_info.get("sector"),
                     "industry_name": df_asset_info.get("industry"),
                     "country_name": df_asset_info.get("country"),
@@ -67,7 +82,7 @@ class YahooFinanceDataExtractor:
 
             logging.info(f"text_content: {text_content}")
 
-            asset_info_names_dict = {
+            self._asset_info_names_dict = {
                 # "asset_class_name": df_asset_info.get("quoteType"),
                 # "asset_subclass_name": df_asset_info.get("quoteType"),
                 "sector_name": df_asset_info.get("sector"),
@@ -82,7 +97,6 @@ class YahooFinanceDataExtractor:
                 "website": df_asset_info.get("website"),
                 "logo_url": df_asset_info.get("logo_url")
                 }
-            return asset_info_names_dict
 
     # def fill_in_asset_info(self, df_data: pd.DataFrame, df_asset_info: pd.DataFrame) -> None:
     #     # Get the exchange_id for Cboe Canada

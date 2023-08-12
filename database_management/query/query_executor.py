@@ -40,6 +40,22 @@ class QueryExecutor:
             logging.debug("Database connection is closed.")
             raise DatabaseConnectionError(self._db_connection, "Database connection is closed.")
 
+    def dictionary_to_existing_sql_table(self, dictionary: dict, table_name: str) -> None:
+        # Check if the dictionary is None or not
+        if dictionary is not None:
+            try:
+                # Construct the INSERT statement
+                columns = ", ".join(dictionary.keys())
+                placeholders = ", ".join("?" * len(dictionary))
+                query = f"INSERT INTO mytable ({columns}) VALUES ({placeholders})"
+                # Execute the query
+                self.execute_query(query, tuple(dictionary.values()))
+                logging.info(f"Dictionary inserted into the '{table_name}' table.")
+            except sqlite3.IntegrityError as e:
+                logging.error(f"Dictionary could not be inserted into the '{table_name}' table. {e}")
+        else:
+            logging.error("Dictionary is None.")
+
     def dataframe_to_existing_sql_table(self, dataframe: pd.DataFrame, table_name: str) -> None:
         # Check if the dataframe is None or not
         if dataframe is not None:
@@ -692,6 +708,19 @@ class QueryExecutor:
         params = (country_id, exchange_name, exchange_acronym)
         # Execute the query
         self.execute_query(insert_exchange_query, params)
+
+    def get_exchange_listing_symbols_by_exchange_acronym(self, exchange_acronym: str) -> list[str] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_exchange_listing_symbols_by_exchange_acronym_query = f"{query_type} symbol FROM exchange_listing WHERE exchange_id = (SELECT id FROM exchange WHERE acronym = ?)"
+        params = (exchange_acronym,)
+        # Execute the query
+        result = self.execute_query(get_exchange_listing_symbols_by_exchange_acronym_query, params)
+        # Check whether the result is None (None means the exchange doesn't exist)
+        if result is not None and len(result) > 0:
+            return [row[0] for row in result]
+        else:
+            return None
 
 
     ##############

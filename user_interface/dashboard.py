@@ -16,6 +16,7 @@ from user_interface.query_results import QueryResults
 from user_interface.user_input import UserInput
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 from import_modules.import_market_data.exchange_listings_extractor import ExchangeListingsExtractor
+from import_modules.import_market_data.asset_info_extractor import AssetInfoExtractor
 
 # Local modules imported for Type Checking purposes only
 if TYPE_CHECKING:
@@ -440,39 +441,48 @@ class Dashboard:
 
 
     def initialize_nasdaq_asset_information_data(self):
-        print("Initialize Nasdaq Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("NASDAQ")
     
 
     def initialize_nyse_asset_information_data(self):
-        print("Initialize NYSE Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("NYSE")
 
     
     def initialize_nyse_mkt_asset_information_data(self):
-        print("Initialize NYSE MKT Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("NYSE MKT")
 
 
     def initialize_nyse_arca_asset_information_data(self):
-        print("Initialize NYSE ARCA Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("NYSE ARCA")
 
 
     def initialize_bats_asset_information_data(self):
-        print("Initialize BATS Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("BATS")
 
 
     def initialize_tsx_asset_information_data(self):
-        print("Initialize TSX Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("TSX")
 
 
     def initialize_tsxv_asset_information_data(self):
-        print("Initialize TSXV Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("TSXV")
 
 
     def initialize_cse_asset_information_data(self):
-        print("Initialize CSE Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("CSE")
 
 
     def initialize_cboe_canada_asset_information_data(self):
-        print("Initialize Cboe Canada Asset Information Data logic goes here...")
+        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor.initialize_asset_info("Cboe Canada")
 
 
     def initialize_index_holdings_data(self):
