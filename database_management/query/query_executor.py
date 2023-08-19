@@ -859,13 +859,13 @@ class QueryExecutor:
         else:
             return None
     
-    def get_company_name_by_exchange_id_and_symbol(self, exchange_id: int, asset_symbol: str) -> str | None:
+    def get_security_name_by_exchange_id_and_symbol(self, exchange_id: int, asset_symbol: str) -> str | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_company_name_by_exchange_id_and_symbol_query = f"{query_type} company_name FROM exchange_listing WHERE exchange_id = ? AND symbol = ?"
+        get_security_name_by_exchange_id_and_symbol_query = f"{query_type} security_name FROM exchange_listing WHERE exchange_id = ? AND symbol = ?"
         params = (exchange_id, asset_symbol)
         # Execute the query
-        result = self.execute_query(get_company_name_by_exchange_id_and_symbol_query, params)
+        result = self.execute_query(get_security_name_by_exchange_id_and_symbol_query, params)
         # Check whether the result is None (None means the company doesn't exist)
         if result is not None and len(result) > 0:
             return result[0][0]
@@ -877,13 +877,13 @@ class QueryExecutor:
         query_type = "INSERT"
         insert_asset_info_query = f"{query_type} INTO asset_info (asset_class_id, asset_subclass_id, " \
             f"sector_id, industry_id, country_id, city_id, financial_currency_id, exchange_currency_id, " \
-            f"exchange_id, symbol, company_name, business_summary, website, logo_url) "\
+            f"exchange_id, symbol, security_name, business_summary, website, logo_url) "\
             f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         # Define the query parameters
         asset_info = asset_info_with_ids
         params = (asset_info.asset_class_id, asset_info.asset_subclass_id, asset_info.sector_id,
             asset_info.industry_id, asset_info.country_id, asset_info.city_id, asset_info.financial_currency_id,
-            asset_info.exchange_currency_id, asset_info.exchange_id, asset_info.symbol, asset_info.company_name,
+            asset_info.exchange_currency_id, asset_info.exchange_id, asset_info.symbol, asset_info.security_name,
             asset_info.business_summary, asset_info.website, asset_info.logo_url)
         # Execute the query
         self.execute_query(insert_asset_info_query, params)

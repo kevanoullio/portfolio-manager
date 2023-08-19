@@ -260,7 +260,7 @@ class ExchangeListingsExtractor:
         self._df_exchange_listings_info = self._df_exchange_listings_info[~self._df_exchange_listings_info[self._df_exchange_listings_info.columns[0]].str.contains("File Creation Time")]
 
         # Filter the desired columns
-        desired_columns = ["exchange_id", "exchange_currency_id", self._df_exchange_listings_info.columns[0], "Security Name"]
+        desired_columns = ["exchange_currency_id", "exchange_id", self._df_exchange_listings_info.columns[0], "Security Name"]
         self._filter_dataframe_columns(desired_columns)
         # Rename all of the remaining columns to match the database
         self._rename_dataframe_columns(desired_columns, ["exchange_currency_id", "exchange_id", "symbol", "security_name"])

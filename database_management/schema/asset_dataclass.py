@@ -88,10 +88,10 @@ class AssetInfoWithNames:
     country_name: str
     city_name: str
     financial_currency_iso_code: str
-    exchange_currency_iso_code: str
-    exchange_acronym: str
+    exchange_currency_id: int
+    exchange_id: int
     symbol: str
-    company_name: str
+    security_name: str
     business_summary: str
     website: str
     logo_url: str
@@ -103,11 +103,11 @@ class AssetInfoWithNames:
         return f"AssetInfo(asset_class_name={self.asset_class_name}, asset_subclass_name={self.asset_subclass_name}, " \
                f"sector_name={self.sector_name}, industry_name={self.industry_name}, country_name={self.country_name}, " \
                f"city_name={self.city_name}, financial_currency_iso_code={self.financial_currency_iso_code}, " \
-               f"exchange_currency_iso_code={self.exchange_currency_iso_code}, exchange_acronym={self.exchange_acronym}, " \
-               f"symbol={self.symbol}, company_name={self.company_name}, business_summary={self.business_summary}, " \
+               f"exchange_currency_id={self.exchange_currency_id}, exchange_id={self.exchange_id}, " \
+               f"symbol={self.symbol}, security_name={self.security_name}, business_summary={self.business_summary}, " \
                f"website={self.website}, logo_url={self.logo_url})"
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, str | int]:
         return {
             "asset_class_name": self.asset_class_name,
             "asset_subclass_name": self.asset_subclass_name,
@@ -116,10 +116,10 @@ class AssetInfoWithNames:
             "country_name": self.country_name,
             "city_name": self.city_name,
             "financial_currency_iso_code": self.financial_currency_iso_code,
-            "exchange_currency_iso_code": self.exchange_currency_iso_code,
-            "exchange_acronym": self.exchange_acronym,
+            "exchange_currency_id": self.exchange_currency_id,
+            "exchange_id": self.exchange_id,
             "symbol": self.symbol,
-            "company_name": self.company_name,
+            "security_name": self.security_name,
             "business_summary": self.business_summary,
             "website": self.website,
             "logo_url": self.logo_url
@@ -139,7 +139,7 @@ class AssetInfoWithIDs:
     exchange_currency_id: int
     exchange_id: int
     symbol: str
-    company_name: str
+    security_name: str
     business_summary: str
     website: str
     logo_url: str
@@ -152,7 +152,7 @@ class AssetInfoWithIDs:
                f"sector_id={self.sector_id}, industry_id={self.industry_id}, country_id={self.country_id}, " \
                f"city_id={self.city_id}, financial_currency_id={self.financial_currency_id}, " \
                f"exchange_currency_id={self.exchange_currency_id}, exchange_id={self.exchange_id}, " \
-               f"symbol={self.symbol}, company_name={self.company_name}, business_summary={self.business_summary}, " \
+               f"symbol={self.symbol}, security_name={self.security_name}, business_summary={self.business_summary}, " \
                f"website={self.website}, logo_url={self.logo_url})"
     
     def to_dict(self) -> dict:
@@ -167,7 +167,7 @@ class AssetInfoWithIDs:
             "exchange_currency_id": self.exchange_currency_id,
             "exchange_id": self.exchange_id,
             "symbol": self.symbol,
-            "company_name": self.company_name,
+            "security_name": self.security_name,
             "business_summary": self.business_summary,
             "website": self.website,
             "logo_url": self.logo_url
