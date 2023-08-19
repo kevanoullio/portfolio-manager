@@ -606,73 +606,73 @@ class InitializeMarketData(Menu):
         self.title = "INITIALIZE MARKET DATA"
         self.previous_menu = ManageMarketData(dashboard)
         # Add menu options
-        self.add_option(verb="Initialize", subject="Exchange Listings Data")
+        # self.add_option(verb="Initialize", subject="Exchange Listings Data")
         self.add_option(verb="Initialize", subject="Asset Information Data")
         self.add_option(verb="Initialize", subject="Index Holdings Data")
         self.add_option(verb="Initialize", subject="Macro Data")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: InitializeExchangeListingsData,
-            2: InitializeAssetInformationData,
-            3: InitializeIndexHoldingsData,
-            4: InitializeMacroData,
+            # 1: InitializeExchangeListingsData,
+            1: InitializeAssetInformationData,
+            2: InitializeIndexHoldingsData,
+            3: InitializeMacroData,
             0: ManageMarketData
         }
         self.menu_logic = {
+            # 1: self.dashboard.menu_without_logic,
             1: self.dashboard.menu_without_logic,
             2: self.dashboard.initialize_index_holdings_data,
-            3: self.dashboard.initialize_index_holdings_data,
-            4: self.dashboard.initialize_macro_data,
+            3: self.dashboard.initialize_macro_data,
             0: self.dashboard.previous_menu
         }
 
 
-# InitializeExchangeListingsData Menu class for managing the initialize exchange listings data menu
-class InitializeExchangeListingsData(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "INITIALIZE EXCHANGE LISTINGS DATA"
-        self.previous_menu = InitializeMarketData(dashboard)
-        # Add menu options
-        self.add_option(verb="Initialize", subject="All Default Exchange Listings Data")
-        self.add_option(verb="Initialize", subject="NASDAQ Listings Data")
-        self.add_option(verb="Initialize", subject="NYSE Listings Data")
-        self.add_option(verb="Initialize", subject="NYSE MKT Listings Data")
-        self.add_option(verb="Initialize", subject="NYSE ARCA Listings Data")
-        self.add_option(verb="Initialize", subject="BATS Listings Data")
-        self.add_option(verb="Initialize", subject="TSX Listings Data")
-        self.add_option(verb="Initialize", subject="TSXV Listings Data")
-        self.add_option(verb="Initialize", subject="CSE Listings Data")
-        self.add_option(verb="Initialize", subject="Cboe CA Listings Data")
-        # Format option 0
-        self.format_return_to_previous_menu_option()
-        self.menu_mapping = {
-            1: InitializeExchangeListingsData,
-            2: InitializeExchangeListingsData,
-            3: InitializeExchangeListingsData,
-            4: InitializeExchangeListingsData,
-            5: InitializeExchangeListingsData,
-            6: InitializeExchangeListingsData,
-            7: InitializeExchangeListingsData,
-            8: InitializeExchangeListingsData,
-            9: InitializeExchangeListingsData,
-            10: InitializeExchangeListingsData,
-            0: InitializeMarketData
-        }
-        self.menu_logic = { # TODO - add logic
-            1: self.dashboard.initialize_all_exchange_listings_data,
-            2: self.dashboard.initialize_nasdaq_listings_data,
-            3: self.dashboard.initialize_nyse_listings_data,
-            4: self.dashboard.initialize_nyse_mkt_listings_data,
-            5: self.dashboard.initialize_nyse_arca_listings_data,
-            6: self.dashboard.initialize_bats_listings_data,
-            7: self.dashboard.initialize_tsx_listings_data,
-            8: self.dashboard.initialize_tsxv_listings_data,
-            9: self.dashboard.initialize_cse_listings_data,
-            10: self.dashboard.initialize_cboe_canada_listings_data,
-            0: self.dashboard.previous_menu
-        }
+# # InitializeExchangeListingsData Menu class for managing the initialize exchange listings data menu
+# class InitializeExchangeListingsData(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "INITIALIZE EXCHANGE LISTINGS DATA"
+#         self.previous_menu = InitializeMarketData(dashboard)
+#         # Add menu options
+#         self.add_option(verb="Initialize", subject="All Default Exchange Listings Data")
+#         self.add_option(verb="Initialize", subject="NASDAQ Listings Data")
+#         self.add_option(verb="Initialize", subject="NYSE Listings Data")
+#         self.add_option(verb="Initialize", subject="NYSE MKT Listings Data")
+#         self.add_option(verb="Initialize", subject="NYSE ARCA Listings Data")
+#         self.add_option(verb="Initialize", subject="BATS Listings Data")
+#         self.add_option(verb="Initialize", subject="TSX Listings Data")
+#         self.add_option(verb="Initialize", subject="TSXV Listings Data")
+#         self.add_option(verb="Initialize", subject="CSE Listings Data")
+#         self.add_option(verb="Initialize", subject="Cboe CA Listings Data")
+#         # Format option 0
+#         self.format_return_to_previous_menu_option()
+#         self.menu_mapping = {
+#             1: InitializeExchangeListingsData,
+#             2: InitializeExchangeListingsData,
+#             3: InitializeExchangeListingsData,
+#             4: InitializeExchangeListingsData,
+#             5: InitializeExchangeListingsData,
+#             6: InitializeExchangeListingsData,
+#             7: InitializeExchangeListingsData,
+#             8: InitializeExchangeListingsData,
+#             9: InitializeExchangeListingsData,
+#             10: InitializeExchangeListingsData,
+#             0: InitializeMarketData
+#         }
+#         self.menu_logic = { # TODO - add logic
+#             1: self.dashboard.initialize_all_exchange_listings_data,
+#             2: self.dashboard.initialize_nasdaq_listings_data,
+#             3: self.dashboard.initialize_nyse_listings_data,
+#             4: self.dashboard.initialize_nyse_mkt_listings_data,
+#             5: self.dashboard.initialize_nyse_arca_listings_data,
+#             6: self.dashboard.initialize_bats_listings_data,
+#             7: self.dashboard.initialize_tsx_listings_data,
+#             8: self.dashboard.initialize_tsxv_listings_data,
+#             9: self.dashboard.initialize_cse_listings_data,
+#             10: self.dashboard.initialize_cboe_canada_listings_data,
+#             0: self.dashboard.previous_menu
+#         }
 
 
 # InitializeMarketData Menu class for managing the initialize market data menu

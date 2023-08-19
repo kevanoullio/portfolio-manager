@@ -1,7 +1,6 @@
 # Purpose: Database Schema module for creating and initializing the database schema.
 
 # Standard Libraries
-from dataclasses import dataclass
 
 # Third-party Libraries
 import pandas as pd
@@ -47,7 +46,7 @@ class DatabaseSchema:
         data = []
         for i, (asset_class, subclasses) in enumerate(asset_classes_and_subclasses.items(), start=1):
             for subclass in subclasses:
-                data.append({"id": i, "name": subclass})
+                data.append({"asset_class_id": i, "name": subclass})
         df_asset_subclasses = pd.DataFrame(data)
 
         # Insert the default asset classes into the database
@@ -176,137 +175,6 @@ class DatabaseSchema:
 
         # Insert the default exchanges into the database
         self._query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
-
-
-# AssetInfoWithNames dataclass for storing asset information with names prior to formatting and inserting into the database
-@dataclass
-class AssetInfoWithNames:
-    asset_class_name: str
-    asset_subclass_name: str
-    sector_name: str
-    industry_name: str
-    country_name: str
-    city_name: str
-    currency_iso_code: str
-    exchange_acronym: str
-    symbol: str
-    company_name: str
-    business_summary: str
-    website: str
-    logo_url: str
-
-    def __post_init__(self) -> None:
-        logging.debug(f"Creating AssetInfoWithNames object: {self}")
-    
-    def __str__(self) -> str:
-        return f"AssetInfo(asset_class_name={self.asset_class_name}, asset_subclass_name={self.asset_subclass_name}, " \
-               f"sector_name={self.sector_name}, industry_name={self.industry_name}, country_name={self.country_name}, " \
-               f"city_name={self.city_name}, currency_iso_code={self.currency_iso_code}, exchange_acronym={self.exchange_acronym}, " \
-               f"symbol={self.symbol}, company_name={self.company_name}, business_summary={self.business_summary}, " \
-               f"website={self.website}, logo_url={self.logo_url})"
-
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "asset_class_name": self.asset_class_name,
-            "asset_subclass_name": self.asset_subclass_name,
-            "sector_name": self.sector_name,
-            "industry_name": self.industry_name,
-            "country_name": self.country_name,
-            "city_name": self.city_name,
-            "currency_iso_code": self.currency_iso_code,
-            "exchange_acronym": self.exchange_acronym,
-            "symbol": self.symbol,
-            "company_name": self.company_name,
-            "business_summary": self.business_summary,
-            "website": self.website,
-            "logo_url": self.logo_url
-        }
-
-
-# AssetInfoWithIDs dataclass for storing asset information that exactly matches the database schema
-@dataclass
-class AssetInfoWithIDs:
-    asset_class_id: int
-    asset_subclass_id: int
-    sector_id: int
-    industry_id: int
-    country_id: int
-    city_id: int
-    currency_id: int
-    exchange_id: int
-    symbol: str
-    company_name: str
-    business_summary: str
-    website: str
-    logo_url: str
-
-    def __post_init__(self) -> None:
-        logging.debug(f"Creating AssetInfoWithIDs object: {self}")
-    
-    def __str__(self) -> str:
-        return f"AssetInfo(asset_class_id={self.asset_class_id}, asset_subclass_id={self.asset_subclass_id}, " \
-               f"sector_id={self.sector_id}, industry_id={self.industry_id}, country_id={self.country_id}, " \
-               f"city_id={self.city_id}, currency_id={self.currency_id}, exchange_id={self.exchange_id}, " \
-               f"symbol={self.symbol}, company_name={self.company_name}, business_summary={self.business_summary}, " \
-               f"website={self.website}, logo_url={self.logo_url})"
-    
-    def to_dict(self) -> dict:
-        return {
-            "asset_class_id": self.asset_class_id,
-            "asset_subclass_id": self.asset_subclass_id,
-            "sector_id": self.sector_id,
-            "industry_id": self.industry_id,
-            "country_id": self.country_id,
-            "city_id": self.city_id,
-            "currency_id": self.currency_id,
-            "exchange_id": self.exchange_id,
-            "symbol": self.symbol,
-            "company_name": self.company_name,
-            "business_summary": self.business_summary,
-            "website": self.website,
-            "logo_url": self.logo_url
-        }
-
-
-# AssetTransaction dataclass for storing asset transaction data
-@dataclass
-class AssetTransaction:
-    user_id: int
-    asset_id: int
-    transaction_type_id: int
-    brokerage_id: int
-    asset_account_id: int
-    quantity: float
-    avg_price: float
-    total: float
-    transaction_date: str
-    imported_from: str
-    imported_date: str
-
-    def __post_init__(self) -> None:
-        logging.debug(f"Creating AssetTransaction object: {self}")
-
-    def __str__(self) -> str:
-        return f"AssetTransaction(user_id={self.user_id}, asset_id={self.asset_id}, " \
-               f"transaction_type_id={self.transaction_type_id}, brokerage_id={self.brokerage_id}, " \
-               f"asset_account_id={self.asset_account_id}, quantity={self.quantity}, avg_price={self.avg_price}, " \
-               f"total={self.total}, transaction_date={self.transaction_date}, imported_from={self.imported_from}, " \
-               f"imported_date={self.imported_date})"
-    
-    def to_dict(self):
-        return {
-            'user_id': self.user_id,
-            'asset_id': self.asset_id,
-            'transaction_type_id': self.transaction_type_id,
-            'brokerage_id': self.brokerage_id,
-            'asset_account_id': self.asset_account_id,
-            'quantity': self.quantity,
-            'avg_price': self.avg_price,
-            'total': self.total,
-            'transaction_date': self.transaction_date,
-            'imported_from': self.imported_from,
-            'imported_date': self.imported_date
-        }
 
 
 if __name__ == "__main__":

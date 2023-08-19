@@ -10,6 +10,7 @@ import pandas as pd
 from account_management.accounts import UserAccount, EmailAccount
 from database_management.connection import DatabaseConnection, DatabaseConnectionError
 from session_management.session_manager import SessionManager
+from database_management.schema.asset_dataclass import AssetInfoWithIDs
 
 # Configure logging
 import logging
@@ -727,6 +728,18 @@ class QueryExecutor:
     # ASSET INFO #
     ##############
 
+    def get_all_asset_class_names(self) -> list[str] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_all_asset_class_names_query = f"{query_type} name FROM asset_class"
+        # Execute the query
+        result = self.execute_query(get_all_asset_class_names_query)
+        # Check whether the result is None (None means the asset class doesn't exist)
+        if result is not None and len(result) > 0:
+            return [row[0] for row in result]
+        else:
+            return None
+
     def get_asset_class_id_by_asset_class_name(self, asset_class_name: str) -> int | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -740,6 +753,18 @@ class QueryExecutor:
         else:
             return None
     
+    def get_all_asset_subclass_names(self) -> list[str] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_all_asset_subclass_names_query = f"{query_type} name FROM asset_subclass"
+        # Execute the query
+        result = self.execute_query(get_all_asset_subclass_names_query)
+        # Check whether the result is None (None means the asset subclass doesn't exist)
+        if result is not None and len(result) > 0:
+            return [row[0] for row in result]
+        else:
+            return None
+    
     def get_asset_subclass_id_by_asset_subclass_name(self, asset_subclass_name: str) -> int | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -750,6 +775,19 @@ class QueryExecutor:
         # Check whether the result is None (None means the asset subclass doesn't exist)
         if result is not None and len(result) > 0:
             return result[0][0]
+        else:
+            return None
+    
+    def get_asset_subclass_names_by_asset_class_name(self, asset_class_name: str) -> list[str] | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_asset_subclass_names_by_asset_class_name_query = f"{query_type} asset_subclass.name FROM asset_subclass JOIN asset_class ON asset_subclass.asset_class_id = asset_class.id WHERE asset_class.name = ?"
+        params = (asset_class_name,)
+        # Execute the query
+        result = self.execute_query(get_asset_subclass_names_by_asset_class_name_query, params)
+        # Check whether the result is None (None means the asset subclass doesn't exist)
+        if result is not None and len(result) > 0:
+            return [row[0] for row in result]
         else:
             return None
 
@@ -766,11 +804,11 @@ class QueryExecutor:
         else:
             return None
         
-    def insert_sector(self, sector_name: str) -> None:
+    def insert_sector(self, asset_class_id: int, sector_name: str) -> None:
         # Define the query parameters
         query_type = "INSERT"
-        insert_sector_query = f"{query_type} INTO sector (name) VALUES (?)"
-        params = (sector_name,)
+        insert_sector_query = f"{query_type} INTO sector (asset_class_id, name) VALUES (?, ?)"
+        params = (asset_class_id, sector_name)
         # Execute the query
         self.execute_query(insert_sector_query, params)
 
@@ -787,11 +825,11 @@ class QueryExecutor:
         else:
             return None
 
-    def insert_industry(self, industry_name: str) -> None:
+    def insert_industry(self, sector_id: int, industry_name: str) -> None:
         # Define the query parameters
         query_type = "INSERT"
-        insert_industry_query = f"{query_type} INTO industry (name) VALUES (?)"
-        params = (industry_name,)
+        insert_industry_query = f"{query_type} INTO industry (sector_id, name) VALUES (?, ?)"
+        params = (sector_id, industry_name)
         # Execute the query
         self.execute_query(insert_industry_query, params)
 
@@ -820,8 +858,37 @@ class QueryExecutor:
             return result[0][0]
         else:
             return None
-        
     
+    def get_company_name_by_exchange_id_and_symbol(self, exchange_id: int, asset_symbol: str) -> str | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_company_name_by_exchange_id_and_symbol_query = f"{query_type} company_name FROM exchange_listing WHERE exchange_id = ? AND symbol = ?"
+        params = (exchange_id, asset_symbol)
+        # Execute the query
+        result = self.execute_query(get_company_name_by_exchange_id_and_symbol_query, params)
+        # Check whether the result is None (None means the company doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+    
+    def insert_asset_info_with_ids(self, asset_info_with_ids: AssetInfoWithIDs) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_asset_info_query = f"{query_type} INTO asset_info (asset_class_id, asset_subclass_id, " \
+            f"sector_id, industry_id, country_id, city_id, financial_currency_id, exchange_currency_id, " \
+            f"exchange_id, symbol, company_name, business_summary, website, logo_url) "\
+            f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        # Define the query parameters
+        asset_info = asset_info_with_ids
+        params = (asset_info.asset_class_id, asset_info.asset_subclass_id, asset_info.sector_id,
+            asset_info.industry_id, asset_info.country_id, asset_info.city_id, asset_info.financial_currency_id,
+            asset_info.exchange_currency_id, asset_info.exchange_id, asset_info.symbol, asset_info.company_name,
+            asset_info.business_summary, asset_info.website, asset_info.logo_url)
+        # Execute the query
+        self.execute_query(insert_asset_info_query, params)
+
+
 
 
     ######################

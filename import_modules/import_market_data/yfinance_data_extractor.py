@@ -6,7 +6,9 @@
 import yfinance as yf
 
 # Local Modules
+from database_management.database import Database
 from import_modules.web_scraper import WebScraper
+from database_management.schema.asset_dataclass import YFinanceAssetInfo
 
 # Configure logging
 import logging
@@ -14,25 +16,12 @@ import logging
 
 # YahooFinanceDataExtractor class for extracting data from Yahoo Finance using the yfinance library
 class YahooFinanceDataExtractor:
-    def __init__(self) -> None:
-        self._asset_info_names_dict = {
-                    "sector_name": "",
-                    "industry_name": "",
-                    "country_name": "",
-                    "city_name": "",
-                    "currency_iso_code": "",
-                    "exchange_acronym": "",
-                    "symbol": "",
-                    "company_name": "",
-                    "business_summary": "",
-                    "website": "",
-                    "logo_url": ""
-                }
+    def __init__(self, database: Database) -> None:
+        self._database = database
+        self._asset_symbol: str | None = None
+        self._yfinance_asset_info: YFinanceAssetInfo | None = None
 
-    def get_asset_info_names_dict(self) -> dict[str, str]:
-        return self._asset_info_names_dict
-
-    def _format_symbol_for_yf(self, original_symbol: str) -> str:
+    def _format_symbol_for_yfinance(self, original_symbol: str) -> str:
         # Check if the symbol has ".___" in it, yfinance requires it to be "-___"
         if ".A" in original_symbol:
             formatted_symbol = original_symbol.replace(".", "-")
@@ -45,81 +34,62 @@ class YahooFinanceDataExtractor:
         else:
             formatted_symbol = original_symbol
         return formatted_symbol
+    
+    def extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:
+        df_asset_info = yf.Ticker(self._format_symbol_for_yfinance(asset_symbol)).info
+        logging.debug(f"df_asset_info: {df_asset_info}")
 
-    def get_asset_info_from_yf(self, asset_symbol: str) -> dict[str, str] | None:
-            df_asset_info = yf.Ticker(self._format_symbol_for_yf(asset_symbol)).info
-            if df_asset_info:
-                asset_info_names_dict = {
-                    "asset_class_name": df_asset_info.get("quoteType"),
-                    "asset_subclass_name": df_asset_info.get("quoteType"),
-                    "sector_name": df_asset_info.get("sector"),
-                    "industry_name": df_asset_info.get("industry"),
-                    "country_name": df_asset_info.get("country"),
-                    "city_name": df_asset_info.get("city"),
-                    "currency_iso_code": df_asset_info.get("currency"),
-                    "exchange_acronym": df_asset_info.get("exchange"),
-                    "symbol": asset_symbol,
-                    "company_name": df_asset_info.get("shortName"), # or "longName"
-                    "business_summary": df_asset_info.get("longBusinessSummary"),
-                    "website": df_asset_info.get("website"),
-                    "logo_url": df_asset_info.get("logo_url")
-                }
-                for item in asset_info_names_dict:
-                    if asset_info_names_dict[item] is None:
-                        asset_info_names_dict[item] = ""
-                return asset_info_names_dict
-            else:
-                return None
+        # Store the asset symbol
+        self._asset_symbol = asset_symbol
 
-    def get_asset_info_from_yf_website(self, exchange_in_url: str, asset_symbol: str) -> dict[str, str] | None:
-            # Create a WebScraper object
-            web_scraper = WebScraper(user_agent=True)
-            # Format the url
-            url = "https://finance.yahoo.com/quote/" + asset_symbol + "." + exchange_in_url + "/profile?p=" + asset_symbol + "." + exchange_in_url
-            # Get the html from the url
-            text_content = web_scraper.get_html_content_as_text(url)
-            # Scrape the text for the asset information
+        # Store the desired raw yahoo finance data
+        if df_asset_info is None:
+            logging.error(f"Could not find any asset info for {self._asset_symbol} on Yahoo Finance.")
+            return None
+        else:
+            self._yfinance_asset_info = YFinanceAssetInfo(
+                asset_class_name=str(df_asset_info.get("quoteType")),
+                sector_name=str(df_asset_info.get("sector")),
+                industry_name=str(df_asset_info.get("industry")),
+                country_name=str(df_asset_info.get("country")),
+                city_name=str(df_asset_info.get("city")),
+                financial_currency_iso_code=str(df_asset_info.get("financialCurrency")),
+                company_name=str(df_asset_info.get("shortName")),
+                business_summary=str(df_asset_info.get("longBusinessSummary")),
+                website=str(df_asset_info.get("website")),
+                logo_url=str(df_asset_info.get("logo_url"))
+            )
 
-            logging.info(f"text_content: {text_content}")
+    def extract_asset_info_from_yfinance_website(self, asset_symbol: str, exchange_in_url: str) -> None:
+        # Store the asset symbol
+        self._asset_symbol = asset_symbol
 
-            self._asset_info_names_dict = {
-                # "asset_class_name": df_asset_info.get("quoteType"),
-                # "asset_subclass_name": df_asset_info.get("quoteType"),
-                "sector_name": df_asset_info.get("sector"),
-                "industry_name": df_asset_info.get("industry"),
-                "country_name": df_asset_info.get("country"),
-                "city_name": df_asset_info.get("city"),
-                "currency_iso_code": df_asset_info.get("currency"),
-                "exchange_acronym": df_asset_info.get("exchange"),
-                "symbol": asset_symbol,
-                "company_name": df_asset_info.get("shortName"), # or "longName"
-                "business_summary": df_asset_info.get("longBusinessSummary"),
-                "website": df_asset_info.get("website"),
-                "logo_url": df_asset_info.get("logo_url")
-                }
+        # Create a WebScraper object
+        web_scraper = WebScraper(user_agent=True)
+        # Format the url
+        url = "https://finance.yahoo.com/quote/" + self._asset_symbol + "." + exchange_in_url + "/profile?p=" + self._asset_symbol + "." + exchange_in_url
+        # Get the html from the url
+        text_content = web_scraper.get_html_content_as_text(url)
+        # Scrape the text for the asset information
 
-    # def fill_in_asset_info(self, df_data: pd.DataFrame, df_asset_info: pd.DataFrame) -> None:
-    #     # Get the exchange_id for Cboe Canada
-    #     cboe_ca_exchange_id = asset_info_extractor.get_exchange_id_by_exchange_acronym("Cboe CA")
+        logging.info(f"text_content: {text_content}")
+        
+        # Store the desired raw yahoo finance data
+        self._yfinance_asset_info = YFinanceAssetInfo(
+            asset_class_name=str(df_asset_info.get("quoteType")),
+            sector_name=str(df_asset_info.get("sector")),
+            industry_name=str(df_asset_info.get("industry")),
+            country_name=str(df_asset_info.get("country")),
+            city_name=str(df_asset_info.get("city")),
+            financial_currency_iso_code=str(df_asset_info.get("financialCurrency")),
+            company_name=str(df_asset_info.get("shortName")),
+            business_summary=str(df_asset_info.get("longBusinessSummary")),
+            website=str(df_asset_info.get("website")),
+            logo_url=str(df_asset_info.get("logo_url"))
+        )
 
-    #     if df_data["asset_account"][0] != "Crypto":
-    #         if df_data["currency"][0] == "CAD":
-    #             if df_asset_info["exchange_listing_id"] == cboe_ca_exchange_id:
-    #                 yf_asset_info = asset_info_extractor.get_asset_info_from_yf_website("NE", formatted_symbol)
-    #             else:
-    #                 if formatted_symbol == "SJR-B":
-    #                     temp_symbol = "RCI-B"
-    #                     yf_asset_info = asset_info_extractor.get_asset_info_from_yf(temp_symbol + ".TO")
-    #                     if yf_asset_info is None:
-    #                         raise Exception(f"yf_asset_info is None for symbol: '{temp_symbol}.TO'")
-    #                     yf_asset_info["symbol"] = "SJR-B.TO bought out by RCI-B.TO"
-    #                     yf_asset_info["company_name"] = "Shaw Communications bought out by Rogers Communications"
-    #                 else:
-    #                     yf_asset_info = asset_info_extractor.n(formatted_symbol + ".TO")
-    #                     if yf_asset_info is None:
-    #                         raise Exception(f"yf_asset_info is None for symbol: '{formatted_symbol}.TO'")
-    #         else:
-    #             yf_asset_info = asset_info_extractor.get_asset_info_from_yf(formatted_symbol    )
+    def get_yfinance_asset_info(self) -> YFinanceAssetInfo | None:
+        return self._yfinance_asset_info
 
 
 if __name__ == "__main__":

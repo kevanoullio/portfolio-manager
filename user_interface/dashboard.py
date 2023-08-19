@@ -304,128 +304,129 @@ class Dashboard:
         print("Initialize Market Data logic goes here...")
 
     
-    def initialize_all_exchange_listings_data(self):
-        self.initialize_nasdaq_listings_data()
-        self.initialize_nyse_listings_data()
-        self.initialize_nyse_mkt_listings_data()
-        self.initialize_nyse_arca_listings_data()
-        self.initialize_bats_listings_data()
-        self.initialize_tsx_listings_data()
-        self.initialize_tsxv_listings_data()
-        self.initialize_cse_listings_data()
-        self.initialize_cboe_canada_listings_data()
+    # def initialize_all_exchange_listings_data(self):
+    #     self.initialize_nasdaq_listings_data()
+    #     self.initialize_nyse_listings_data()
+    #     self.initialize_nyse_mkt_listings_data()
+    #     self.initialize_nyse_arca_listings_data()
+    #     self.initialize_bats_listings_data()
+    #     self.initialize_tsx_listings_data()
+    #     self.initialize_tsxv_listings_data()
+    #     self.initialize_cse_listings_data()
+    #     self.initialize_cboe_canada_listings_data()
 
 
-    def initialize_nasdaq_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "USA"
-        exchange_name = "NASDAQ Stock Exchange"
-        exchange_acronym = "NASDAQ"
-        exchange_in_url = "nasdaq"
-        exchange_filter = None
-        # Initialize the exchange listings object
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+    # def initialize_nasdaq_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "NASDAQ Stock Exchange"
+    #     exchange_acronym = "NASDAQ"
+    #     exchange_in_url = "nasdaq"
+    #     exchange_filter = None
+    #     # Initialize the exchange listings object
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
     
     
-    def initialize_nyse_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "USA"
-        exchange_name = "New York Stock Exchange"
-        exchange_acronym = "NYSE"
-        exchange_in_url = "other"
-        exchange_filter = "N"
-        # Initialize the exchange listings object
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+    # def initialize_nyse_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "New York Stock Exchange"
+    #     exchange_acronym = "NYSE"
+    #     exchange_in_url = "other"
+    #     exchange_filter = "N"
+    #     # Initialize the exchange listings object
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
 
     
-    def initialize_nyse_mkt_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "USA"
-        exchange_name = "NYSE American"
-        exchange_acronym = "NYSE MKT"
-        exchange_in_url = "other"
-        exchange_filter = "A"
-        # Initialize the exchange listings object
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+    # def initialize_nyse_mkt_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "NYSE American"
+    #     exchange_acronym = "NYSE MKT"
+    #     exchange_in_url = "other"
+    #     exchange_filter = "A"
+    #     # Initialize the exchange listings object
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
 
 
-    def initialize_nyse_arca_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "USA"
-        exchange_name = "NYSE Arca"
-        exchange_acronym = "NYSE ARCA"
-        exchange_in_url = "other"
-        exchange_filter = "P"
-        # Initialize the exchange listings object
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+    # def initialize_nyse_arca_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "NYSE Arca"
+    #     exchange_acronym = "NYSE ARCA"
+    #     exchange_in_url = "other"
+    #     exchange_filter = "P"
+    #     # Initialize the exchange listings object
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
 
 
-    def initialize_bats_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "USA"
-        exchange_name = "BATS Global Markets"
-        exchange_acronym = "BATS"
-        exchange_in_url = "other"
-        exchange_filter = "Z"
-        # Initialize the exchange listings object
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+    # def initialize_bats_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "USA"
+    #     exchange_name = "BATS Global Markets"
+    #     exchange_acronym = "BATS"
+    #     exchange_in_url = "other"
+    #     exchange_filter = "Z"
+    #     # Initialize the exchange listings object
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
 
 
-    def initialize_tsx_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "CAN"
-        exchange_name = "Toronto Stock Exchange"
-        exchange_acronym = "TSX"
-        exchange_filter = "XTSE"
-        # Initialize the exchange listings
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+    # def initialize_tsx_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "CAN"
+    #     exchange_name = "Toronto Stock Exchange"
+    #     exchange_acronym = "TSX"
+    #     exchange_filter = "XTSE"
+    #     # Initialize the exchange listings
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
 
 
-    def initialize_tsxv_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "CAN"
-        exchange_name = "TSX Venture Exchange"
-        exchange_acronym = "TSXV"
-        exchange_filter = "XTSX"
-        # Initialize the exchange listings
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
-
-    def initialize_cse_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "CAN"
-        exchange_name = "Canadian Securities Exchange"
-        exchange_acronym = "CSE"
-        exchange_filter = "XCNQ"
-        # Initialize the exchange listings
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+    # def initialize_tsxv_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "CAN"
+    #     exchange_name = "TSX Venture Exchange"
+    #     exchange_acronym = "TSXV"
+    #     exchange_filter = "XTSX"
+    #     # Initialize the exchange listings
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
 
 
-    def initialize_cboe_canada_listings_data(self):
-        # Set the exchange variables
-        country_iso_code = "CAN"
-        exchange_name = "Cboe Canada"
-        exchange_acronym = "Cboe CA"
-        exchange_filter = "NEOE"
-        # Initialize the exchange listings
-        exchange_listings = ExchangeListingsExtractor(self._database)
-        # Initialize the exchange listings
-        exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+    # def initialize_cse_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "CAN"
+    #     exchange_name = "Canadian Securities Exchange"
+    #     exchange_acronym = "CSE"
+    #     exchange_filter = "XCNQ"
+    #     # Initialize the exchange listings
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+
+
+    # def initialize_cboe_canada_listings_data(self):
+    #     # Set the exchange variables
+    #     country_iso_code = "CAN"
+    #     exchange_name = "Cboe Canada"
+    #     exchange_acronym = "Cboe CA"
+    #     exchange_filter = "NEOE"
+    #     # Initialize the exchange listings
+    #     exchange_listings = ExchangeListingsExtractor(self._database)
+    #     # Initialize the exchange listings
+    #     exchange_listings.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
 
 
     def initialize_all_asset_information_data(self):
@@ -441,48 +442,179 @@ class Dashboard:
 
 
     def initialize_nasdaq_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "NASDAQ Stock Exchange"
+        exchange_acronym = "NASDAQ"
+        exchange_in_url = "nasdaq"
+        exchange_filter = None
+        # Initialize the exchange listings object
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("NASDAQ")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
     
 
     def initialize_nyse_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "New York Stock Exchange"
+        exchange_acronym = "NYSE"
+        exchange_in_url = "other"
+        exchange_filter = "N"
+        # Initialize the exchange listings object
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("NYSE")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
     
     def initialize_nyse_mkt_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "NYSE American"
+        exchange_acronym = "NYSE MKT"
+        exchange_in_url = "other"
+        exchange_filter = "A"
+        # Initialize the exchange listings object
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("NYSE MKT")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_nyse_arca_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "NYSE Arca"
+        exchange_acronym = "NYSE ARCA"
+        exchange_in_url = "other"
+        exchange_filter = "P"
+        # Initialize the exchange listings object
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("NYSE ARCA")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_bats_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "USA"
+        exchange_name = "BATS Global Markets"
+        exchange_acronym = "BATS"
+        exchange_in_url = "other"
+        exchange_filter = "Z"
+        # Initialize the exchange listings object
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("BATS")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_tsx_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "CAN"
+        exchange_name = "Toronto Stock Exchange"
+        exchange_acronym = "TSX"
+        exchange_filter = "XTSE"
+        # Initialize the exchange listings
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("TSX")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_tsxv_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "CAN"
+        exchange_name = "TSX Venture Exchange"
+        exchange_acronym = "TSXV"
+        exchange_filter = "XTSX"
+        # Initialize the exchange listings
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("TSXV")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_cse_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "CAN"
+        exchange_name = "Canadian Securities Exchange"
+        exchange_acronym = "CSE"
+        exchange_filter = "XCNQ"
+        # Initialize the exchange listings
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("CSE")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_cboe_canada_asset_information_data(self):
+        # Set the exchange variables
+        country_iso_code = "CAN"
+        exchange_name = "Cboe Canada"
+        exchange_acronym = "Cboe CA"
+        exchange_filter = "NEOE"
+        # Initialize the exchange listings
+        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        # Initialize the exchange listings
+        exchange_listings_extractor.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
+        # Get the exchange listings
+        df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
+        if df_exchange_listings_info is None:
+            raise Exception("Exchange listings info not initialized")
+        # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
-        asset_info_extractor.initialize_asset_info("Cboe Canada")
+        asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
 
 
     def initialize_index_holdings_data(self):
