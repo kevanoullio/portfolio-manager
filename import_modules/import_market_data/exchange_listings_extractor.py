@@ -164,6 +164,7 @@ class ExchangeListingsExtractor:
         
         # Get all asset class names from the database
         asset_class_names = self._database.query_executor.get_all_asset_class_names()
+        # logging.debug(f"asset_class_names:\n{asset_class_names}")
         if asset_class_names is None:
             raise ValueError("Asset class names could not be retrieved from the database.")
         
@@ -171,6 +172,7 @@ class ExchangeListingsExtractor:
         asset_classes_and_subclasses = {}
         for asset_class_name in asset_class_names:
             asset_classes_and_subclasses[asset_class_name] = self._database.query_executor.get_asset_subclass_names_by_asset_class_name(asset_class_name)
+        # logging.debug(f"asset_classes_and_subclasses:\n{asset_classes_and_subclasses}")
 
         # Synonyms for Common Stock
         common_stock_synonyms = ["common stock", "common stocks", "common", "stock", "stocks", 
@@ -182,21 +184,40 @@ class ExchangeListingsExtractor:
         self._df_exchange_listings_info["asset_subclass_name"] = None
         
         for index, row in self._df_exchange_listings_info.iterrows():
+            logging.debug(f"row:\n{row}")
             security_name_lower = row["security_name"].lower()
+            logging.debug(f"security_name_lower: {security_name_lower}")
             # security_name_upper = row["security_name"].upper()
             asset_class_name = None
             asset_subclass_name = None
+
+            # Flag to indicate if a match is found
+            found = False
             
             for asset_class, asset_subclasses in asset_classes_and_subclasses.items():
+                logging.debug(f"asset_class: {asset_class}, asset_subclasses: {asset_subclasses}")
                 if asset_subclasses[0] == common_stock_synonyms[0]:
                     for synonym in common_stock_synonyms:
                         if synonym in security_name_lower:
                             asset_class_name = asset_class
                             asset_subclass_name = asset_subclasses[0]
+                            found = True
                             break
-                elif any(subclass in security_name_lower for subclass in asset_subclasses):
-                    asset_subclass_name = next((sub for sub in asset_subclasses if sub in security_name_lower), None)
+                # Check if any of the asset subclasses is present in the security name
+                for subclass in asset_subclasses:
+                    if subclass in security_name_lower:
+                        logging.debug(f"subclass is in name: {subclass}")
+                        # Set the asset subclass name to the first subclass found in the security name
+                        asset_class_name = asset_class
+                        asset_subclass_name = subclass
+                        found = True
+                        break
+                    logging.debug(f"subclass is not in name: {subclass}")
+
+                if found:
                     break
+
+            logging.debug(f"asset_class_name: {asset_class_name}, asset_subclass_name: {asset_subclass_name}")
             
             if asset_subclass_name is None:
                 asset_subclass_name = row["symbol"]
@@ -205,6 +226,7 @@ class ExchangeListingsExtractor:
             # Update the 'asset_subclass' column with the determined asset class and subclass names
             self._df_exchange_listings_info.at[index, "asset_class_name"] = asset_class_name
             self._df_exchange_listings_info.at[index, "asset_subclass_name"] = asset_subclass_name
+            logging.debug(f"current df_exchange_listing entry:\n{self._df_exchange_listings_info.loc[index]}") # type: ignore
 
     def _extract_nasdaq_trader_exchange_listings(self, exchange_in_url: str, exchange_filter: str | None = None) -> None:
         """

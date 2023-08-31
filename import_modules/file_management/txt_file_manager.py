@@ -104,19 +104,19 @@ class TXTFileManager:
     def read_txt_from_url(self, url: str) -> None:
         # Read the TXT file from the URL
         content = self._web_scraper.get_html_content_as_text(url)
-        logging.debug(f"Content: {content}")
+        # logging.debug(f"Content: {content}")
         # Convert the TXT file to a list of lists
         txt_file = io.StringIO(content)
         # Read the TXT file into a list of lists
         data = []
+        # logging.debug(f"Delimiter: {self._delimiter}")
         for row in txt_file:
-            logging.debug(f"Row: {row}")
-            logging.debug(f"Delimiter: {self._delimiter}")
+            # logging.debug(f"Row: {row}")
             row_data = row.strip().split(self._delimiter)
             data.append(row_data)
 
         # Find the header row
-        logging.debug(f"First row in data: {data[0]}")
+        # logging.debug(f"First row in data: {data[0]}")
         header_index = self._find_header_row(data)
 
         # Check if the header row was found
@@ -125,13 +125,13 @@ class TXTFileManager:
         
         # Remove all rows before the header row
         if header_index > 0:
-            logging.debug(f"Removing {header_index} rows before the header row.")
-            logging.debug(f"Data: {data[:header_index]}")
+            # logging.debug(f"Removing {header_index} rows before the header row.")
+            # logging.debug(f"Data: {data[:header_index]}")
             data = data[header_index:]
         self._header = data.pop(0)
         self._data = data
-        logging.debug(f"Header: {self._header}")
-        logging.debug(f"Data: {data}")
+        # logging.debug(f"Header: {self._header}")
+        # logging.debug(f"Data: {data}")
 
     # def sort_data_by_column(self, column_name: str) -> None:
     #     column_index = self._header.index(column_name)
