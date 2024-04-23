@@ -26,7 +26,7 @@ class AssetInfoExtractor:
         self._replacement_asset_info: dict[str, str] | None = None
         self._asset_info_with_names: AssetInfoWithNames | None = None
         self._asset_info_with_ids: AssetInfoWithIDs | None = None
-        self._df_asset_info: pd.DataFrame | None = None
+        # self._df_asset_info: pd.DataFrame | None = None
 
     def _replace_delisted_asset_info(self, asset_symbol: str) -> dict[str, str] | None:
         replacement_asset_info = {}
@@ -63,86 +63,106 @@ class AssetInfoExtractor:
             if available_asset_classes is None:
                 logging.error(f"Could not find any asset classes in the database.")
                 return None
-            if asset_class_name.lower() in available_asset_classes:
-                asset_class_name = asset_class_name.lower()
-            elif asset_class_name.upper() in available_asset_classes:
-                asset_class_name = asset_class_name.upper()
-            else:
-                fund_asset_subclass_names = self._database.query_executor.get_asset_subclass_names_by_asset_class_name("fund")
-                if fund_asset_subclass_names is None:
-                    logging.error(f"Could not find any asset subclasses for asset class 'fund' in the database.")
-                    return None
-                if asset_class_name.lower() in fund_asset_subclass_names or asset_class_name.upper() in fund_asset_subclass_names:
-                    asset_class_name = "fund"
-
-            # # Get the available asset subclasses from the database
-            # available_asset_subclasses = self._database.query_executor.get_all_asset_subclass_names()
-            # if available_asset_subclasses is None:
-            #     logging.error(f"Could not find any asset subclasses in the database.")
-            #     return None
-            # # Get exchange_id from the database
-            # exchange_id = self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
-            # if exchange_id is None:
-            #     logging.error(f"Could not find exchange_id for {exchange_acronym} in the database.")
-            #     return None
-            # # Get the company_name from the database
-            # company_name = self._database.query_executor.get_company_name_by_exchange_id_and_symbol(exchange_id, self._asset_symbol)
-            # if company_name is None:
-            #     logging.error(f"Could not find company_name for {self._asset_symbol} on {exchange_acronym} in the database.")
-            #     return None
-            # # Synonyms for Common Stock
-            # common_stock_synonyms = ["common stock", "common stocks", "common", "stock", "stocks", 
-            #                          "common share", "common shares", "share", "shares",
-            #                          "class a", "class b", "class c", "class d"]
-            # asset_subclass_name = None
-            # for name in available_asset_subclasses:
-            #     if name == common_stock_synonyms[0]:
-            #         for synonym in common_stock_synonyms:
-            #             if synonym in company_name.lower():
-            #                 asset_subclass_name = name
-            #                 break
-            #     elif name in company_name.lower():
-            #         asset_subclass_name = name.lower()
-            #         break
-            #     elif name in company_name.upper():
-            #         asset_subclass_name = name.upper()
-            #         break
-            # if asset_subclass_name is None:
-            #     asset_subclass_name = asset_class_name
-            #     logging.error(f"Could not find asset subclass for {self._yf_asset_info.} on Yahoo Finance, using asset class as placeholder.")
             
-            # sector_name = 
-            # industry_name = str(df_asset_info.get("industry")).lower()
+            if asset_class_name is None:
+                logging.error(f"Asset Class Name must be provided.")
+                return None
+            else:
+                if asset_class_name.lower() in available_asset_classes:
+                    asset_class_name = asset_class_name.lower()
+                elif asset_class_name.upper() in available_asset_classes:
+                    asset_class_name = asset_class_name.upper()
+                else:
+                    fund_asset_subclass_names = self._database.query_executor.get_asset_subclass_names_by_asset_class_name("fund")
+                    if fund_asset_subclass_names is None:
+                        logging.error(f"Could not find any asset subclasses for asset class 'fund' in the database.")
+                        return None
+                    if asset_class_name.lower() in fund_asset_subclass_names or asset_class_name.upper() in fund_asset_subclass_names:
+                        asset_class_name = "fund"
+
+            # Get the available asset subclasses from the database
+            available_asset_subclasses = self._database.query_executor.get_all_asset_subclass_names()
+            if available_asset_subclasses is None:
+                logging.error(f"Could not find any asset subclasses in the database.")
+                return None
+            
+            # Get exchange_id from the database
+            if self._exchange_acronym is None:
+                logging.error(f"Exchange Acronym must be extracted before asset info can be cleaned up.")
+                return None
+            else:
+                exchange_id = self._database.query_executor.get_exchange_id_by_exchange_acronym(self._exchange_acronym)
+                if exchange_id is None:
+                    logging.error(f"Could not find exchange_id for {self._exchange_acronym} in the database.")
+                    return None
+                # # Get the company_name from the database
+                # company_name = self._database.query_executor.get_company_name_by_exchange_id_and_symbol(exchange_id, self._asset_info_with_names.symbol)
+                # if company_name is None:
+                #     logging.error(f"Could not find company_name for {self._asset_info_with_names.symbol} on {self._exchange_acronym} in the database.")
+                #     return None
+            
+            if self._yfinance_asset_info is None:
+                logging.error(f"yfinance_asset_info needs to be extracted before it can be cleaned up.")
+                return None
+            else:
+                # Synonyms for Common Stock
+                common_stock_synonyms = ["common stock", "common stocks", "common", "stock", "stocks", 
+                                        "common share", "common shares", "share", "shares",
+                                        "class a", "class b", "class c", "class d"]
+                asset_subclass_name = None
+                for name in available_asset_subclasses:
+                    if name == common_stock_synonyms[0]:
+                        for synonym in common_stock_synonyms:
+                            if synonym in self._yfinance_asset_info.company_name.lower():
+                                asset_subclass_name = name
+                                break
+                    elif name in self._yfinance_asset_info.company_name.lower():
+                        asset_subclass_name = name.lower()
+                        break
+                    elif name in self._yfinance_asset_info.company_name.upper():
+                        asset_subclass_name = name.upper()
+                        break
+                if asset_subclass_name is None:
+                    asset_subclass_name = asset_class_name
+                    logging.error(f"Could not find asset subclass for {self._yfinance_asset_info.company_name} on Yahoo Finance, using asset class as placeholder.")
+            
+            # self._asset_info_with_names.sector_name.title()
+            # self._asset_info_with_names.industry_name.title()
 
             # Format country_name to match the database entries
-            country_name = self._asset_info_with_names.country_name.title()
-            if country_name == "United States":
+            if self._asset_info_with_names.country_name.title() == "United States":
                 self._asset_info_with_names.country_name = "United States of America (the)"
-            elif country_name == "United Kingdom" or country_name == "Great Britain":
+            elif self._asset_info_with_names.country_name.title() == "United Kingdom"\
+                or self._asset_info_with_names.country_name.title() == "Great Britain":
                 self._asset_info_with_names.country_name = "United Kingdom of Great Britain and Northern Ireland (the)"
-            # elif country_name == "None":
-            #     if str(df_asset_info.get("currency")).upper() == "USD":
-            #         country_name = "United States of America (the)"
-            #     elif str(df_asset_info.get("currency")).upper() == "CAD":
-            #         country_name = "Canada"
-            #     elif str(df_asset_info.get("currency")).upper() == "GBP":
-            #         country_name = "United Kingdom of Great Britain and Northern Ireland (the)"
+            elif self._asset_info_with_names.country_name.title() == "None":
+                if self._asset_info_with_names is None:
+                    logging.error(f"_asset_info_with_names needs to be extracted before country_name can be cleaned up.")
+                    return None
+                if self._asset_info_with_names.financial_currency_iso_code.upper() == "USD":
+                    self._asset_info_with_names.country_name = "United States of America (the)"
+                elif self._asset_info_with_names.financial_currency_iso_code.upper() == "CAD":
+                    self._asset_info_with_names.country_name = "Canada"
+                elif self._asset_info_with_names.financial_currency_iso_code.upper() == "GBP":
+                    self._asset_info_with_names.country_name = "United Kingdom of Great Britain and Northern Ireland (the)"
 
-            # Use "N/A" if city is not available
-            city_name = self._asset_info_with_names.city_name.title()
-            if city_name == "None":
+            # Use "N/A" if city is not applicable
+            if self._asset_info_with_names.city_name.title() == "None":
                 self._asset_info_with_names.city_name = "N/A"
             
             # Financial currency is the currency used for financial statements
-            financial_currency_iso_code = self._asset_info_with_names.financial_currency_iso_code.upper()
-            if financial_currency_iso_code == "NONE":
-                financial_currency_iso_code = self._asset_info_with_names.exchange_currency_id
+            if self._asset_info_with_names.financial_currency_iso_code.upper() == "NONE":
+                currency_iso_code = self._database.query_executor.get_currency_iso_code_by_currency_id(self._asset_info_with_names.exchange_currency_id)
+                if currency_iso_code is None:
+                    logging.error(f"Could not find currency_iso_code for {self._asset_info_with_names.exchange_currency_id} in the database.")
+                    return None
+                self._asset_info_with_names.financial_currency_iso_code = currency_iso_code
             
-            exchange_currency_id = self._asset_info_with_names.exchange_currency_id
-            security_name = self._asset_info_with_names.security_name.title() # or "longName"
-            business_summary = self._asset_info_with_names.business_summary
-            website = self._asset_info_with_names.website
-            logo_url = self._asset_info_with_names.logo_url
+            # exchange_currency_id = self._asset_info_with_names.exchange_currency_id
+            # security_name = self._asset_info_with_names.security_name.title() # or "longName"
+            # business_summary = self._asset_info_with_names.business_summary
+            # website = self._asset_info_with_names.website
+            # logo_url = self._asset_info_with_names.logo_url
         # else:
         #     return None
 
@@ -304,9 +324,10 @@ class AssetInfoExtractor:
         self._database.query_executor.insert_asset_info_with_ids(self._asset_info_with_ids)
 
     def initialize_asset_info(self, df_exchange_listings_info: pd.DataFrame, exchange_acronym: str) -> None:
+        logging.debug(f"df_exchange_listings_info: {df_exchange_listings_info}")
         self._exchange_acronym = exchange_acronym
         for index, row in df_exchange_listings_info.iterrows():
-            # Replace delisted asset info if applicable
+            # Replace delisted asset info if applicable (only applies for known delisted assets)
             replacement_symbol = self._replace_delisted_asset_info(row["symbol"])
             if replacement_symbol is not None:
                 # Populate the exchange_listings_info datatype using the current row
@@ -337,16 +358,28 @@ class AssetInfoExtractor:
                 )
                 # Get asset info with names
                 self._extract_asset_info_from_yfinance(row["symbol"])
-            # Merge excjange listings info and yfinance asset info
-            self._merge_exchange_listings_info_and_yfinance_asset_info()
-            # Cleanup asset info with names
-            self._cleanup_asset_info_with_names()
-            # Convert asset info with names to asset info with IDs
-            self._convert_asset_info_with_names_to_ids()
-            # Insert asset info into the database
-            self._insert_asset_info_to_database()
-        print(f"Asset Info for {exchange_acronym} has been initialized.")
-        logging.info(f"Asset Info for {exchange_acronym} has been initialized.")
+            # Merge exchange listings info and yfinance asset info
+            if self._yfinance_asset_info is None:
+                logging.warning(f"Could not retrieve asset information for {row['symbol']} from Yahoo Finance.")
+                continue
+            else:
+                self._merge_exchange_listings_info_and_yfinance_asset_info()
+                # Cleanup asset info with names
+                self._cleanup_asset_info_with_names()
+                try:
+                    # Convert asset info with names to asset info with IDs
+                    self._convert_asset_info_with_names_to_ids()
+                except ValueError as err:
+                    logging.error(f"ValueError occurred: {err}")
+                else:
+                    # Insert asset info into the database
+                    self._insert_asset_info_to_database()
+        if self._yfinance_asset_info is not None:
+            print(f"Asset Info for {exchange_acronym} has been initialized.")
+            logging.info(f"Asset Info for {exchange_acronym} has been initialized.")
+        else:
+            print(f"Asset Info for {exchange_acronym} could not be initialized.")
+            logging.info(f"Asset Info for {exchange_acronym} could not be initialized.")
 
 
 if __name__ == "__main__":

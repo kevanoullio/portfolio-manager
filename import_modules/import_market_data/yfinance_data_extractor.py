@@ -3,6 +3,7 @@
 # Standard Libraries
 
 # Third-party Libraries
+import requests
 import yfinance as yf
 
 # Local Modules
@@ -35,10 +36,21 @@ class YahooFinanceDataExtractor:
             formatted_symbol = original_symbol
         return formatted_symbol
     
+    def _get_asset_info_from_yfinance(self, asset_symbol: str) -> dict | None:
+        try:
+            ticker = yf.Ticker(self._format_symbol_for_yfinance(asset_symbol))
+            if ticker.info is None:
+                logging.error(f"Asset symbol {asset_symbol} not found on Yahoo Finance.")
+                return None
+            else:
+                logging.debug(f"df_asset_info: {ticker.info}")
+                return ticker.info
+        except requests.exceptions.HTTPError as err:
+            print(f"HTTP error occurred for symbol {asset_symbol}: {err}")
+    
     def extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:
-        df_asset_info = yf.Ticker(self._format_symbol_for_yfinance(asset_symbol)).info
-        logging.debug(f"df_asset_info: {df_asset_info}")
-
+        df_asset_info = self._get_asset_info_from_yfinance(asset_symbol)
+        
         # Store the asset symbol
         self._asset_symbol = asset_symbol
 
@@ -61,6 +73,8 @@ class YahooFinanceDataExtractor:
             )
 
     def extract_asset_info_from_yfinance_website(self, asset_symbol: str, exchange_in_url: str) -> None:
+        df_asset_info = self._get_asset_info_from_yfinance(asset_symbol)
+        
         # Store the asset symbol
         self._asset_symbol = asset_symbol
 

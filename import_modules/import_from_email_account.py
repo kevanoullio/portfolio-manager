@@ -15,7 +15,7 @@ from html.parser import HTMLParser
 
 # Local Modules
 from database_management.database import Database
-from database_management.schema.schema import AssetInfoWithNames, AssetInfoWithIDs, AssetTransaction
+from database_management.schema.asset_dataclass import AssetInfoWithNames, AssetInfoWithIDs, AssetTransaction
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 from access_management.account_authenticator import AccountAuthenticator
 from import_modules.web_scraper import WebScraper
@@ -254,10 +254,10 @@ class AssetTransactionManager:
     def get_asset_account_id(self, asset_account_name: str) -> int | None:
         return self._database.query_executor.get_asset_account_id_by_asset_account_name(asset_account_name)
     
-    def find_asset_in_exchange_listing(self, symbol: str) -> list[tuple] | None:
-        query = f"SELECT * FROM exchange_listing WHERE symbol = '{symbol}'"
-        exchange_listing = self._database.query_executor.execute_query(query)
-        return exchange_listing
+    def find_asset_info(self, symbol: str) -> list[tuple] | None:
+        query = f"SELECT * FROM asset_info WHERE symbol = '{symbol}'"
+        asset_info = self._database.query_executor.execute_query(query)
+        return asset_info
 
     def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
         # Append the new transaction to the list of asset transactions
@@ -317,10 +317,13 @@ def import_from_email_account(database: Database) -> int:
         return 3
     # Login to the IMAP server using the selected email account
     imap_client = IMAPClient(selected_import_email_account.address, provided_password_hash)
-    mail = imap_client.email_login()
-    if mail is None:
-        return 3
-
+    try:
+        mail = imap_client.email_login()
+        if mail is None:
+            return 3
+    except imaplib.IMAP4.error:
+        print("Failed to login to email account.")
+    
     # List available folders
     folder_list = imap_client.list_folders()
     title = "Available folders:"
@@ -479,12 +482,12 @@ def import_from_email_account(database: Database) -> int:
                 database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
             continue
 
-        # Find the given asset in the exchange_listing table
-        exchange_listing = asset_transaction_manager.find_asset_in_exchange_listing(df_data["symbol"][0])
+        # Find the given asset info table
+        asset_info = asset_transaction_manager.find_asset_info(df_data["symbol"][0])
 
         # If the exchange listing is not found, skip the email
-        if exchange_listing is None or len(exchange_listing) == 0:
-            logging.info(f"Exchange listing not found for symbol: {df_data['symbol']}")
+        if asset_info is None or len(asset_info) == 0:
+            logging.info(f"Asset listing not found for symbol: {df_data['symbol']}")
             
             # Save the UID of the last processed email to a file
             last_uid_cache = num.decode("utf-8")
@@ -495,13 +498,13 @@ def import_from_email_account(database: Database) -> int:
             continue
             
         # If there are multiple exchange listings with the same symbol, prompt the user to select the correct one
-        if len(exchange_listing) > 1:
+        if len(asset_info) > 1:
             matches = 0
-            for i, exchange in enumerate(exchange_listing):
-                if exchange[2] == database.query_executor.get_currency_id_by_currency_iso_code(df_data["currency"][0]):
+            for i, asset in enumerate(asset_info):
+                if asset[2] == database.query_executor.get_currency_id_by_currency_iso_code(df_data["currency"][0]):
                     matches += 1
-                if i == len(exchange_listing) - 1 and matches == 1:
-                    exchange_listing = exchange
+                if i == len(asset_info) - 1 and matches == 1:
+                    asset_info = asset
             if matches != 1:
                 print(f"Multiple exchange listings found for symbol: {df_data['symbol']}")
                 # Print df_data exctracted from the email
@@ -509,12 +512,12 @@ def import_from_email_account(database: Database) -> int:
                 print(df_data)
                 # Print the exchange listings info
                 print("Please select the correct exchange listing:")
-                for i, exchange in enumerate(exchange_listing):
-                    print(f"{i + 1}: {exchange}")
+                for i, asset in enumerate(asset_info):
+                    print(f"{i + 1}: {asset}")
                 selection = int(input("Enter the number of the correct exchange listing: "))
-                exchange_listing = exchange_listing[selection - 1]
-        elif len(exchange_listing) == 1:
-            exchange_listing = exchange_listing[0]
+                asset_info = asset_info[selection - 1]
+        elif len(asset_info) == 1:
+            asset_info = asset_info[0]
 
         # Save the UID of the last processed email to a file
         last_uid_cache = num.decode("utf-8")

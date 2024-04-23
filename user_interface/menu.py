@@ -569,8 +569,25 @@ class ViewMarketData(Menu):
     def __init__(self, dashboard: Dashboard) -> None:
         super().__init__(dashboard)
         self.title = "VIEW MARKET DATA"
-        self.previous_menu = ManageMarketData(dashboard)
-        self.options = {} # TODO - Add dynamic list of scripts to choose from
+        self.previous_menu = PortfolioManager(dashboard)
+        # Add menu options
+        self.add_option(verb="View", subject="Macro Data")
+        self.add_option(verb="View", subject="Default Market Data")
+        self.add_option(verb="View", subject="Custom Market Data")
+        # Format option 0
+        self.format_return_to_previous_menu_option()
+        self.menu_mapping = {
+            1: PortfolioManager, # TODO - add macro data menu
+            2: PortfolioManager, # TODO - add default market data menu
+            3: PortfolioManager, # TODO - add custom market data menu
+            0: PortfolioManager
+        }
+        self.menu_logic = {
+            1: self.dashboard.previous_menu,
+            2: self.dashboard.previous_menu,
+            3: self.dashboard.previous_menu,
+            0: self.dashboard.previous_menu
+        }
 
 
 # ManageMarketData Menu class for managing the manage market data menu

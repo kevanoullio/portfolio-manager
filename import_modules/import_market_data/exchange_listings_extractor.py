@@ -119,7 +119,11 @@ class ExchangeListingsExtractor:
         if self._df_exchange_listings_info is None:
             raise ValueError("DataFrame must be initialized before filtering.")
         # Only keep the desired columns if specified
-        self._df_exchange_listings_info = self._df_exchange_listings_info[desired_columns]
+        try:
+            self._df_exchange_listings_info = self._df_exchange_listings_info[desired_columns]
+        except KeyError as err:
+            print(f"KeyError: {err}")
+
 
     def _rename_dataframe_columns(self, columns_to_be_renamed: list[str], new_column_names: list[str]) -> None:
         if self._df_exchange_listings_info is None:
@@ -303,8 +307,8 @@ class ExchangeListingsExtractor:
         self._cleanup_nasdaq_trader_exchange_listings()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
-        print(f"{exchange_name} listings initialized successfully")
-        logging.info(f"{exchange_name} listings initialized successfully")
+        print(f"{exchange_name} listings information successfully collected")
+        logging.info(f"{exchange_name} listings information successfully collected")
 
 
     def _extract_cboe_canada_exchange_listings(self, exchange_acronym: str, exchange_filter: str) -> None:

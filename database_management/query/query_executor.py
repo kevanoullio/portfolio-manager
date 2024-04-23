@@ -859,6 +859,19 @@ class QueryExecutor:
         else:
             return None
     
+    def get_currency_iso_code_by_currency_id(self, currency_id: int) -> str | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_currency_iso_code_by_currency_id_query = f"{query_type} iso_code FROM currency WHERE id = ?"
+        params = (currency_id,)
+        # Execute the query
+        result = self.execute_query(get_currency_iso_code_by_currency_id_query, params)
+        # Check whether the result is None (None means the currency doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
+    
     def get_security_name_by_exchange_id_and_symbol(self, exchange_id: int, asset_symbol: str) -> str | None:
         # Define the query parameters
         query_type = "SELECT"
@@ -873,6 +886,14 @@ class QueryExecutor:
             return None
     
     def insert_asset_info_with_ids(self, asset_info_with_ids: AssetInfoWithIDs) -> None:
+        # Check if a row with the same exchange_id and symbol already exists
+        sql_query = "SELECT * FROM asset_info WHERE exchange_id = ? AND symbol = ?"
+        result = self.execute_query(sql_query, (asset_info_with_ids.exchange_id, asset_info_with_ids.symbol))
+        if result:
+            print(f"A row with exchange_id {asset_info_with_ids.exchange_id} and symbol {asset_info_with_ids.symbol} already exists in the asset_info table.")
+            logging.info(f"A row with exchange_id {asset_info_with_ids.exchange_id} and symbol {asset_info_with_ids.symbol} already exists in the asset_info table.")
+            return None
+        
         # Define the query parameters
         query_type = "INSERT"
         insert_asset_info_query = f"{query_type} INTO asset_info (asset_class_id, asset_subclass_id, " \
@@ -880,13 +901,14 @@ class QueryExecutor:
             f"exchange_id, symbol, security_name, business_summary, website, logo_url) "\
             f"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         # Define the query parameters
-        asset_info = asset_info_with_ids
-        params = (asset_info.asset_class_id, asset_info.asset_subclass_id, asset_info.sector_id,
-            asset_info.industry_id, asset_info.country_id, asset_info.city_id, asset_info.financial_currency_id,
-            asset_info.exchange_currency_id, asset_info.exchange_id, asset_info.symbol, asset_info.security_name,
-            asset_info.business_summary, asset_info.website, asset_info.logo_url)
+        params = (asset_info_with_ids.asset_class_id, asset_info_with_ids.asset_subclass_id, asset_info_with_ids.sector_id,
+            asset_info_with_ids.industry_id, asset_info_with_ids.country_id, asset_info_with_ids.city_id, asset_info_with_ids.financial_currency_id,
+            asset_info_with_ids.exchange_currency_id, asset_info_with_ids.exchange_id, asset_info_with_ids.symbol, asset_info_with_ids.security_name,
+            asset_info_with_ids.business_summary, asset_info_with_ids.website, asset_info_with_ids.logo_url)
         # Execute the query
         self.execute_query(insert_asset_info_query, params)
+        print(f"{asset_info_with_ids.symbol} successfully inserted into database for exchange_id {asset_info_with_ids.exchange_id}.")
+        logging.info(f"{asset_info_with_ids.symbol} successfully inserted into database for exchange_id {asset_info_with_ids.exchange_id}.")
 
 
 

@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS email (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES user (id),
     email_usage_id INTEGER NOT NULL REFERENCES email_usage (id),
-    [address] VARCHAR(255) NOT NULL,
+    [address] VARCHAR(255) NOT NULL UNIQUE,
     password_hash BLOB
 );
 
