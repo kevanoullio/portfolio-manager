@@ -47,34 +47,40 @@ class YahooFinanceDataExtractor:
                 return ticker.info
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred for symbol {asset_symbol}: {err}")
-    
-    def extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:
-        df_asset_info = self._get_asset_info_from_yfinance(asset_symbol)
+
+    def _store_raw_yfinance_data(self) -> None:
+        if self._asset_symbol is None:
+            logging.error("Asset symbol is None.")
+            return None
         
-        # Store the asset symbol
-        self._asset_symbol = asset_symbol
+        # Get the raw yahoo finance data
+        df_asset_info = self._get_asset_info_from_yfinance(self._asset_symbol)
 
         # Store the desired raw yahoo finance data
         if df_asset_info is None:
             logging.error(f"Could not find any asset info for {self._asset_symbol} on Yahoo Finance.")
             return None
-        else:
-            self._yfinance_asset_info = YFinanceAssetInfo(
-                asset_class_name=str(df_asset_info.get("quoteType")),
-                sector_name=str(df_asset_info.get("sector")),
-                industry_name=str(df_asset_info.get("industry")),
-                country_name=str(df_asset_info.get("country")),
-                city_name=str(df_asset_info.get("city")),
-                financial_currency_iso_code=str(df_asset_info.get("financialCurrency")),
-                company_name=str(df_asset_info.get("shortName")),
-                business_summary=str(df_asset_info.get("longBusinessSummary")),
-                website=str(df_asset_info.get("website")),
-                logo_url=str(df_asset_info.get("logo_url"))
-            )
+        self._yfinance_asset_info = YFinanceAssetInfo(
+            asset_class_name=str(df_asset_info.get("quoteType")),
+            sector_name=str(df_asset_info.get("sector")),
+            industry_name=str(df_asset_info.get("industry")),
+            country_name=str(df_asset_info.get("country")),
+            city_name=str(df_asset_info.get("city")),
+            financial_currency_iso_code=str(df_asset_info.get("financialCurrency")),
+            company_name=str(df_asset_info.get("shortName")),
+            business_summary=str(df_asset_info.get("longBusinessSummary")),
+            website=str(df_asset_info.get("website")),
+            logo_url=str(df_asset_info.get("logo_url"))
+        )
+
+    def extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:        
+        # Store the asset symbol
+        self._asset_symbol = asset_symbol
+
+        # Store the desired raw yahoo finance data
+        self._store_raw_yfinance_data()
 
     def extract_asset_info_from_yfinance_website(self, asset_symbol: str, exchange_in_url: str) -> None:
-        df_asset_info = self._get_asset_info_from_yfinance(asset_symbol)
-        
         # Store the asset symbol
         self._asset_symbol = asset_symbol
 
@@ -89,18 +95,7 @@ class YahooFinanceDataExtractor:
         logging.info(f"text_content: {text_content}")
         
         # Store the desired raw yahoo finance data
-        self._yfinance_asset_info = YFinanceAssetInfo(
-            asset_class_name=str(df_asset_info.get("quoteType")),
-            sector_name=str(df_asset_info.get("sector")),
-            industry_name=str(df_asset_info.get("industry")),
-            country_name=str(df_asset_info.get("country")),
-            city_name=str(df_asset_info.get("city")),
-            financial_currency_iso_code=str(df_asset_info.get("financialCurrency")),
-            company_name=str(df_asset_info.get("shortName")),
-            business_summary=str(df_asset_info.get("longBusinessSummary")),
-            website=str(df_asset_info.get("website")),
-            logo_url=str(df_asset_info.get("logo_url"))
-        )
+        self._store_raw_yfinance_data()
 
     def get_yfinance_asset_info(self) -> YFinanceAssetInfo | None:
         return self._yfinance_asset_info
