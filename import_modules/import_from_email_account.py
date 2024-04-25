@@ -236,8 +236,6 @@ class MyHTMLParser(HTMLParser):
 class AssetTransactionManager:
     def __init__(self, database: Database):
         self._database = database
-        # self._asset_transactions: list[AssetTransaction] = []  # Initialize as an empty list
-        # self._current_transaction: AssetTransaction | None = None
 
     def get_asset_id(self, asset_symbol: str) -> int | None:
         return self._database.query_executor.get_asset_id_by_asset_symbol(asset_symbol)
@@ -267,16 +265,6 @@ class AssetTransactionManager:
         query = f"SELECT * FROM asset_info WHERE symbol = '{symbol}'"
         asset_info = self._database.query_executor.execute_query(query)
         return asset_info
-
-    # def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
-    #     # Append the new transaction to the list of asset transactions
-    #     self._asset_transactions.append(asset_transaction)
-
-    # def convert_asset_transactions_to_dataframe(self) -> pd.DataFrame:
-    #     # Convert the list of objects to a list of dictionaries
-    #     transactions_dict = [t.to_dict() for t in self._asset_transactions]
-    #     # Convert the list of dictionaries to a dataframe
-    #     return pd.DataFrame(transactions_dict)
 
     def insert_asset_transaction_to_database(self, asset_transaction: AssetTransaction) -> None:
         # Convert the asset transaction to a dictionary
