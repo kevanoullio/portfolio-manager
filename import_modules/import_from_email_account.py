@@ -540,15 +540,15 @@ def import_from_email_account(database: Database) -> int:
 
         # Check if df_data has a quantity, if not add one
         if "quantity" not in df_data or df_data["quantity"][0] == "":
-            df_data["quantity"] = 1
+            df_data["quantity"][0] = 1
         
         # Check if df_data has an avg_price, if not add one
         if "avg_price" not in df_data:
-            df_data["avg_price"] = df_data["total"][0]
+            df_data["avg_price"][0] = df_data["total"][0]
         
         # Check if df_data has a transaction_fee, if not add one as $0.00
         if "transaction_fee" not in df_data:
-            df_data["transaction_fee"] = 0.00
+            df_data["transaction_fee"][0] = 0.00
 
         logging.debug(f"Asset info found for symbol: {df_data['symbol'][0]}:\n{asset_info}")
         logging.debug(f"df_data:\n{df_data}")

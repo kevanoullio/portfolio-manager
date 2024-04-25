@@ -28,14 +28,14 @@ class DatabaseSchema:
     def _insert_default_asset_classes_and_subclasses(self) -> None:
         # Create a dataframe with the default asset classes
         asset_classes_and_subclasses = {
-            "equity": ["common stock", "preferred stock", "warrant", "unit", "other"],
-            "fund": ["ETF", "mutual fund", "investment fund", "hedge fund", "private equity", "other"],
-            "fixed income": ["government bond", "corporate bond", "municipal bond", "money market fund", "certificate of deposit", "loan", "other"],
-            "cash or cash equivalent": ["savings account", "checking account", "money market account", "cash", "cash equivalent", "other"],
-            "real estate": ["real estate investment trust", "real estate fund", "real estate property", "other"],
-            "commodity": ["industrial metal", "precious metal", "energy", "agriculture", "livestock", "other"],
-            "derivative": ["stock option", "futures contract", "other"],
-            "cryptocurrency": ["platform", "DeFi", "exchange token", "oracle", "DAO", "metaverse", "privacy", "utility", "NFT", "gaming", "payment", "stablecoin", "other"]
+            "equity": ["common_stock", "preferred_stock", "warrant", "unit", "depository_shares", "other"],
+            "fund": ["ETF", "mutual_fund", "investment_fund", "hedge_fund", "private_equity", "other"],
+            "fixed_income": ["government_bond", "corporate_bond", "municipal_bond", "government_note", "corporate_note", "municipal_note", "money_market_fund", "certificate_of_deposit", "loan", "other"],
+            "cash_or_cash_equivalent": ["savings_account", "checking_account", "money_market_account", "cash", "cash_equivalent", "other"],
+            "real_estate": ["real_estate_investment_trust", "real_estate_fund", "real_estate_property", "other"],
+            "commodity": ["industrial_metal", "precious_metal", "energy", "agriculture", "livestock", "other"],
+            "derivative": ["stock_option", "futures_contract", "other"],
+            "cryptocurrency": ["platform", "DeFi", "exchange_token", "oracle", "DAO", "metaverse", "privacy", "utility", "NFT", "gaming", "payment", "stablecoin", "other"]
         }
 
         # Convert the asset classes into a pandas dataframe

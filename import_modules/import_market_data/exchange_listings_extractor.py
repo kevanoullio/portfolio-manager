@@ -172,6 +172,9 @@ class ExchangeListingsExtractor:
         if asset_class_names is None:
             raise ValueError("Asset class names could not be retrieved from the database.")
         
+        # Remove all "_" from the asset class names
+        asset_class_names = [asset_class_name.replace("_", " ") for asset_class_name in asset_class_names]
+        
         # Create a dictionary of asset class names and their corresponding asset subclass names
         asset_classes_and_subclasses = {}
         for asset_class_name in asset_class_names:
@@ -183,6 +186,12 @@ class ExchangeListingsExtractor:
                                 "common share", "common shares", "share", "shares",
                                 "class a", "class b", "class c", "class d"]
         
+        # Synonyms for Government notes and bonds
+        government_synonyms = ["government", "govt", "gov", "federal", "provincial", "province",
+                               "united states", " usa ", "u.s.a.", " us ", "u.s.", "american", "treasury", "treasuries",
+                               "canada", "canadian", "ontario", "quebec", "alberta", "british columbia", "manitoba", "saskatchewan",
+                               "newfoundland", "labrador", "nova scotia", "new brunswick", "prince edward island", "northwest territories", "nunavut", "yukon"]
+                               
         # Create a new column "asset_class_name" and "asset_subclass_name" to store determined class/subclass
         self._df_exchange_listings_info["asset_class_name"] = None
         self._df_exchange_listings_info["asset_subclass_name"] = None
@@ -198,8 +207,50 @@ class ExchangeListingsExtractor:
             # Flag to indicate if a match is found
             found = False
             
+            # Check if any of the other asset classes are present in the security name
             for asset_class, asset_subclasses in asset_classes_and_subclasses.items():
                 logging.debug(f"asset_class: {asset_class}, asset_subclasses: {asset_subclasses}")
+
+                # Check if the security is a depository share
+                if "depository" in security_name_lower:
+                    asset_class_name = "equity"
+                    asset_subclass_name = "depository_share"
+                    found = True
+                    break
+
+                # Check if the security is a note
+                if "note" in security_name_lower:
+                    asset_class_name = "fixed_income"
+                    for synonym in government_synonyms:
+                        if synonym in security_name_lower:
+                            asset_subclass_name = "government_note"
+                            found = True
+                            break
+                    if "municipal" in security_name_lower:
+                        asset_subclass_name = "municipal_note"
+                        found = True
+                        break
+                    asset_subclass_name = "corporate_note"
+                    found = True
+                    break
+
+                # Check if the security is a bond
+                if "bond" in security_name_lower:
+                    asset_class_name = "fixed_income"
+                    for synonym in government_synonyms:
+                        if synonym in security_name_lower:
+                            asset_subclass_name = "government_bond"
+                            found = True
+                            break
+                    if "municipal" in security_name_lower:
+                        asset_subclass_name = "municipal_bond"
+                        found = True
+                        break
+                    asset_subclass_name = "corporate_bond"
+                    found = True
+                    break
+                
+                # Check if the asset is a common stock
                 if asset_subclasses[0] == common_stock_synonyms[0]:
                     for synonym in common_stock_synonyms:
                         if synonym in security_name_lower:
@@ -207,16 +258,17 @@ class ExchangeListingsExtractor:
                             asset_subclass_name = asset_subclasses[0]
                             found = True
                             break
+
                 # Check if any of the asset subclasses is present in the security name
                 for subclass in asset_subclasses:
                     if subclass in security_name_lower:
-                        logging.debug(f"subclass is in name: {subclass}")
+                        logging.debug(f"subclass '{subclass}' is in the security name.")
                         # Set the asset subclass name to the first subclass found in the security name
                         asset_class_name = asset_class
                         asset_subclass_name = subclass
                         found = True
                         break
-                    logging.debug(f"subclass is not in name: {subclass}")
+                    logging.debug(f"subclass '{subclass}' is not in the security name.")
 
                 if found:
                     break
@@ -307,8 +359,8 @@ class ExchangeListingsExtractor:
         self._cleanup_nasdaq_trader_exchange_listings()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
-        print(f"{exchange_name} listings information successfully collected")
-        logging.info(f"{exchange_name} listings information successfully collected")
+        print(f"{exchange_name} listings information successfully collected.")
+        logging.info(f"{exchange_name} listings information successfully collected.")
 
 
     def _extract_cboe_canada_exchange_listings(self, exchange_acronym: str, exchange_filter: str) -> None:
@@ -378,8 +430,8 @@ class ExchangeListingsExtractor:
         self._cleanup_cboe_canada_exchange_listings()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
-        print(f"{exchange_name} listings information successfully collected")
-        logging.info(f"{exchange_name} listings information successfully collected")
+        print(f"{exchange_name} listings information successfully collected.")
+        logging.info(f"{exchange_name} listings information successfully collected.")
 
     def get_exchange_listings_info_dataframe(self) -> pd.DataFrame | None:
         return self._df_exchange_listings_info

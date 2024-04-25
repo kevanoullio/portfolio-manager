@@ -325,15 +325,15 @@ class Dashboard:
         # Get the exchange listings
         df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
         if df_exchange_listings_info is None:
-            raise Exception("Exchange listings info not initialized")
+            raise Exception("Exchange listings info not initialized.")
         
         # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
         asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
         
         # Print and log the success message
-        print(f"{exchange_name} listings initialized successfully")
-        logging.info(f"{exchange_name} listings initialized successfully")
+        print(f"{exchange_name} listings initialized successfully.")
+        logging.info(f"{exchange_name} listings initialized successfully.")
 
 
     def initialize_nasdaq_asset_information_data(self):
@@ -410,15 +410,15 @@ class Dashboard:
         # Get the exchange listings
         df_exchange_listings_info = exchange_listings_extractor.get_exchange_listings_info_dataframe()
         if df_exchange_listings_info is None:
-            raise Exception("Exchange listings info not initialized")
+            raise Exception("Exchange listings info not initialized.")
         
         # Initialize the asset information
         asset_info_extractor = AssetInfoExtractor(self._database)
         asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
         
         # Print and log the success message
-        print(f"{exchange_name} listings initialized successfully")
-        logging.info(f"{exchange_name} listings initialized successfully")
+        print(f"{exchange_name} listings initialized successfully.")
+        logging.info(f"{exchange_name} listings initialized successfully.")
 
 
     def initialize_tsx_asset_information_data(self):

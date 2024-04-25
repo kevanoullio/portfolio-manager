@@ -32,6 +32,8 @@ class YahooFinanceDataExtractor:
             formatted_symbol = original_symbol.replace(".", "-")
         elif ".X" in original_symbol:
             formatted_symbol = original_symbol.replace(".", "-")
+        elif "$" in original_symbol:
+            formatted_symbol = original_symbol.replace("$", "-P")
         else:
             formatted_symbol = original_symbol
         return formatted_symbol
