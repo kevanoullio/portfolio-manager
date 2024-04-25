@@ -332,8 +332,8 @@ class ExchangeListingsExtractor:
 
         # Add the exchange_id column
         self._df_exchange_listings_info["exchange_id"] = self._exchange_id
-        # Convert the currency column to currency_id
-        self._df_exchange_listings_info["currency"] = self._df_exchange_listings_info["currency"].apply(self._database.query_executor.get_currency_id_by_currency_iso_code)
+        # Convert the currency column to exchange_currency_id
+        self._df_exchange_listings_info["exchange_currency_id"] = self._df_exchange_listings_info["currency"].apply(self._database.query_executor.get_currency_id_by_currency_iso_code)
         # Remove the currency column
         self._df_exchange_listings_info.drop(columns=["currency"], inplace=True)
 
@@ -355,8 +355,11 @@ class ExchangeListingsExtractor:
         # Remove the pattern from the "company_name" column using regular expressions
         self._df_exchange_listings_info["company_name"] = self._df_exchange_listings_info["company_name"].str.replace(pattern, "", regex=True)
 
+        # Replace all symbols with ".DB" at the end with ".TO"
+        self._df_exchange_listings_info["symbol"] = self._df_exchange_listings_info["symbol"].str.replace(r"\.DB$", ".TO", regex=True)
+
         # Filter the desired columns
-        desired_columns = ["asset_class", "currency", "exchange_id", "symbol", "company_name"]
+        desired_columns = ["asset_class", "exchange_currency_id", "exchange_id", "symbol", "company_name"]
         self._filter_dataframe_columns(desired_columns)
         # Rename all of the remaining columns to match the database
         self._rename_dataframe_columns(desired_columns, ["asset_class_name", "exchange_currency_id", "exchange_id", "symbol", "security_name"])
@@ -375,8 +378,8 @@ class ExchangeListingsExtractor:
         self._cleanup_cboe_canada_exchange_listings()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
-        print(f"{exchange_name} listings initialized successfully")
-        logging.info(f"{exchange_name} listings initialized successfully")
+        print(f"{exchange_name} listings information successfully collected")
+        logging.info(f"{exchange_name} listings information successfully collected")
 
     def get_exchange_listings_info_dataframe(self) -> pd.DataFrame | None:
         return self._df_exchange_listings_info

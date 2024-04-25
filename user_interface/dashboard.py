@@ -232,7 +232,7 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        current_user = self._database.session_manager.get_current_user() 
+        current_user = self._database.session_manager.get_current_user()
         # if current_user is not None:
         #     if current_user.user_id is not None:
         #         # self.database.import_file(current_user.user_id, "database", [".db"])

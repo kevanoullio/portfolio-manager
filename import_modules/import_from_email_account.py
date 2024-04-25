@@ -207,7 +207,7 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
     df_data = pd.DataFrame([data])
 
     # Rename all of the columns
-    new_column_names = {"Date (UTC)": "transaction_date", "Type": "transaction_type", "Symbol": "symbol", "Account": "asset_account", "Quantity": "quantity", "Average price": "avg_price", "Total": "total"}
+    new_column_names = {"Date (UTC)": "transaction_date", "Type": "transaction_type", "Symbol": "symbol", "Account": "investment_account", "Quantity": "quantity", "Average price": "avg_price", "Total": "total"}
     df_data = df_data.rename(columns=new_column_names)
 
     # Add all other missing columns
@@ -232,11 +232,12 @@ class MyHTMLParser(HTMLParser):
         self.text += data
 
 
-# AssetTransactionManager class for managing asset transactions
+# AssetTransactionManager class for appending asset transactions, converting to DataFrame so they can be imported into the database
 class AssetTransactionManager:
     def __init__(self, database: Database):
         self._database = database
-        self._asset_transactions: list[AssetTransaction] = []  # Initialize as an empty list
+        # self._asset_transactions: list[AssetTransaction] = []  # Initialize as an empty list
+        # self._current_transaction: AssetTransaction | None = None
 
     def get_asset_id(self, asset_symbol: str) -> int | None:
         return self._database.query_executor.get_asset_id_by_asset_symbol(asset_symbol)
@@ -248,26 +249,40 @@ class AssetTransactionManager:
         brokerage_id = self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
         if brokerage_id is None:
             self._database.query_executor.insert_brokerage(brokerage_name)
+            print(f"Brokerage {brokerage_name} not found. Inserted into the database.")
+            logging.info(f"Brokerage {brokerage_name} not found. Inserted into the database.")
         brokerage_id = self._database.query_executor.get_brokerage_id_by_brokerage_name(brokerage_name)
         return brokerage_id
 
-    def get_asset_account_id(self, asset_account_name: str) -> int | None:
-        return self._database.query_executor.get_asset_account_id_by_asset_account_name(asset_account_name)
-    
+    def get_investment_account_id_or_insert(self, brokerage_id: int, investment_account_name: str) -> int | None:
+        investment_account_id = self._database.query_executor.get_investment_account_id_by_investment_account_name(brokerage_id, investment_account_name)
+        if investment_account_id is None:
+            self._database.query_executor.insert_investment_account(brokerage_id, investment_account_name)
+            print(f"Investment account {investment_account_name.lower().replace(' ', '_')} not found. Inserted into the database.")
+            logging.info(f"Investment account {investment_account_name.lower().replace(' ', '_')} not found. Inserted into the database.")
+        investment_account_id = self._database.query_executor.get_investment_account_id_by_investment_account_name(brokerage_id, investment_account_name)
+        return investment_account_id
+
     def find_asset_info(self, symbol: str) -> list[tuple] | None:
         query = f"SELECT * FROM asset_info WHERE symbol = '{symbol}'"
         asset_info = self._database.query_executor.execute_query(query)
         return asset_info
 
-    def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
-        # Append the new transaction to the list of asset transactions
-        self._asset_transactions.append(asset_transaction)
+    # def append_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
+    #     # Append the new transaction to the list of asset transactions
+    #     self._asset_transactions.append(asset_transaction)
 
-    def convert_asset_transactions_to_dataframe(self) -> pd.DataFrame:
-        # Convert the list of objects to a list of dictionaries
-        transactions_dict = [t.to_dict() for t in self._asset_transactions]
-        # Convert the list of dictionaries to a dataframe
-        return pd.DataFrame(transactions_dict)
+    # def convert_asset_transactions_to_dataframe(self) -> pd.DataFrame:
+    #     # Convert the list of objects to a list of dictionaries
+    #     transactions_dict = [t.to_dict() for t in self._asset_transactions]
+    #     # Convert the list of dictionaries to a dataframe
+    #     return pd.DataFrame(transactions_dict)
+
+    def insert_asset_transaction_to_database(self, asset_transaction: AssetTransaction) -> None:
+        # Convert the asset transaction to a dictionary
+        asset_transaction_dict = asset_transaction.to_dict()
+        # Insert asset transaction into the database
+        self._database.query_executor.dictionary_to_existing_sql_table(asset_transaction_dict, "asset_transaction")
 
 
 # TODO - make this function a class object???
@@ -482,6 +497,11 @@ def import_from_email_account(database: Database) -> int:
                 database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
             continue
 
+        # Check the database for the account type
+        investment_account_id = asset_transaction_manager.get_investment_account_id_or_insert(brokerage_id, df_data["investment_account"][0].lower().replace(' ', '_'))
+        if investment_account_id is None:
+            raise ValueError(f"Investment account {df_data['investment_account'][0].lower().replace(' ', '_')} not found.")
+
         # Find the given asset info table
         asset_info = asset_transaction_manager.find_asset_info(df_data["symbol"][0])
 
@@ -497,13 +517,15 @@ def import_from_email_account(database: Database) -> int:
                 database.query_executor.insert_uid_by_email_address_and_folder_name(selected_import_email_account.address, folder_name, last_uid_cache)
             continue
             
-        # If there are multiple exchange listings with the same symbol, prompt the user to select the correct one
+        # If there are multiple exchange listings with the same symbol, automatically resolve, if not resolved, prompt the user to select the correct one
         if len(asset_info) > 1:
+            # Check whether the asset
             matches = 0
             for i, asset in enumerate(asset_info):
-                if asset[2] == database.query_executor.get_currency_id_by_currency_iso_code(df_data["currency"][0]):
+                # asset[8] is the exchange_currency_id
+                if asset[8] == database.query_executor.get_currency_id_by_currency_iso_code(df_data["currency"][0]):
                     matches += 1
-                if i == len(asset_info) - 1 and matches == 1:
+                if i == (len(asset_info) - 1) and matches == 1:
                     asset_info = asset
             if matches != 1:
                 print(f"Multiple exchange listings found for symbol: {df_data['symbol']}")
@@ -511,13 +533,63 @@ def import_from_email_account(database: Database) -> int:
                 print("Data extracted from the email:")
                 print(df_data)
                 # Print the exchange listings info
-                print("Please select the correct exchange listing:")
+                print("\nPlease select the correct exchange listing:")
                 for i, asset in enumerate(asset_info):
-                    print(f"{i + 1}: {asset}")
-                selection = int(input("Enter the number of the correct exchange listing: "))
+                    print(f"[{i + 1}]:\n{asset}")
+                
+                # Get the user's selection
+                selection = int(input("\nEnter the number of the correct exchange listing: "))
+                
+                # Validate the user's selection
+                while selection < 1 or selection > len(asset_info) or selection != int(selection):
+                    selection = int(input("Invalid selection. Please enter the number of the correct exchange listing: ")) 
+                
+                # Set the asset_info to the user's selection
                 asset_info = asset_info[selection - 1]
+
         elif len(asset_info) == 1:
             asset_info = asset_info[0]
+
+        # Check if df_data has a quantity, if not add one
+        if "quantity" not in df_data or df_data["quantity"][0] == "":
+            df_data["quantity"] = 1
+        
+        # Check if df_data has an avg_price, if not add one
+        if "avg_price" not in df_data:
+            df_data["avg_price"] = df_data["total"][0]
+        
+        # Check if df_data has a transaction_fee, if not add one as $0.00
+        if "transaction_fee" not in df_data:
+            df_data["transaction_fee"] = 0.00
+
+        logging.debug(f"Asset info found for symbol: {df_data['symbol'][0]}:\n{asset_info}")
+        logging.debug(f"df_data:\n{df_data}")
+
+        # Get the asset transaction info
+        transaction_type_id = asset_transaction_manager.get_transaction_type_id(df_data["transaction_type"][0].lower().replace(' ', '_'))
+        if transaction_type_id is None:
+            raise ValueError(f"Transaction type {df_data['transaction_type'][0].lower().replace(' ', '_')} not found.")
+        
+        # Get the investment account ID
+        investment_account_id = asset_transaction_manager.get_investment_account_id_or_insert(brokerage_id, df_data["investment_account"][0].lower().replace(' ', '_'))
+        if investment_account_id is None:
+            raise ValueError(f"Investment account {df_data['investment_account'][0].lower().replace(' ', '_')} not found.")
+        
+        # Append the transaction to the asset_transaction_manager
+        asset_transaction_manager.insert_asset_transaction_to_database(AssetTransaction(
+            user_id=database.session_manager.get_current_user_id(),
+            asset_id=asset_info[0], # type: ignore
+            transaction_type_id=transaction_type_id,
+            brokerage_id=brokerage_id,
+            investment_account_id=investment_account_id,
+            quantity=df_data["quantity"][0],
+            avg_price=df_data["avg_price"][0],
+            total=df_data["total"][0],
+            transaction_fee=df_data["transaction_fee"][0],
+            transaction_date=df_data["transaction_date"][0].isoformat(),
+            imported_from="email",
+            import_date=datetime.now(timezone.utc).isoformat()
+        ))
 
         # Save the UID of the last processed email to a file
         last_uid_cache = num.decode("utf-8")

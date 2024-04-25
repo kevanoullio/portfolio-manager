@@ -181,13 +181,14 @@ class AssetTransaction:
     asset_id: int
     transaction_type_id: int
     brokerage_id: int
-    asset_account_id: int
+    investment_account_id: int
     quantity: float
     avg_price: float
     total: float
+    transaction_fee: float
     transaction_date: str
     imported_from: str
-    imported_date: str
+    import_date: str
 
     def __post_init__(self) -> None:
         logging.debug(f"Creating AssetTransaction object: {self}")
@@ -195,23 +196,24 @@ class AssetTransaction:
     def __str__(self) -> str:
         return f"AssetTransaction(user_id={self.user_id}, asset_id={self.asset_id}, " \
                f"transaction_type_id={self.transaction_type_id}, brokerage_id={self.brokerage_id}, " \
-               f"asset_account_id={self.asset_account_id}, quantity={self.quantity}, avg_price={self.avg_price}, " \
-               f"total={self.total}, transaction_date={self.transaction_date}, imported_from={self.imported_from}, " \
-               f"imported_date={self.imported_date})"
+               f"investment_account_id={self.investment_account_id}, quantity={self.quantity}, avg_price={self.avg_price}, " \
+               f"total={self.total}, transaction_fee={self.transaction_fee}, transaction_date={self.transaction_date}, " \
+               f"imported_from={self.imported_from}, import_date={self.import_date})"
     
     def to_dict(self):
         return {
-            'user_id': self.user_id,
-            'asset_id': self.asset_id,
-            'transaction_type_id': self.transaction_type_id,
-            'brokerage_id': self.brokerage_id,
-            'asset_account_id': self.asset_account_id,
-            'quantity': self.quantity,
-            'avg_price': self.avg_price,
-            'total': self.total,
-            'transaction_date': self.transaction_date,
-            'imported_from': self.imported_from,
-            'imported_date': self.imported_date
+            "user_id": self.user_id,
+            "asset_id": self.asset_id,
+            "transaction_type_id": self.transaction_type_id,
+            "brokerage_id": self.brokerage_id,
+            "investment_account_id": self.investment_account_id,
+            "quantity": self.quantity,
+            "avg_price": self.avg_price,
+            "total": self.total,
+            "transaction_fee": self.transaction_fee,
+            "transaction_date": self.transaction_date,
+            "imported_from": self.imported_from,
+            "import_date": self.import_date
         }
 
 

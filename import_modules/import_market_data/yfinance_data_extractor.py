@@ -41,12 +41,16 @@ class YahooFinanceDataExtractor:
             ticker = yf.Ticker(self._format_symbol_for_yfinance(asset_symbol))
             if ticker.info is None:
                 logging.error(f"Asset symbol {asset_symbol} not found on Yahoo Finance.")
-                return None
+                raise ValueError(f"Asset symbol {asset_symbol} not found on Yahoo Finance.")
             else:
                 logging.debug(f"df_asset_info: {ticker.info}")
                 return ticker.info
         except requests.exceptions.HTTPError as err:
             print(f"HTTP error occurred for symbol {asset_symbol}: {err}")
+            return None
+        except ValueError as err:
+            print(f"Value error occurred for symbol {asset_symbol}: {err}")
+            return None
 
     def _store_raw_yfinance_data(self) -> None:
         if self._asset_symbol is None:

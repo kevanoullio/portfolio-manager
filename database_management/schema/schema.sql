@@ -209,14 +209,16 @@ CREATE TABLE IF NOT EXISTS transaction_type (
 );
 
 -- Insert default transaction types
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('market buy');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('market sell');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('limit buy');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('limit sell');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop buy');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop sell');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop limit buy');
-INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop limit sell');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('market_buy');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('market_sell');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('limit_buy');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('limit_sell');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop_buy');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop_sell');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop_limit_buy');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('stop_limit_sell');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('fractional_buy');
+INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('fractional_sell');
 INSERT OR IGNORE INTO transaction_type ([name]) VALUES ('dividend');
 
 -- Create table for brokerage data
@@ -227,9 +229,10 @@ CREATE TABLE IF NOT EXISTS brokerage (
 );
 
 -- Create table for asset account data
-CREATE TABLE IF NOT EXISTS asset_account (
+CREATE TABLE IF NOT EXISTS investment_account (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES user (id),
+    brokerage_id INTEGER NOT NULL REFERENCES brokerage (id),
     [name] VARCHAR(255) NOT NULL UNIQUE
 );
 
@@ -240,10 +243,11 @@ CREATE TABLE IF NOT EXISTS asset_transaction (
     asset_id INTEGER NOT NULL REFERENCES asset_info (id),
     transaction_type_id INTEGER NOT NULL REFERENCES transaction_type (id),
     brokerage_id INTEGER NOT NULL REFERENCES brokerage (id),
-    asset_account_id VARCHAR(255) NOT NULL REFERENCES asset_account (id),
+    investment_account_id VARCHAR(255) NOT NULL REFERENCES investment_account (id),
     quantity DECIMAL (10, 2) NOT NULL,
     avg_price DECIMAL(10, 2) NOT NULL,
     total DECIMAL(10, 2) NOT NULL,
+    transaction_fee DECIMAL(10, 2) NOT NULL,
     transaction_date DATE NOT NULL,
     imported_from VARCHAR(255),
     import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -9,6 +9,7 @@ import pandas as pd
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
 from database_management.connection import DatabaseConnection, DatabaseConnectionError
+from database_management.schema.asset_dataclass import AssetTransaction
 from session_management.session_manager import SessionManager
 from database_management.schema.asset_dataclass import AssetInfoWithIDs
 
@@ -48,7 +49,7 @@ class QueryExecutor:
                 # Construct the INSERT statement
                 columns = ", ".join(dictionary.keys())
                 placeholders = ", ".join("?" * len(dictionary))
-                query = f"INSERT INTO mytable ({columns}) VALUES ({placeholders})"
+                query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
                 # Execute the query
                 self.execute_query(query, tuple(dictionary.values()))
                 logging.info(f"Dictionary inserted into the '{table_name}' table.")
@@ -1029,19 +1030,49 @@ class QueryExecutor:
             # Execute the query
             self.execute_query(insert_brokerage_query, params)
 
-    def get_asset_account_id_by_asset_account_name(self, asset_account_name: str) -> int | None:
+    def insert_investment_account(self, brokerage_id: int, investment_account_name: str) -> None:
+        # Define the query parameters
+        query_type = "INSERT"
+        insert_investment_account_query = f"{query_type} INTO investment_account (user_id, brokerage_id, name) VALUES (?, ?, ?)"
+        current_user_id = self._session_manager.get_current_user_id()
+        params = (current_user_id, brokerage_id, investment_account_name)
+        # Execute the query
+        self.execute_query(insert_investment_account_query, params)
+
+    def get_investment_account_id_by_investment_account_name(self, brokerage_id: int, investment_account_name: str) -> int | None:
         # Define the query parameters
         query_type = "SELECT"
-        get_asset_account_id_by_asset_account_name_query = f"{query_type} id FROM asset_account WHERE name = ?"
-        params = (asset_account_name,)
+        get_investment_account_id_by_investment_account_name_query = f"{query_type} id FROM investment_account WHERE user_id = ? AND brokerage_id = ? AND name = ?"
+        current_user_id = self._session_manager.get_current_user_id()
+        params = (current_user_id, brokerage_id, investment_account_name,)
         # Execute the query
-        result = self.execute_query(get_asset_account_id_by_asset_account_name_query, params)
-        # Check whether the result is None (None means the asset account doesn't exist)
+        result = self.execute_query(get_investment_account_id_by_investment_account_name_query, params)
+        # Check whether the result is None (None means the investment account doesn't exist)
         if result is not None and len(result) > 0:
             return result[0][0]
         else:
             return None
 
+    # def insert_asset_transaction(self, asset_transaction: AssetTransaction) -> None:
+    #     # Define the query parameters
+    #     query_type = "INSERT"
+    #     insert_asset_transaction_query = f"{query_type} INTO asset_transaction (user_id, asset_id, transaction_type_id, " \
+    #         f"brokerage_id, investment_account_id, quantity, avg_price, total, transaction_fee, transaction_date, " \
+    #         f"imported_from, import_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    #     current_user_id = self._session_manager.get_current_user_id()
+    #     params = (current_user_id, asset_transaction.asset_id, asset_transaction.transaction_type_id,
+    #         asset_transaction.brokerage_id, asset_transaction.investment_account_id, asset_transaction.quantity,
+    #         asset_transaction.avg_price, asset_transaction.total, asset_transaction.transaction_fee,
+    #         asset_transaction.transaction_date, asset_transaction.imported_from, asset_transaction.import_date)
+    #     # Execute the query
+    #     result = self.execute_query(insert_asset_transaction_query, params)
+    #     # Check whether the result is None (None means the asset transaction wasn't inserted)
+    #     if result is not None and len(result) > 0:
+    #         print(f"Asset transaction for {asset_transaction.asset_id} successfully inserted into database.")
+    #         logging.info(f"Asset transaction for {asset_transaction.asset_id} successfully inserted into database.")
+    #     else:
+    #         print(f"Asset transaction for {asset_transaction.asset_id} was not inserted into database.")
+    #         logging.info(f"Asset transaction for {asset_transaction.asset_id} was not inserted into database.")
 
 
 

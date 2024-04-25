@@ -56,6 +56,7 @@ class AssetInfoExtractor:
     def _cleanup_asset_info_with_names(self) -> None:
         if self._asset_info_with_names is None:
             logging.error(f"asset_info_with_names needs to be extracted before it can be cleaned up.")
+            return None
         else:
             # Format the asset class name
             asset_class_name = self._asset_info_with_names.asset_class_name
@@ -95,11 +96,6 @@ class AssetInfoExtractor:
                 if exchange_id is None:
                     logging.error(f"Could not find exchange_id for {self._exchange_acronym} in the database.")
                     return None
-                # # Get the company_name from the database
-                # company_name = self._database.query_executor.get_company_name_by_exchange_id_and_symbol(exchange_id, self._asset_info_with_names.symbol)
-                # if company_name is None:
-                #     logging.error(f"Could not find company_name for {self._asset_info_with_names.symbol} on {self._exchange_acronym} in the database.")
-                #     return None
             
             if self._yfinance_asset_info is None:
                 logging.error(f"yfinance_asset_info needs to be extracted before it can be cleaned up.")
@@ -157,15 +153,6 @@ class AssetInfoExtractor:
                     logging.error(f"Could not find currency_iso_code for {self._asset_info_with_names.exchange_currency_id} in the database.")
                     return None
                 self._asset_info_with_names.financial_currency_iso_code = currency_iso_code
-            
-            # exchange_currency_id = self._asset_info_with_names.exchange_currency_id
-            # security_name = self._asset_info_with_names.security_name.title() # or "longName"
-            # business_summary = self._asset_info_with_names.business_summary
-            # website = self._asset_info_with_names.website
-            # logo_url = self._asset_info_with_names.logo_url
-        # else:
-        #     return None
-
 
     def _merge_exchange_listings_info_and_yfinance_asset_info(self) -> None:
         # Check if either asset info datatypes are None
