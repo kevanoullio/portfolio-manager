@@ -178,9 +178,12 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
     elif data.get("Amount"):
         split_value = data["Amount"].split("$")
         data["currency"] = split_value[0] + "$"
-        data["Amount"] = float(split_value[1].replace(",", ""))
+        data["Average price"] = float(split_value[1].replace(",", ""))
         formatted_total = "{:,.2f}".format(float(split_value[1].replace(",", "")))
         data["Total"] = formatted_total
+        # Check if "Quantity" exists, if not assign 1
+        if data["Quantity"] == "" or data["Quantity"] == 0:
+            data["Quantity"] = 1
     else:
         raise ValueError("Unknown email type.")
 
@@ -289,8 +292,6 @@ def import_from_email_account(database: Database) -> int:
     # TODO - Replace with AvailableEmailAccount class???
     # Print the available email accounts
     title = "AVAILABLE EMAIL ACCOUNTS:"
-    print(f"\n{title}")
-    print("-" * len(title))
     for i, email_account in enumerate(import_email_accounts, start=1):
         print(f"{i}: {email_account.address}")
 
@@ -467,14 +468,12 @@ def import_from_email_account(database: Database) -> int:
             data = {"Date (UTC)" : date, "Account" : "", "Type" : "", "Symbol" : "", "Quantity" : "", "Average price" : ""}
             # Extract the data from the email body
             df_data = extract_from_email(data, body)
-
         # Check if the email is a dividend email
         elif ("You" and "a dividend") in subject.lower():
             # Specify the desired order of the keys and initialize their values
-            data = {"Date (UTC)" : date, "Account" : "", "Type" : "dividend", "Symbol" : "", "Amount" : ""}
+            data = {"Date (UTC)" : date, "Account" : "", "Type" : "dividend", "Symbol" : "", "Quantity" : "", "Average price" : "", "Amount" : ""}
             # Extract the data from the email body
             df_data = extract_from_email(data, body)
-
         else:
             logging.info(f"Email subject did not match any of the expected subjects: {subject}")
             # Save the UID of the last processed email to a file
@@ -539,16 +538,12 @@ def import_from_email_account(database: Database) -> int:
             asset_info = asset_info[0]
 
         # Check if df_data has a quantity, if not add one
-        if "quantity" not in df_data or df_data["quantity"][0] == "":
-            df_data["quantity"][0] = 1
-        
-        # Check if df_data has an avg_price, if not add one
-        if "avg_price" not in df_data:
-            df_data["avg_price"][0] = df_data["total"][0]
+        if df_data["quantity"].iloc[0] == "":
+            df_data["quantity"] = 1
         
         # Check if df_data has a transaction_fee, if not add one as $0.00
         if "transaction_fee" not in df_data:
-            df_data["transaction_fee"][0] = 0.00
+            df_data["transaction_fee"] = [0.00]
 
         logging.debug(f"Asset info found for symbol: {df_data['symbol'][0]}:\n{asset_info}")
         logging.debug(f"df_data:\n{df_data}")
@@ -566,15 +561,15 @@ def import_from_email_account(database: Database) -> int:
         # Append the transaction to the asset_transaction_manager
         asset_transaction_manager.insert_asset_transaction_to_database(AssetTransaction(
             user_id=database.session_manager.get_current_user_id(),
-            asset_id=asset_info[0], # type: ignore
+            asset_id=asset_info[0], # type: ignore | asset_info[0] is the asset_id
             transaction_type_id=transaction_type_id,
             brokerage_id=brokerage_id,
             investment_account_id=investment_account_id,
-            quantity=df_data["quantity"][0],
-            avg_price=df_data["avg_price"][0],
-            total=df_data["total"][0],
-            transaction_fee=df_data["transaction_fee"][0],
-            transaction_date=df_data["transaction_date"][0].isoformat(),
+            quantity=df_data["quantity"].iloc[0],
+            avg_price=df_data["avg_price"].iloc[0],
+            total=df_data["total"].iloc[0],
+            transaction_fee=df_data["transaction_fee"].iloc[0],
+            transaction_date=df_data["transaction_date"].iloc[0].isoformat(),
             imported_from="email",
             import_date=datetime.now(timezone.utc).isoformat()
         ))

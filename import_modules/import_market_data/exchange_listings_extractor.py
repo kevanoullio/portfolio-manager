@@ -249,8 +249,15 @@ class ExchangeListingsExtractor:
                     asset_subclass_name = "corporate_bond"
                     found = True
                     break
+
+                # Check if the security is an etf
+                if " etf" in security_name_lower:
+                    asset_class_name = "fund"
+                    asset_subclass_name = "etf"
+                    found = True
+                    break
                 
-                # Check if the asset is a common stock
+                # Check if the security is a common stock
                 if asset_subclasses[0] == common_stock_synonyms[0]:
                     for synonym in common_stock_synonyms:
                         if synonym in security_name_lower:

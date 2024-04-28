@@ -136,16 +136,6 @@ CREATE TABLE IF NOT EXISTS exchange (
     acronym VARCHAR(255) NOT NULL UNIQUE
 );
 
--- -- Create table for exchange listing data
--- CREATE TABLE IF NOT EXISTS exchange_listing (
---     id INTEGER PRIMARY KEY AUTOINCREMENT,
---     exchange_id INTEGER NOT NULL REFERENCES exchange (id),
---     exchange_currency_id INTEGER NOT NULL REFERENCES currency (id),
---     symbol VARCHAR(255) NOT NULL,
---     company_name VARCHAR(255) NOT NULL,
---     UNIQUE (exchange_id, symbol)
--- );
-
 -- Create table for asset data
 CREATE TABLE IF NOT EXISTS asset_info (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

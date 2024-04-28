@@ -642,7 +642,17 @@ class Dashboard:
 
 
     def view_user_details(self):
-        print("View User Details logic goes here...")
+        # Print the username
+        user = self._database.session_manager.get_current_user()
+        if user is not None:
+            print(user)
+        else:
+            print("No user details found.")
+        # Print the user email accounts
+        email_accounts = self._database.query_executor.get_all_current_user_email_accounts()
+        if email_accounts is not None:
+            for email_account in email_accounts:
+                print(email_account)
     
 
     def manage_email_accounts(self):
@@ -665,9 +675,6 @@ class Dashboard:
         email_accounts = self._database.query_executor.get_all_current_user_email_accounts()
         logging.debug(f"Current email accounts: {email_accounts}")
         if email_accounts is not None:
-            title = "CURRENT EMAIL ACCOUNTS"
-            print(f"\n{title}")
-            print("-" * len(title))
             for email_account in email_accounts:
                 print(email_account)
         else:
@@ -680,7 +687,8 @@ class Dashboard:
         print(f"\n{title}")
         print("-" * len(title))
         # Run through the prompts to get the email address and password
-        self._email_account_operation.add_email_account()    
+        self._email_account_operation.add_email_account()
+
 
     def remove_email_account(self):
         print("Remove Email Account logic goes here...")

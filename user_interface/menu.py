@@ -1456,7 +1456,7 @@ class AccountSettings(Menu):
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: ViewUserDetails,
+            1: AccountSettings,
             2: ManageEmailAccounts,
             3: ChangeAccountUsername,
             4: ChangeAccountPassword,
@@ -1471,17 +1471,6 @@ class AccountSettings(Menu):
             5: self.dashboard.delete_account,
             0: self.dashboard.previous_menu
         }
-
-
-# ViewUserDetails Menu class for managing the view user details menu
-class ViewUserDetails(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "VIEW USER DETAILS"
-        self.previous_menu = AccountSettings(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of user details to choose from
-        # TODO - finish this menu
 
 
 # ViewUserDetails Menu class for managing the user's email accounts
@@ -1508,25 +1497,6 @@ class ManageEmailAccounts(Menu):
             3: self.dashboard.remove_email_account,
             0: self.dashboard.previous_menu
         }
-
-
-# # CurrentEmailAccounts Menu class for managing the user's current email accounts
-# class ViewCurrentEmailAccounts(Menu):
-#     def __init__(self, dashboard: Dashboard) -> None:
-#         super().__init__(dashboard)
-#         self.title = "CURRENT EMAIL ACCOUNTS"
-#         self.previous_menu = ManageEmailAccounts(dashboard)
-#         # Add menu options
-#         self.options = {
-#         } # TODO - Populate user's current email accounts
-#         # TODO - finish this menu
-#         self.format_return_to_previous_menu_option()
-#         self.menu_mapping = {
-#             0: ManageEmailAccounts
-#         }
-#         self.menu_logic = {
-#             0: self.dashboard.previous_menu
-#         }
 
 
 # # AddEmailAccount Menu class for managing the add email account menu
