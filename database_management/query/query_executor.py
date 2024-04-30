@@ -846,6 +846,19 @@ class QueryExecutor:
             return result[0][0]
         else:
             return None
+    
+    def get_country_id_by_exchange_id(self, exchange_id: int) -> int | None:
+        # Define the query parameters
+        query_type = "SELECT"
+        get_country_id_by_exchange_id_query = f"{query_type} country_id FROM exchange WHERE id = ?"
+        params = (exchange_id,)
+        # Execute the query
+        result = self.execute_query(get_country_id_by_exchange_id_query, params)
+        # Check whether the result is None (None means the country doesn't exist)
+        if result is not None and len(result) > 0:
+            return result[0][0]
+        else:
+            return None
         
     def get_currency_id_by_currency_iso_code(self, currency_iso_code: str) -> int | None:
         # Define the query parameters

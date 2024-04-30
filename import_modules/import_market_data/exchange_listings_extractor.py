@@ -34,6 +34,8 @@ class ExchangeListingsExtractor:
         self._web_scraper = WebScraper(user_agent=True)
         self._df_exchange_listings_info: pd.DataFrame | None = None
         self._exchange_id: int | None = None
+        self._asset_class_names: list[str] | None = None
+        self._asset_class_lookup: dict | None = None
 
     def _format_url(self, iterable_index: int | None = None) -> str:
         if self._url_iterables is None:
@@ -160,38 +162,193 @@ class ExchangeListingsExtractor:
             if exchange_id is None:
                 raise ValueError(f"Exchange acronym '{exchange_acronym}' does not exist in the database.")
         self._exchange_id = exchange_id
+    
+    # def _build_asset_class_and_subclass_lookup(self) -> None:
+    #     """
+    #     This method builds a dictionary to store asset class names, subclasses, and their synonyms.
 
-    def _add_asset_class_and_subclass_names_to_dataframe(self) -> None:
-        # Check if the exchange listings have been extracted
-        if self._df_exchange_listings_info is None:
-            raise ValueError("Exchange listings must be extracted before adding asset class and subclass names.")
+    #     Updates the internal `_asset_class_lookup` attribute.
+
+    #     `_asset_class_lookup` dict structure:
+    #         A dictionary where the key is the asset class name and the value is another dictionary.
+    #         The inner dictionary has two keys:
+    #             - 'subclasses': a list of asset subclasses for the class
+    #             - 'synonyms': a list of synonyms for both the class and subclasses (combined)
+
+    #     Raises:
+    #         ValueError: If asset class names or subclass names cannot be retrieved from the database.
+    #     """
+
+    #     # Initialize the asset class lookup dictionary
+    #     self._asset_class_lookup = {}
+
+    #     # Get all asset class names and subclasses from the database
+    #     asset_class_names = self._database.query_executor.get_all_asset_class_names()
+
+    #     if asset_class_names is None:
+    #         logging.error("Asset class names could not be retrieved from the database.")
+    #         raise ValueError("Asset class names could not be retrieved from the database.")
+
+    #     # Synonyms for equity subclasses
+    #     common_stock_synonyms = ["common stock", "common", "stock", "common share","share",
+    #                             "class a", "class b", "class c", "class d"]
+
+    #     preferred_share_synonyms = ["preferred share", "pref shs", "preference share"]
+
+    #     depository_share_synonyms = ["depository", "depository share", "depository receipt", "depository unit"] 
+
+    #     # Synonyms for fund subclasses
+    #     etf_synonyms = ["etf", "exchange traded fund"]
+
+    #     # Synonyms for fixed income subclasses
+    #     government_synonyms = ["government", "govt", "gov", "federal", "provincial", "province",
+    #                            "united states", " usa ", "u.s.a.", " us ", "u.s.", "american", "treasury", "treasuries",
+    #                            "canada", "canadian", "ontario", "quebec", "alberta", "british columbia", "manitoba", "saskatchewan",
+    #                            "newfoundland", "labrador", "nova scotia", "new brunswick", "prince edward island", "northwest territories", "nunavut", "yukon"]
         
+    #     municiple_synonyms = ["municipal", "city", "town", "county", "municipality"]
+        
+    #     corporate_synonyms = ["corporate", "company", "business", "enterprise", "corporation", "firm", "organization", "association"]
+        
+    #     bond_synonyms = ["bond", "debt"]
+
+    #     note_synonyms = ["note", "paper", "bill"]
+
+    #     # Predefined synonym dictionaries for each subclass
+    #     subclass_synonyms = {
+    #         "equity": {
+    #             "common_stock": common_stock_synonyms,
+    #             "preferred_share": preferred_share_synonyms,
+    #             "depository_share": depository_share_synonyms
+    #         },
+    #         "fund": {
+    #             "etf": etf_synonyms
+    #         },
+    #         "fixed_income": {
+    #             "government_bond": government_synonyms + bond_synonyms,
+    #             "municipal_bond": municiple_synonyms + bond_synonyms,
+    #             "corporate_bond": corporate_synonyms + bond_synonyms,
+    #             "government_note": government_synonyms + note_synonyms,
+    #             "municipal_note": municiple_synonyms + note_synonyms,
+    #             "corporate_note": corporate_synonyms + note_synonyms
+    #         },
+
+    #     }
+
+    #     for asset_class_name in asset_class_names:
+    #         asset_subclasses = self._database.query_executor.get_asset_subclass_names_by_asset_class_name(asset_class_name)
+
+    #         if asset_subclasses is None:
+    #             logging.error(f"Asset subclass names could not be retrieved for asset class '{asset_class_name}' from the database.")
+    #             raise ValueError(f"Asset subclass names could not be retrieved for asset class '{asset_class_name}' from the database.")
+
+    #         # Combine synonyms from class name, subclasses, and predefined subclass synonyms
+    #         synonyms = [asset_class_name.lower().replace('_', ' ')] + [subclass.lower().replace('_', ' ') for subclass in asset_subclasses]
+    #         for subclass in asset_subclasses:
+    #             synonyms.extend(subclass_synonyms.get(asset_class_name, {}).get(subclass, []))
+
+    #         self._asset_class_lookup[asset_class_name] = {
+    #             "subclasses": asset_subclasses,
+    #             "synonyms": synonyms
+    #         }
+
+    # def _match_asset_class_and_subclass(self, security_name):
+    #     """
+    #     This method matches a security name to an asset class and subclass.
+
+    #     Args:
+    #         security_name: The name of the security to match.
+
+    #     Returns:
+    #         The matched asset class and subclass, or (None, None) if no match is found.
+    #     """
+    #     if self._asset_class_lookup is None:
+    #         logging.error("Asset class lookup dictionary not yet built. Please call _build_asset_class_and_subclass_lookup first.")
+    #         raise ValueError("Asset class lookup dictionary not yet built. Please call _build_asset_class_and_subclass_lookup first.")
+        
+    #     for asset_class, info in self._asset_class_lookup.items():
+    #         if any(word in info["synonyms"] for word in security_name.split()):
+    #             for subclass in info["subclasses"]:
+    #                 if any(word in subclass for word in security_name.split()):
+    #                     return asset_class, subclass
+    #             return asset_class, None
+    #     return None, None
+
+
+    # def _add_asset_class_and_subclass_names_to_dataframe(self) -> None:
+    #     """
+    #     This method attempts to match security descriptions in the exchange listings DataFrame to asset classes and subclasses using the internal lookup dictionary.
+
+    #     Modifies the DataFrame in-place to add new columns "asset_class_name" and "asset_subclass_name".
+
+    #     Raises:
+    #         ValueError: If exchange listings have not been extracted or the asset class lookup dictionary is not built.
+    #     """
+
+    #     if self._df_exchange_listings_info is None:
+    #         raise ValueError("Exchange listings must be extracted before adding asset class and subclass names.")
+
+    #     if self._asset_class_lookup is None:
+    #         raise ValueError("Asset class lookup dictionary not yet built. Please call _build_asset_class_and_subclass_lookup first.")
+
+    #     # Add new columns for asset class and subclass names to the DataFrame
+    #     self._df_exchange_listings_info["asset_class_name"] = None
+    #     self._df_exchange_listings_info["asset_subclass_name"] = None
+
+    #     for index, row in self._df_exchange_listings_info.iterrows():
+    #         security_name_lower = row["security_name"].lower()
+    #         matched_class, matched_subclass = self._match_asset_class_and_subclass(security_name_lower)
+
+    #         # Update columns with matched class and subclass (or None if no match)
+    #         self._df_exchange_listings_info.at[index, "asset_class_name"] = matched_class
+    #         self._df_exchange_listings_info.at[index, "asset_subclass_name"] = matched_subclass
+
+    #         # Handle cases where no match is found (consider logging or assigning defaults)
+    #         if matched_class is None:
+    #             logging.error(f"Could not determine asset class for '{row['symbol']}'.")
+    #         if matched_subclass is None:
+    #             logging.error(f"Could not determine asset subclass for '{row['symbol']}'.")
+    
+    def _retrieve_asset_class_names(self) -> None:
         # Get all asset class names from the database
-        asset_class_names = self._database.query_executor.get_all_asset_class_names()
-        # logging.debug(f"asset_class_names:\n{asset_class_names}")
-        if asset_class_names is None:
+        self._asset_class_names = self._database.query_executor.get_all_asset_class_names()
+        logging.debug(f"asset_class_names:\n{self._asset_class_names}")
+        if self._asset_class_names is None:
             raise ValueError("Asset class names could not be retrieved from the database.")
         
         # Remove all "_" from the asset class names
-        asset_class_names = [asset_class_name.replace("_", " ") for asset_class_name in asset_class_names]
+        self._asset_class_names = [asset_class_name.replace("_", " ") for asset_class_name in self._asset_class_names]
+
+    def _add_asset_class_and_subclass_names_to_dataframe(self) -> None:
+        self._retrieve_asset_class_names()
+
+        if self._asset_class_names is None:
+            logging.debug("Asset class names could not be retrieved from the database.")
+            raise ValueError("Asset class names could not be retrieved from the database.")
         
         # Create a dictionary of asset class names and their corresponding asset subclass names
         asset_classes_and_subclasses = {}
-        for asset_class_name in asset_class_names:
+        for asset_class_name in self._asset_class_names:
             asset_classes_and_subclasses[asset_class_name] = self._database.query_executor.get_asset_subclass_names_by_asset_class_name(asset_class_name)
-        # logging.debug(f"asset_classes_and_subclasses:\n{asset_classes_and_subclasses}")
+        logging.debug(f"asset_classes_and_subclasses:\n{asset_classes_and_subclasses}")
 
         # Synonyms for Common Stock
-        common_stock_synonyms = ["common stock", "common stocks", "common", "stock", "stocks", 
-                                "common share", "common shares", "share", "shares",
+        common_stock_synonyms = ["common stock", "common", "stock", "common share","share",
                                 "class a", "class b", "class c", "class d"]
+        
+        # Synonyms for Preferred Shares
+        preferred_shares_synonyms = ["preferred share", "pref shs", "preference share"]
         
         # Synonyms for Government notes and bonds
         government_synonyms = ["government", "govt", "gov", "federal", "provincial", "province",
                                "united states", " usa ", "u.s.a.", " us ", "u.s.", "american", "treasury", "treasuries",
                                "canada", "canadian", "ontario", "quebec", "alberta", "british columbia", "manitoba", "saskatchewan",
                                "newfoundland", "labrador", "nova scotia", "new brunswick", "prince edward island", "northwest territories", "nunavut", "yukon"]
-                               
+
+        # Check if the exchange listings have been extracted
+        if self._df_exchange_listings_info is None:
+            raise ValueError("Exchange listings must be extracted before adding asset class and subclass names.")
+
         # Create a new column "asset_class_name" and "asset_subclass_name" to store determined class/subclass
         self._df_exchange_listings_info["asset_class_name"] = None
         self._df_exchange_listings_info["asset_subclass_name"] = None
@@ -217,6 +374,14 @@ class ExchangeListingsExtractor:
                     asset_subclass_name = "depository_share"
                     found = True
                     break
+
+                # Check if the security is a preferred share
+                for synonym in preferred_shares_synonyms:
+                    if synonym in security_name_lower:
+                        asset_class_name = "equity"
+                        asset_subclass_name = "preferred_share"
+                        found = True
+                        break
 
                 # Check if the security is a note
                 if "note" in security_name_lower:
@@ -258,7 +423,7 @@ class ExchangeListingsExtractor:
                     break
                 
                 # Check if the security is a common stock
-                if asset_subclasses[0] == common_stock_synonyms[0]:
+                if asset_subclasses == "common_stock":
                     for synonym in common_stock_synonyms:
                         if synonym in security_name_lower:
                             asset_class_name = asset_class
@@ -267,24 +432,29 @@ class ExchangeListingsExtractor:
                             break
 
                 # Check if any of the asset subclasses is present in the security name
-                for subclass in asset_subclasses:
-                    if subclass in security_name_lower:
-                        logging.debug(f"subclass '{subclass}' is in the security name.")
-                        # Set the asset subclass name to the first subclass found in the security name
-                        asset_class_name = asset_class
-                        asset_subclass_name = subclass
-                        found = True
-                        break
-                    logging.debug(f"subclass '{subclass}' is not in the security name.")
+                if asset_subclass_name is not None:
+                    for subclass in asset_subclasses:
+                        if subclass in security_name_lower:
+                            logging.debug(f"subclass '{subclass}' is in the security name.")
+                            # Set the asset subclass name to the first subclass found in the security name
+                            asset_class_name = asset_class
+                            asset_subclass_name = subclass
+                            found = True
+                            break
+                        logging.debug(f"subclass '{subclass}' is not in the security name.")
 
                 if found:
                     break
 
             logging.debug(f"asset_class_name: {asset_class_name}, asset_subclass_name: {asset_subclass_name}")
             
+            # If no asset class or subclass, assign a default
+            if asset_class_name is None:
+                asset_class_name = "equity"
+                logging.error(f"Could not determine asset class for '{row['symbol']}', using equity as placeholder.")
             if asset_subclass_name is None:
-                asset_subclass_name = row["symbol"]
-                logging.error(f"Could not determine asset subclass for '{row['symbol']}', using asset class as placeholder.")
+                asset_subclass_name = "common_stock"
+                logging.error(f"Could not determine asset subclass for '{row['symbol']}', using common stock as placeholder.")
             
             # Update the 'asset_subclass' column with the determined asset class and subclass names
             self._df_exchange_listings_info.at[index, "asset_class_name"] = asset_class_name
@@ -364,6 +534,9 @@ class ExchangeListingsExtractor:
         self._add_static_columns_to_nasdaq_trader_dataframe()
         # Cleanup the exchange listings
         self._cleanup_nasdaq_trader_exchange_listings()
+        # # Build the asset class and subclass lookup dictionary
+        # if self._asset_class_lookup is None:
+        #     self._build_asset_class_and_subclass_lookup()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
         print(f"{exchange_name} listings information successfully collected.")
@@ -435,6 +608,9 @@ class ExchangeListingsExtractor:
         self._extract_cboe_canada_exchange_listings(exchange_acronym, exchange_filter)
         # Cleanup the exchange listings
         self._cleanup_cboe_canada_exchange_listings()
+        # # Build the asset class and subclass lookup dictionary
+        # if self._asset_class_lookup is None:
+        #     self._build_asset_class_and_subclass_lookup()
         # Add the asset class and subclass name to the DataFrame
         self._add_asset_class_and_subclass_names_to_dataframe()
         print(f"{exchange_name} listings information successfully collected.")

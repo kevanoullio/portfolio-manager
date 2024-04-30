@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS asset_price_history (
     UNIQUE (asset_id, [date])
 );
 
--- Create table for asset dividend history data
+-- Create table for asset dividend history data (not dividends earned by the user)
 CREATE TABLE IF NOT EXISTS dividend_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     asset_id INTEGER NOT NULL REFERENCES asset_info (id),

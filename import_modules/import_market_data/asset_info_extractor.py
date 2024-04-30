@@ -42,10 +42,11 @@ class AssetInfoExtractor:
         if self._exchange_acronym is None:
             raise ValueError("Exchange Acronym must be extracted before Asset Info With Names.")
         # Extract the asset info with names
-        if self._exchange_acronym == "Cboe CA":
-            self._yfinance_data_extractor.extract_asset_info_from_yfinance_website("NE", asset_symbol)
-        else:
-            self._yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
+        # if self._exchange_acronym == "Cboe CA":
+        #     self._yfinance_data_extractor.extract_asset_info_from_yfinance_website("NE", asset_symbol)
+        # else:
+        #     self._yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
+        self._yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
         # Get the asset info with names
         yf_asset_info = self._yfinance_data_extractor.get_yfinance_asset_info()
         if yf_asset_info is None:
@@ -120,7 +121,7 @@ class AssetInfoExtractor:
                         break
                 if asset_subclass_name is None:
                     asset_subclass_name = asset_class_name
-                    logging.error(f"Could not find asset subclass for {self._yfinance_asset_info.company_name} on Yahoo Finance, using asset class as placeholder.")
+                    logging.error(f"Could not find asset subclass for {self._yfinance_asset_info.company_name} on Yahoo Finance, using asset class name as placeholder.")
             
             # self._asset_info_with_names.sector_name.title()
             # self._asset_info_with_names.industry_name.title()
@@ -181,29 +182,61 @@ class AssetInfoExtractor:
         logging.debug(f"Filtered asset_info_with_names: {self._asset_info_with_names}")
 
     def _get_asset_class_id(self, asset_class_name: str) -> int | None:
-        return self._database.query_executor.get_asset_class_id_by_asset_class_name(asset_class_name)
-    
+        asset_id = self._database.query_executor.get_asset_class_id_by_asset_class_name(asset_class_name)
+        if asset_id is None:
+            asset_id = self._database.query_executor.get_asset_class_id_by_asset_class_name("unknown")
+        return asset_id
+
     def _get_asset_subclass_id(self, asset_subclass_name: str) -> int | None:
-        return self._database.query_executor.get_asset_subclass_id_by_asset_subclass_name(asset_subclass_name)
+        subclass_id = self._database.query_executor.get_asset_subclass_id_by_asset_subclass_name(asset_subclass_name)
+        if subclass_id is None:
+            subclass_id = self._database.query_executor.get_asset_subclass_id_by_asset_subclass_name("unknown")
+        return subclass_id
     
     def _get_sector_id_or_insert(self, asset_class_id: int, sector_name: str) -> int | None:
+        # Check if sector_name is "None"
+        if sector_name == "None":
+            sector_name = "unknown"
+            sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector_name)
+            # Insert "unknown" sector if it doesn't exist
+            if sector_id is None:
+                self._database.query_executor.insert_sector(asset_class_id, sector_name)
+        # Get sector_id
         sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector_name)
+        # If sector is still None, then it's a new sector, insert it
         if sector_id is None:
             self._database.query_executor.insert_sector(asset_class_id, sector_name)
         sector_id = self._database.query_executor.get_sector_id_by_sector_name(sector_name)
         return sector_id
     
     def _get_industry_id_or_insert(self, sector_id: int, industry_name: str) -> int | None:
+        # Check if industry_name is "None"
+        if industry_name == "None":
+            industry_name = "unknown"
+            industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry_name)
+            # Insert "unknown" industry if it doesn't exist
+            if industry_id is None:
+                self._database.query_executor.insert_industry(sector_id, industry_name)
+        # Get industry_id
         industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry_name)
+        # If industry is still None, then it's a new industry, insert it
         if industry_id is None:
             self._database.query_executor.insert_industry(sector_id, industry_name)
         industry_id = self._database.query_executor.get_industry_id_by_industry_name(industry_name)
         return industry_id
     
     def _get_country_id(self, country_name: str) -> int | None:
-        return self._database.query_executor.get_country_id_by_country_name(country_name)
+        if country_name == "None":
+            country_name = "unknown"
+        country_id = self._database.query_executor.get_country_id_by_country_name(country_name)
+        if country_id is None:
+            logging.error(f"Could not find country_id for {country_name} in the database.")
+            raise ValueError(f"Could not find country_id for {country_name} in the database.")
+        return country_id
     
     def _get_city_id_or_insert(self, city_name: str, country_name: str) -> int | None:
+        if city_name == "None":
+            city_name = "unknown"
         city_id = self._database.query_executor.get_city_id_by_city_name(city_name)
         if city_id is None:
             self._database.query_executor.insert_city(city_name, country_name)
@@ -211,73 +244,101 @@ class AssetInfoExtractor:
         return city_id
     
     def _get_currency_id(self, currency_iso_code: str) -> int | None:
-        return self._database.query_executor.get_currency_id_by_currency_iso_code(currency_iso_code)
+        if currency_iso_code == "None":
+            currency_iso_code = "unknown"
+        currency_id = self._database.query_executor.get_currency_id_by_currency_iso_code(currency_iso_code)
+        if currency_id is None:
+            logging.error(f"Could not find currency_id for {currency_iso_code} in the database.")
+            raise ValueError(f"Could not find currency_id for {currency_iso_code} in the database.")
+        return currency_id
 
     def _get_exchange_id(self, exchange_acronym: str) -> int | None:
-        return self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        if exchange_acronym == "None":
+            exchange_acronym = "unknown"
+        exchange_id = self._database.query_executor.get_exchange_id_by_exchange_acronym(exchange_acronym)
+        if exchange_id is None:
+            logging.error(f"Could not find exchange_id for {exchange_acronym} in the database.")
+            raise ValueError(f"Could not find exchange_id for {exchange_acronym} in the database.")
+        return exchange_id
 
     def _convert_asset_info_with_names_to_ids(self) -> None:
         # Check if the asset info with names has been extracted
         if self._asset_info_with_names is None:
+            logging.error("Asset Info with names must be extracted before converting to asset info with IDs.")
             raise ValueError("Asset Info with names must be extracted before converting to asset info with IDs.")
         
         # Asset Class
         asset_class_name = self._asset_info_with_names.asset_class_name
         if asset_class_name is None:
+            logging.error("Asset Class Name must be provided.")
             raise ValueError("Asset Class Name must be provided.")
         asset_class_id = self._get_asset_class_id(asset_class_name)
         if asset_class_id is None:
+            logging.error("Asset Class ID is None.")
             raise ValueError("Asset Class ID is None.")
         # Asset Subclass
         asset_subclass_name = self._asset_info_with_names.asset_subclass_name
         if asset_subclass_name is None:
+            logging.error("Asset Subclass Name must be provided.")
             raise ValueError("Asset Subclass Name must be provided.")
         asset_subclass_id = self._get_asset_subclass_id(asset_subclass_name)
         if asset_subclass_id is None:
+            logging.error("Asset Subclass ID is None.")
             raise ValueError("Asset Subclass ID is None.")
         # Sector
         sector_name = self._asset_info_with_names.sector_name
         if sector_name is None:
+            logging.error("Sector Name must be provided.")
             raise ValueError("Sector Name must be provided.")
         sector_id = self._get_sector_id_or_insert(asset_class_id, sector_name)
         if sector_id is None:
+            logging.error("Sector ID is None.")
             raise ValueError("Sector ID is None.")
         # Industry
         industry_name = self._asset_info_with_names.industry_name
         if industry_name is None:
+            logging.error("Industry Name must be provided.")
             raise ValueError("Industry Name must be provided.")
         industry_id = self._get_industry_id_or_insert(sector_id, industry_name)
         if industry_id is None:
+            logging.error("Industry ID is None.")
             raise ValueError("Industry ID is None.")
         # Country
         country_name = self._asset_info_with_names.country_name
         if country_name is None:
+            logging.error("Country Name must be provided.")
             raise ValueError("Country Name must be provided.")
         country_id = self._get_country_id(country_name)
         if country_id is None:
-            logging.debug(f"Country Name: '{country_name}' returned None.")
+            logging.error("Country ID is None.")
             raise ValueError("Country ID is None.")
         # City
         city_name = self._asset_info_with_names.city_name
         if city_name is None:
+            logging.error("City Name must be provided.")
             raise ValueError("City Name must be provided.")
         city_id = self._get_city_id_or_insert(city_name, country_name)
         if city_id is None:
+            logging.error("City ID is None.")
             raise ValueError("City ID is None.")
         # Financial Currency
         financial_currency_iso_code = self._asset_info_with_names.financial_currency_iso_code
         if financial_currency_iso_code is None:
+            logging.error("Financial Currency ISO Code must be provided.")
             raise ValueError("Financial Currency ISO Code must be provided.")
         financial_currency_id = self._get_currency_id(financial_currency_iso_code)
         if financial_currency_id is None:
+            logging.error("Financial Currency ID is None.")
             raise ValueError("Financial Currency ID is None.")
         # Exchange Currency
         exchange_currency_id = self._asset_info_with_names.exchange_currency_id
         if exchange_currency_id is None:
+            logging.error("Exchange Currency ID is None.")
             raise ValueError("Exchange Currency ID is None.")
         # Exchange Acronym
         exchange_id = self._asset_info_with_names.exchange_id
         if exchange_id is None:
+            logging.error("Exchange ID is None.")
             raise ValueError("Exchange ID is None.")
         # All remaining fields
         symbol = self._asset_info_with_names.symbol
@@ -306,6 +367,7 @@ class AssetInfoExtractor:
     def _insert_asset_info_to_database(self) -> None:
         # Check if the asset info has been extracted
         if self._asset_info_with_ids is None:
+            logging.error("Asset Info must be extracted and put into a data frame before inserting into the database.")
             raise ValueError("Asset Info must be extracted and put into a data frame before inserting into the database.")
         # Insert the asset info into the database
         self._database.query_executor.insert_asset_info_with_ids(self._asset_info_with_ids)
@@ -344,10 +406,11 @@ class AssetInfoExtractor:
                     row["security_name"]
                 )
                 # Get asset info with names
-                self._extract_asset_info_from_yfinance(row["symbol"])
+                self._extract_asset_info_from_yfinance(self._exchange_listings_info.symbol)
+
             # Merge exchange listings info and yfinance asset info
             if self._yfinance_asset_info is None:
-                logging.warning(f"Could not retrieve asset information for {row['symbol']} from Yahoo Finance.")
+                logging.warning(f"Could not retrieve asset information for {self._exchange_listings_info.symbol} from Yahoo Finance.")
                 continue
             else:
                 self._merge_exchange_listings_info_and_yfinance_asset_info()

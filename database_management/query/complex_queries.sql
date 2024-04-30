@@ -1,19 +1,32 @@
--- Query 1: Calculate the net value of securities (BUY - SELL)
+-- net_value_of_securities: Calculate the net value of securities (BUY - SELL)
 SELECT
-    (SELECT COALESCE(SUM(total), 0) FROM security WHERE type LIKE '%BUY%') -
-    (SELECT COALESCE(SUM(total), 0) FROM security WHERE type LIKE '%SELL%') AS net_value;
+    (SELECT COALESCE(SUM(at.total), 0) 
+     FROM asset_transaction at 
+     JOIN transaction_type tt ON at.transaction_type_id = tt.id 
+     WHERE tt.name LIKE '%buy%') -
+    (SELECT COALESCE(SUM(at.total), 0) 
+     FROM asset_transaction at 
+     JOIN transaction_type tt ON at.transaction_type_id = tt.id 
+     WHERE tt.name LIKE '%sell%') AS net_value;
 
 
--- Query 2: Calculate the total value of securities by symbol
-SELECT symbol, SUM(total) AS total_value FROM security GROUP BY symbol;
+-- total_value_of_securities: Calculate the total value of securities by symbol
+SELECT symbol, SUM(total) AS total_value FROM asset_transaction GROUP BY symbol;
 
 
--- Query 3: Calculate the total value of dividends
-SELECT SUM(amount) AS total_dividends FROM dividend;
+-- total_value_of_dividends: Calculate the total value of dividends
+SELECT SUM(at.amount) AS total_dividends 
+FROM asset_transaction at
+JOIN transaction_type tt ON at.transaction_type_id = tt.id 
+WHERE tt.name = 'dividend';
 
 
--- Query 4: Calculate the total value of dividends by symbol
-SELECT symbol, SUM(amount) AS total_dividends FROM dividend GROUP BY symbol;
+-- total_value_of_dividends_by_symbol: Calculate the total value of dividends by symbol
+SELECT at.symbol, SUM(at.amount) AS total_dividends 
+FROM asset_transaction at
+JOIN transaction_type tt ON at.transaction_type_id = tt.id 
+WHERE tt.name = 'dividend'
+GROUP BY at.symbol;
 
 
 -- net_ticker_summary: Calculate the net average price of securities by symbol
@@ -33,32 +46,36 @@ SELECT
 FROM
     (
         SELECT
-            SUM(quantity) AS total_buy_qty,
-            SUM(total) AS total_buy_amnt
+            SUM(at.quantity) AS total_buy_qty,
+            SUM(at.total) AS total_buy_amnt
         FROM
-            security
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
         WHERE
-            symbol = '?'
-            AND type LIKE '%BUY%'
+            at.symbol = '?'
+            AND tt.name LIKE '%buy%'
     ) AS buy,
     (
         SELECT
-            AVG(avg_price) AS avg_sell_price,
-            SUM(quantity) AS total_sell_qty,
-            SUM(total) AS total_sell_amnt
+            AVG(at.avg_price) AS avg_sell_price,
+            SUM(at.quantity) AS total_sell_qty,
+            SUM(at.total) AS total_sell_amnt
         FROM
-            security
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
         WHERE
-            symbol = '?'
-            AND type LIKE '%SELL%'
+            at.symbol = '?'
+            AND tt.name LIKE '%sell%'
     ) AS sell,
     (
         SELECT
-            SUM(amount) AS total_divs
+            SUM(at.amount) AS total_divs
         FROM
-            dividend
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
         WHERE
-            symbol = '?'
+            at.symbol = '?'
+            AND tt.name = 'dividend'
     ) AS div;
 
 
@@ -92,37 +109,42 @@ FROM (
         ROUND((buy.total_buy_amnt - COALESCE(sell.total_sell_amnt, 0) - div.total_divs), 2) AS break_even_value
     FROM (
         SELECT
-            symbol,
+            at.symbol,
             SUM(quantity) AS total_buy_qty,
             SUM(total) AS total_buy_amnt
         FROM
-            security
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
         WHERE
-            type LIKE '%BUY%'
+            tt.name LIKE '%buy%'
         GROUP BY
-            symbol
+            at.symbol
     ) AS buy
     LEFT JOIN (
         SELECT
-            symbol,
+            at.symbol,
             AVG(avg_price) AS avg_sell_price,
             SUM(quantity) AS total_sell_qty,
             SUM(total) AS total_sell_amnt
         FROM
-            security
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
         WHERE
-            type LIKE '%SELL%'
+            tt.name LIKE '%sell%'
         GROUP BY
-            symbol
+            at.symbol
     ) AS sell ON buy.symbol = sell.symbol
     LEFT JOIN (
         SELECT
-            symbol,
+            at.symbol,
             SUM(amount) AS total_divs
         FROM
-            dividend
+            asset_transaction at
+        JOIN transaction_type tt ON at.transaction_type_id = tt.id
+        WHERE
+            tt.name = 'dividend'
         GROUP BY
-            symbol
+            at.symbol
     ) AS div ON buy.symbol = div.symbol
 ) AS result
 WHERE

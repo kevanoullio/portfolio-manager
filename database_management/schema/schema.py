@@ -28,14 +28,15 @@ class DatabaseSchema:
     def _insert_default_asset_classes_and_subclasses(self) -> None:
         # Create a dataframe with the default asset classes
         asset_classes_and_subclasses = {
-            "equity": ["common_stock", "preferred_stock", "warrant", "unit", "depository_share", "other"],
-            "fund": ["etf", "mutual_fund", "investment_fund", "hedge_fund", "private_equity", "other"],
-            "fixed_income": ["government_bond", "corporate_bond", "municipal_bond", "government_note", "corporate_note", "municipal_note", "money_market_fund", "certificate_of_deposit", "loan", "other"],
-            "cash_or_cash_equivalent": ["savings_account", "checking_account", "money_market_account", "cash", "cash_equivalent", "other"],
-            "real_estate": ["real_estate_investment_trust", "real_estate_fund", "real_estate_property", "other"],
-            "commodity": ["industrial_metal", "precious_metal", "energy", "agriculture", "livestock", "other"],
-            "derivative": ["stock_option", "futures_contract", "other"],
-            "cryptocurrency": ["platform", "defi", "exchange_token", "oracle", "dao", "metaverse", "privacy", "utility", "nft", "gaming", "payment", "stablecoin", "other"]
+            "equity": ["common_stock", "preferred_share", "warrant", "unit", "depository_share", "other", "unknown"],
+            "fund": ["etf", "mutual_fund", "investment_fund", "hedge_fund", "private_equity", "other", "unknown"],
+            "fixed_income": ["government_bond", "corporate_bond", "municipal_bond", "government_note", "corporate_note", "municipal_note", "perpetual", "money_market_fund", "certificate_of_deposit", "loan", "other", "unknown"],
+            "cash_or_cash_equivalent": ["savings_account", "checking_account", "money_market_account", "cash", "cash_equivalent", "other", "unknown"],
+            "real_estate": ["real_estate_investment_trust", "real_estate_fund", "real_estate_property", "other", "unknown"],
+            "commodity": ["industrial_metal", "precious_metal", "energy", "agriculture", "livestock", "other", "unknown"],
+            "derivative": ["stock_option", "futures_contract", "other", "unknown"],
+            "cryptocurrency": ["platform", "defi", "exchange_token", "oracle", "dao", "metaverse", "privacy", "utility", "nft", "gaming", "payment", "stablecoin", "other", "unknown"],
+            "unknown": ["unknown"]
         }
 
         # Convert the asset classes into a pandas dataframe
@@ -65,7 +66,7 @@ class DatabaseSchema:
         country_codes.columns = country_codes.columns.get_level_values(1)
 
         # Rename the columns we want to keep
-        country_codes = country_codes.rename(columns={"Country name[5]": "name", "Alpha-3 code[5]": "iso_code"})
+        country_codes = country_codes.rename(columns={"ISO 3166[1] name[5]": "name", "A-3 [5]": "iso_code"})
         # Rebuild a new dataframe with only the columns we want to keep
         country_codes = country_codes[["name", "iso_code"]]
 
@@ -74,6 +75,13 @@ class DatabaseSchema:
 
         # Remove all the citation references from the name column
         country_codes["name"] = country_codes["name"].str.replace(r"\[.*\]", "", regex=True)
+
+        # Add an "unknown" country code to the dataframe
+        new_row = pd.DataFrame({"name": ["Unknown"], "iso_code": ["UNK"]})
+        country_codes = pd.concat([country_codes, new_row], ignore_index=True)
+
+        # Order the dataframe by the name column
+        country_codes = country_codes.sort_values(by=["name"])
 
         # Insert the default country codes into the database
         self._query_executor.dataframe_to_existing_sql_table(country_codes, "country")
@@ -109,6 +117,10 @@ class DatabaseSchema:
         # Order the dataframe by the name column
         currency_codes = currency_codes.sort_values(by=["name"])
 
+        # Add an "unknown" currency code to the dataframe
+        new_row = pd.DataFrame({"name": ["Unknown"], "iso_code": ["UNK"], "symbol": ["UNK"]})
+        currency_codes = pd.concat([currency_codes, new_row], ignore_index=True)
+
         # Insert the default currency codes into the database
         self._query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
 
@@ -135,6 +147,7 @@ class DatabaseSchema:
         country_id["TWN"] = self._query_executor.get_country_id_by_country_iso_code("TWN")
         country_id["SGP"] = self._query_executor.get_country_id_by_country_iso_code("SGP")
         country_id["ZAF"] = self._query_executor.get_country_id_by_country_iso_code("ZAF")
+        country_id["UNK"] = self._query_executor.get_country_id_by_country_iso_code("UNK")
 
         # Put the country_id and exchange name and acronym into a dataframe
         exchanges = [
@@ -166,7 +179,8 @@ class DatabaseSchema:
             {"country_id": country_id["BRA"], "name": "B3", "acronym": "B3"},
             {"country_id": country_id["TWN"], "name": "Taiwan Stock Exchange", "acronym": "TWSE"},
             {"country_id": country_id["SGP"], "name": "Singapore Exchange", "acronym": "SGX"},
-            {"country_id": country_id["ZAF"], "name": "Johannesburg Stock Exchange", "acronym": "JSE"}
+            {"country_id": country_id["ZAF"], "name": "Johannesburg Stock Exchange", "acronym": "JSE"},
+            {"country_id": country_id["UNK"], "name": "Unknown", "acronym": "UNK"}
         ]
 
         # Convert the exchanges data into a pandas dataframe
