@@ -60,8 +60,8 @@ CREATE TRIGGER enforce_import_email
 BEFORE INSERT ON imported_email_log
 FOR EACH ROW
 BEGIN
-    SELECT RAISE(ABORT, 'Invalid email_id. The email must have usage type "import"')
-    WHERE (SELECT usage FROM email_usage WHERE id = NEW.email_id) != 'import';
+    SELECT RAISE(ABORT, 'Invalid email_id. The email must have usage type "import".')
+    WHERE (SELECT email_usage_id FROM email WHERE id = NEW.email_id) != (SELECT id FROM email_usage WHERE usage = 'import');
 END;
 
 -- Only keep the last 100 import email settings for a given user's email and folder combination
