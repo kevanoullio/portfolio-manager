@@ -161,12 +161,16 @@ class YahooFinanceDataExtractor:
             if '.' in original_symbol:
                 if ".PR." in original_symbol:
                     formatted_symbol = original_symbol.replace(".PR.", "-P")
+                elif ".RT." in original_symbol:
+                    formatted_symbol = original_symbol.replace(".RT.", "-RT")
+                elif ".WT." in original_symbol:
+                    formatted_symbol = original_symbol.replace(".WT.", "-WT")
                 else:
                     formatted_symbol = self._format_symbol(original_symbol, '.', '-')
             else:
                 formatted_symbol = original_symbol
-            # Add the "-TO" suffix to the symbol
-            formatted_symbol += "-TO"
+            # Add the ".TO" suffix to the symbol
+            formatted_symbol += ".TO"
 
         elif exchange_acronym == "TSXV":
             if '.' in original_symbol:
