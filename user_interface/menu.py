@@ -288,11 +288,11 @@ class ViewPortfolio(Menu):
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: None,
-            2: None,
-            3: None,
-            4: None,
-            5: None,
+            1: ViewPortfolio,
+            2: ViewPortfolio,
+            3: ViewPortfolio,
+            4: ViewPortfolio,
+            5: ViewPortfolio,
             0: PortfolioManager
         }
         self.menu_logic = {

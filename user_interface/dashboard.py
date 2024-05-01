@@ -169,26 +169,28 @@ class Dashboard:
         # TODO - review and finish this function
         print("\nNET VALUE OF SECURITIES:")
         results = self._database.query_executor.execute_complex_query_by_title("net_value_of_securities")
-        self._query_results.print(results)
+        self._query_results.simple_row_print(results, currency=True)
         
         print("\nTOTAL VALUE OF SECURITIES:")
         results = self._database.query_executor.execute_complex_query_by_title("total_value_of_securities")
-        self._query_results.print(results)
+        self._query_results.simple_row_print(results, currency=True)
 
         print("\nTOTAL VALUE OF DIVIDENDS:")
         results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends")
-        self._query_results.print(results)
+        self._query_results.simple_row_print(results, currency=True)
 
         print("\nTOTAL VALUE OF DIVIDENDS BY SECURITY:")
         results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends_by_security")
-        self._query_results.print(results)
+        self._query_results.simple_row_print(results, currency=True)
 
 
     def view_current_portfolio(self):
         # TODO - review and finish this function
         results = self._database.query_executor.execute_complex_query_by_title("view_current_portfolio")
         print("CURRENT PORTFOLIO:")
-        self._query_results.print(results)
+        headers = ["symbol", "total_buy_qty", "total_buy_amnt", "avg_buy_price", "total_sell_qty", "total_sell_amnt",
+               "avg_sell_price", "total_divs", "net_qty", "net_value", "net_avg_price", "break_even_value"]
+        self._query_results.print_rows_with_headers(headers, results, currency=True)
     
 
     def view_entire_portfolio_history(self):
@@ -209,7 +211,7 @@ class Dashboard:
         # Execute the query to search for an investment in portfolio history
         results = self._database.query_executor.execute_complex_query_by_title("net_ticker_summary", (ticker, ticker, ticker))
         # Print the query results
-        self._query_results.print(results)
+        self._query_results.simple_row_print(results)
 
 
     def build_portfolio_from_data_set(self):
