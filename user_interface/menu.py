@@ -280,6 +280,7 @@ class ViewPortfolio(Menu):
         self.title = "VIEW PORTFOLIO"
         self.previous_menu = PortfolioManager(dashboard)
         # Add menu options
+        self.add_option(verb="View", subject="Portfolio Summary")
         self.add_option(verb="View", subject="Current Portfolio")
         self.add_option(verb="View", subject="Entire Portfolio History")
         self.add_option(verb="Search", subject="for Current Investment")
@@ -291,13 +292,15 @@ class ViewPortfolio(Menu):
             2: None,
             3: None,
             4: None,
+            5: None,
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.dashboard.view_current_portfolio,
-            2: self.dashboard.view_entire_portfolio_history,
-            3: self.dashboard.search_for_current_investment,
-            4: self.dashboard.search_for_investment_in_portfolio_history,
+            1: self.dashboard.view_portfolio_summary,
+            2: self.dashboard.view_current_portfolio,
+            3: self.dashboard.view_entire_portfolio_history,
+            4: self.dashboard.search_for_current_investment,
+            5: self.dashboard.search_for_investment_in_portfolio_history,
             0: self.dashboard.previous_menu
         }
 

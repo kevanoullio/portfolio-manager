@@ -165,9 +165,29 @@ class Dashboard:
         print("Notifications logic goes here...")
 
     
+    def view_portfolio_summary(self):
+        # TODO - review and finish this function
+        print("\nNET VALUE OF SECURITIES:")
+        results = self._database.query_executor.execute_complex_query_by_title("net_value_of_securities")
+        self._query_results.print(results)
+        
+        print("\nTOTAL VALUE OF SECURITIES:")
+        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_securities")
+        self._query_results.print(results)
+
+        print("\nTOTAL VALUE OF DIVIDENDS:")
+        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends")
+        self._query_results.print(results)
+
+        print("\nTOTAL VALUE OF DIVIDENDS BY SECURITY:")
+        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends_by_security")
+        self._query_results.print(results)
+
+
     def view_current_portfolio(self):
         # TODO - review and finish this function
         results = self._database.query_executor.execute_complex_query_by_title("view_current_portfolio")
+        print("CURRENT PORTFOLIO:")
         self._query_results.print(results)
     
 

@@ -1,32 +1,42 @@
 -- net_value_of_securities: Calculate the net value of securities (BUY - SELL)
 SELECT
-    (SELECT COALESCE(SUM(at.total), 0) 
-     FROM asset_transaction at 
-     JOIN transaction_type tt ON at.transaction_type_id = tt.id 
-     WHERE tt.name LIKE '%buy%') -
-    (SELECT COALESCE(SUM(at.total), 0) 
-     FROM asset_transaction at 
-     JOIN transaction_type tt ON at.transaction_type_id = tt.id 
-     WHERE tt.name LIKE '%sell%') AS net_value;
+    printf("$%.2f", ROUND(
+        (SELECT COALESCE(SUM(at.total), 0) 
+            FROM asset_transaction AS at
+            JOIN transaction_type AS tt ON at.transaction_type_id = tt.id 
+            WHERE tt.name LIKE '%buy%') -
+        (SELECT COALESCE(SUM(at.total), 0) 
+            FROM asset_transaction AS at 
+            JOIN transaction_type AS tt ON at.transaction_type_id = tt.id 
+            WHERE tt.name LIKE '%sell%') +
+        (SELECT COALESCE(SUM(at.total), 0)
+            FROM asset_transaction AS at
+            JOIN transaction_type AS tt ON at.transaction_type_id = tt.id
+            WHERE tt.name = 'dividend')
+    , 2)) AS net_value;
 
 
 -- total_value_of_securities: Calculate the total value of securities by symbol
-SELECT symbol, SUM(total) AS total_value FROM asset_transaction GROUP BY symbol;
+SELECT ai.symbol, printf("$%.2f",ROUND(SUM(at.total), 2)) AS total_sum
+    FROM asset_transaction AS at
+    JOIN asset_info AS ai ON at.asset_id = ai.id
+    GROUP BY ai.symbol;
 
 
 -- total_value_of_dividends: Calculate the total value of dividends
-SELECT SUM(at.amount) AS total_dividends 
-FROM asset_transaction at
-JOIN transaction_type tt ON at.transaction_type_id = tt.id 
-WHERE tt.name = 'dividend';
+SELECT printf("$%.2f", ROUND(SUM(at.total), 2)) AS total_dividends 
+    FROM asset_transaction AS at
+    JOIN transaction_type AS tt ON at.transaction_type_id = tt.id
+    WHERE tt.name = 'dividend';
 
 
--- total_value_of_dividends_by_symbol: Calculate the total value of dividends by symbol
-SELECT at.symbol, SUM(at.amount) AS total_dividends 
-FROM asset_transaction at
-JOIN transaction_type tt ON at.transaction_type_id = tt.id 
-WHERE tt.name = 'dividend'
-GROUP BY at.symbol;
+-- total_value_of_dividends_by_security: Calculate the total value of dividends by symbol
+SELECT ai.symbol, printf("$%.2f", ROUND(SUM(at.total), 2)) AS total_dividends 
+    FROM asset_transaction AS at
+    JOIN asset_info AS ai ON at.asset_id = ai.id
+    JOIN transaction_type AS tt ON at.transaction_type_id = tt.id 
+    WHERE tt.name = 'dividend'
+    GROUP BY ai.symbol;
 
 
 -- net_ticker_summary: Calculate the net average price of securities by symbol
@@ -41,7 +51,10 @@ SELECT
     div.total_divs,
     (buy.total_buy_qty - COALESCE(sell.total_sell_qty, 0)) AS net_qty,
     buy.total_buy_amnt - COALESCE(sell.total_sell_amnt, 0) AS net_value,
-    ROUND(((buy.total_buy_amnt - COALESCE(sell.total_sell_amnt, 0)) / (buy.total_buy_qty - COALESCE(sell.total_sell_qty, 0))), 2) AS net_avg_price,
+    CASE 
+        WHEN (buy.total_buy_qty - COALESCE(sell.total_sell_qty, 0)) = 0 THEN NULL
+        ELSE ROUND(((buy.total_buy_amnt - COALESCE(sell.total_sell_amnt, 0)) / (buy.total_buy_qty - COALESCE(sell.total_sell_qty, 0))), 2)
+    END AS net_avg_price,
     buy.total_buy_amnt - COALESCE(sell.total_sell_amnt, 0) - div.total_divs AS break_even_value
 FROM
     asset_info ai
