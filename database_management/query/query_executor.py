@@ -101,10 +101,15 @@ class QueryExecutor:
 
     def __replace_variables(self, query: str, args) -> str:
         for arg in args:
-            query = query.replace("?", arg, 1)
+            if isinstance(arg, str):
+                # If the argument is a string, wrap it in single quotes
+                query = query.replace('?', f"'{arg}'", 1)
+            else:
+                # If the argument is not a string, replace the placeholder without quotes
+                query = query.replace('?', str(arg), 1)
         return query
 
-    def execute_complex_query_by_title(self, query_title: str, *args: str) -> list[tuple] | None:
+    def execute_complex_query_by_title(self, query_title: str, *args: tuple) -> list[tuple] | None:
         # Read the complex_queries.sql file
         with open(self._complex_queries_file, "r") as file:
             queries = file.read()

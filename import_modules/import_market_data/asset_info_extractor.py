@@ -38,7 +38,7 @@ class AssetInfoExtractor:
             replacement_asset_info = None
         return replacement_asset_info
 
-    def _extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:
+    def _extract_asset_info_from_yfinance(self, exchange_acronym: str, asset_symbol: str) -> None:
         if self._exchange_acronym is None:
             raise ValueError("Exchange Acronym must be extracted before Asset Info With Names.")
         # Extract the asset info with names
@@ -46,7 +46,7 @@ class AssetInfoExtractor:
         #     self._yfinance_data_extractor.extract_asset_info_from_yfinance_website("NE", asset_symbol)
         # else:
         #     self._yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
-        self._yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
+        self._yfinance_data_extractor.extract_asset_info_from_yfinance(exchange_acronym, asset_symbol)
         # Get the asset info with names
         yf_asset_info = self._yfinance_data_extractor.get_yfinance_asset_info()
         if yf_asset_info is None:
@@ -389,7 +389,7 @@ class AssetInfoExtractor:
                     replacement_symbol["security_name"]
                 )
                 # Get asset info with names
-                self._extract_asset_info_from_yfinance(replacement_symbol["symbol"])
+                self._extract_asset_info_from_yfinance(exchange_acronym, replacement_symbol["symbol"])
                 if self._asset_info_with_names is None:
                     raise ValueError("Asset Info with names is None.")
                 self._asset_info_with_names.symbol = row["symbol"]
@@ -406,7 +406,7 @@ class AssetInfoExtractor:
                     row["security_name"]
                 )
                 # Get asset info with names
-                self._extract_asset_info_from_yfinance(self._exchange_listings_info.symbol)
+                self._extract_asset_info_from_yfinance(exchange_acronym, self._exchange_listings_info.symbol)
 
             # Merge exchange listings info and yfinance asset info
             if self._yfinance_asset_info is None:

@@ -161,7 +161,7 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
 
     logging.debug(f"Data after extracting from email:\n{data}")
 
-    # Check if email is a standard trade or dividend
+    # Check if email is a standard trade or dividend (standard trade has "Quantity" and "Average price" fields, dividend has "Amount" field)
     if data.get("Quantity") and data.get("Average price"):
         split_value = data["Average price"].split("$")
         data["currency"] = split_value[0] + "$"
@@ -182,8 +182,8 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
         formatted_total = "{:,.2f}".format(float(split_value[1].replace(",", "")))
         data["Total"] = formatted_total
         # Check if "Quantity" exists, if not assign 1
-        if data["Quantity"] == "" or data["Quantity"] == 0:
-            data["Quantity"] = 1
+        # if data["Quantity"] == "" or data["Quantity"] == 0:
+        data["Quantity"] = 1
     else:
         raise ValueError("Unknown email type.")
 

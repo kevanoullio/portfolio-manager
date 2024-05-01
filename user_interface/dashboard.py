@@ -187,7 +187,9 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        self._database.query_executor.execute_complex_query_by_title("net_ticker_summary", ticker)
+        results = self._database.query_executor.execute_complex_query_by_title("net_ticker_summary", (ticker, ticker, ticker))
+        # Print the query results
+        self._query_results.print(results)
 
 
     def build_portfolio_from_data_set(self):

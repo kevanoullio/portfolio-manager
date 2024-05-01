@@ -450,11 +450,11 @@ class ExchangeListingsExtractor:
             
             # If no asset class or subclass, assign a default
             if asset_class_name is None:
-                asset_class_name = "equity"
-                logging.error(f"Could not determine asset class for '{row['symbol']}', using equity as placeholder.")
+                asset_class_name = "unknown"
+                logging.error(f"Could not determine asset class for '{row['symbol']}', using unknown as placeholder.")
             if asset_subclass_name is None:
-                asset_subclass_name = "common_stock"
-                logging.error(f"Could not determine asset subclass for '{row['symbol']}', using common stock as placeholder.")
+                asset_subclass_name = "unknown"
+                logging.error(f"Could not determine asset subclass for '{row['symbol']}', using unknown as placeholder.")
             
             # Update the 'asset_subclass' column with the determined asset class and subclass names
             self._df_exchange_listings_info.at[index, "asset_class_name"] = asset_class_name

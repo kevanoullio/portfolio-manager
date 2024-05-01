@@ -5,6 +5,7 @@
 # Third-party Libraries
 import requests
 import yfinance as yf
+import re
 
 # Local Modules
 from database_management.database import Database
@@ -114,28 +115,88 @@ class YahooFinanceDataExtractor:
         self._database = database
         self._asset_symbol: str | None = None
         self._yfinance_asset_info: YFinanceAssetInfo | None = None
+    
+    def _format_symbol(self, original_symbol: str, char_to_replace: str, replacement_char: str) -> str:
+        pattern = r'\{}([A-Z]+)'.format(char_to_replace)
+        formatted_symbol = re.sub(pattern, replacement_char, original_symbol)
+        return formatted_symbol
 
-    def _format_symbol_for_yfinance(self, original_symbol: str) -> str:
-        # Check if the symbol has ".___" in it, yfinance requires it to be "-___"
-        if ".A" in original_symbol:
-            formatted_symbol = original_symbol.replace(".", "-")
-        elif ".B" in original_symbol:
-            formatted_symbol = original_symbol.replace(".", "-")
-        elif ".UN" in original_symbol:
-            formatted_symbol = original_symbol.replace(".", "-")
-        elif ".X" in original_symbol:
-            formatted_symbol = original_symbol.replace(".", "-")
-        elif ".PR." in original_symbol:
-            formatted_symbol = original_symbol.replace(".PR.", "-P")
-        elif "$" in original_symbol:
-            formatted_symbol = original_symbol.replace("$", "-P")
-        else:
+    def _format_symbol_for_yfinance(self, exchange_acronym: str, original_symbol: str) -> str:
+        if exchange_acronym == "NASDAQ":
             formatted_symbol = original_symbol
+        
+        # Check if the symbol has ".__" in it, yfinance requires it to be "-"
+        if exchange_acronym == "NYSE":
+            if '.' in original_symbol:
+                if ".W" in original_symbol:
+                    formatted_symbol = self._format_symbol(original_symbol, ".W", "-WT")
+                else:
+                    formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            elif '$' in original_symbol:
+                formatted_symbol = self._format_symbol(original_symbol, '$', "-P")
+            else:
+                formatted_symbol = original_symbol
+
+        elif exchange_acronym == "NYSE MKT":
+            if '.' in original_symbol:
+                if ".U" in original_symbol:
+                    formatted_symbol = self._format_symbol(original_symbol, ".U", "-UN")
+                if ".W" in original_symbol:
+                    formatted_symbol = self._format_symbol(original_symbol, ".W", "-WT")
+                else:
+                    formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            # elif '$' in original_symbol:
+            #     formatted_symbol = self._format_symbol(original_symbol, '$', "-P")
+            else:
+                formatted_symbol = original_symbol
+
+        elif exchange_acronym == "NYSE ARCA":
+            formatted_symbol = original_symbol
+
+        elif exchange_acronym == "BATS":
+            formatted_symbol = original_symbol
+
+        # Check if the symbol has ".__" in it, yfinance requires it to be "-__"
+        elif exchange_acronym == "TSX":
+            if '.' in original_symbol:
+                if ".PR." in original_symbol:
+                    formatted_symbol = original_symbol.replace(".PR.", "-P")
+                else:
+                    formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            else:
+                formatted_symbol = original_symbol
+            # Add the "-TO" suffix to the symbol
+            formatted_symbol += "-TO"
+
+        elif exchange_acronym == "TSXV":
+            if '.' in original_symbol:
+                formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            else:
+                formatted_symbol = original_symbol
+            # Add the ".V" suffix to the symbol
+            formatted_symbol += ".V"
+
+        elif exchange_acronym == "CSE":
+            if '.' in original_symbol:
+                formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            else:
+                formatted_symbol = original_symbol
+            # Add the ".CN" suffix to the symbol
+            formatted_symbol += ".CN"
+
+        elif exchange_acronym == "Cboe CA":
+            if '.' in original_symbol:
+                formatted_symbol = self._format_symbol(original_symbol, '.', '-')
+            else:
+                formatted_symbol = original_symbol
+            # Add the ".NE" suffix to the symbol
+            formatted_symbol += ".NE"
+
         return formatted_symbol
     
-    def _get_asset_info_from_yfinance(self, asset_symbol: str) -> dict | None:
+    def _get_asset_info_from_yfinance(self, exchange_acronym: str, asset_symbol: str) -> dict | None:
         try:
-            ticker = yf.Ticker(self._format_symbol_for_yfinance(asset_symbol))
+            ticker = yf.Ticker(self._format_symbol_for_yfinance(exchange_acronym, asset_symbol))
             if ticker.info is None:
                 logging.error(f"Asset symbol {asset_symbol} not found on Yahoo Finance.")
                 raise ValueError(f"Asset symbol {asset_symbol} not found on Yahoo Finance.")
@@ -181,9 +242,9 @@ class YahooFinanceDataExtractor:
     #     # Store the desired raw yahoo finance data
     #     self._store_raw_yfinance_data()
 
-    def extract_asset_info_from_yfinance(self, asset_symbol: str) -> None:  
+    def extract_asset_info_from_yfinance(self, exchange_acronym, asset_symbol: str) -> None:  
         # Get the raw yahoo finance data
-        df_asset_info = self._get_asset_info_from_yfinance(asset_symbol)
+        df_asset_info = self._get_asset_info_from_yfinance(exchange_acronym, asset_symbol)
 
         # Check if the asset info is None
         if df_asset_info is None:
