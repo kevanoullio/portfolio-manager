@@ -181,9 +181,9 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
         data["Average price"] = float(split_value[1].replace(",", ""))
         formatted_total = "{:,.2f}".format(float(split_value[1].replace(",", "")))
         data["Total"] = formatted_total
-        # Check if "Quantity" exists, if not assign 1
+        # Check if "Quantity" exists and if it has a value, if not assign 1
         if not data.get("Quantity"):
-            data["Quantity"] = 1
+            data["Quantity"] = 1.0
     else:
         raise ValueError("Unknown email type.")
 
@@ -536,10 +536,6 @@ def import_from_email_account(database: Database) -> int:
 
         elif len(asset_info) == 1:
             asset_info = asset_info[0]
-
-        # Check if df_data has a quantity, if not add one
-        if df_data["quantity"].iloc[0] == "":
-            df_data["quantity"] = 1
         
         # Check if df_data has a transaction_fee, if not add one as $0.00
         if "transaction_fee" not in df_data:
