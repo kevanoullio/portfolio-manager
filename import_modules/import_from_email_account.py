@@ -182,8 +182,8 @@ def extract_from_email(data: dict, email_body) -> pd.DataFrame:
         formatted_total = "{:,.2f}".format(float(split_value[1].replace(",", "")))
         data["Total"] = formatted_total
         # Check if "Quantity" exists, if not assign 1
-        # if data["Quantity"] == "" or data["Quantity"] == 0:
-        data["Quantity"] = 1
+        if not data.get("Quantity"):
+            data["Quantity"] = 1
     else:
         raise ValueError("Unknown email type.")
 
