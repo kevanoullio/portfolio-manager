@@ -16,7 +16,7 @@ import logging
 # HistoricalDataExtractor class for extracting historical data
 class HistoricalDataExtractor:
     def __init__(self, symbols: list[str]) -> None:
-        self._symbols = symbols
+        self.__symbols = symbols
 
     def get_historical_price_data(self, symbol: str) -> pd.DataFrame:
         data = yf.download(symbol, period="max", interval="1d", actions=True)

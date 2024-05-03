@@ -17,20 +17,20 @@ class WebScraper:
         self.headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"} if user_agent else {}
         self.session = requests.Session()
 
-    def _make_get_request(self, url: str) -> requests.Response:
+    def __make_get_request(self, url: str) -> requests.Response:
         response = self.session.get(url, headers=self.headers)
         return response
 
-    def _get_response_text(self, response: requests.Response) -> str:
+    def __get_response_text(self, response: requests.Response) -> str:
         return response.text
 
-    def _get_response_content(self, response: requests.Response) -> bytes:
+    def __get_response_content(self, response: requests.Response) -> bytes:
         return response.content
 
     def get_html_content_as_text(self, url: str) -> str | None:
-        response = self._make_get_request(url)
+        response = self.__make_get_request(url)
         if response.status_code == 200:
-            html_content = self._get_response_text(response)
+            html_content = self.__get_response_text(response)
             return html_content
         else:
             print(f"Request failed with status code: {response.status_code}")
@@ -38,9 +38,9 @@ class WebScraper:
             return None
         
     def get_html_content_as_bytes(self, url: str) -> bytes | None:
-        response = self._make_get_request(url)
+        response = self.__make_get_request(url)
         if response.status_code == 200:
-            html_content = self._get_response_content(response)
+            html_content = self.__get_response_content(response)
             return html_content
         else:
             print(f"Request failed with status code: {response.status_code}")

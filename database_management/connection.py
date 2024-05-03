@@ -25,15 +25,15 @@ class DatabaseConnection:
     _instance = None
 
     def __new__(cls, db_filename: str):
-        if cls._instance is None:
-            cls._instance = super(DatabaseConnection, cls).__new__(cls)
-            cls._instance._init_db(db_filename)
-        return cls._instance
+        if cls.__instance is None:
+            cls.__instance = super(DatabaseConnection, cls).__new__(cls)
+            cls.__instance.__init_db(db_filename)
+        return cls.__instance
 
-    def _init_db(self, db_filename: str):
-        self._db_filename = db_filename
-        self._db_connection = None
-        logging.debug(f"Database connection initialized. Database: {self._db_filename}")
+    def __init_db(self, db_filename: str):
+        self.__db_filename = db_filename
+        self.__db_connection = None
+        logging.debug(f"Database connection initialized. Database: {self.__db_filename}")
 
     def __enter__(self):
         """The __enter__ method is called when entering the context manager's scope.
@@ -54,39 +54,39 @@ class DatabaseConnection:
 
     @contextmanager
     def cursor(self):
-        if self._db_connection is not None:
-            cursor = self._db_connection.cursor()
+        if self.__db_connection is not None:
+            cursor = self.__db_connection.cursor()
             try:
                 yield cursor
             finally:
                 cursor.close()
         else:
-            logging.error(f"Database connection is closed: {self._db_filename}")
+            logging.error(f"Database connection is closed: {self.__db_filename}")
             raise DatabaseConnectionError(self, "Database connection is closed")
 
     def open_connection(self):
-        if self._db_connection is None:
+        if self.__db_connection is None:
             try:
-                self._db_connection = sqlite3.connect(self._db_filename)
+                self.__db_connection = sqlite3.connect(self.__db_filename)
             except sqlite3.Error as e:
                 raise DatabaseConnectionError(self, "Error opening the database connection", e)
         else:
             raise DatabaseConnectionError(self, "Database connection is already open.")
 
     def close_connection(self) -> None:
-        if self._db_connection is not None:
+        if self.__db_connection is not None:
             try:
-                self._db_connection.close()
-                self._db_connection = None
+                self.__db_connection.close()
+                self.__db_connection = None
             except sqlite3.Error as e:
                 raise DatabaseConnectionError(self, "Error closing the database connection", e)
         else:
             raise DatabaseConnectionError(self, "Database connection is already closed")
 
     def begin_transaction(self) -> None:
-        if self._db_connection is not None:
+        if self.__db_connection is not None:
             try:
-                self._db_connection.execute("BEGIN TRANSACTION")
+                self.__db_connection.execute("BEGIN TRANSACTION")
             except sqlite3.Error as e:
                 raise DatabaseQueryExecutionError(self, "Error beginning a transaction", e)
         else:
@@ -122,9 +122,9 @@ class DatabaseConnection:
             
             execute_query(sql_query, params)
         """
-        if self._db_connection is not None:
+        if self.__db_connection is not None:
             try:
-                cursor = self._db_connection.cursor()
+                cursor = self.__db_connection.cursor()
                 if params is not None:
                     result = cursor.execute(sql_query, params)
                 else:
@@ -137,18 +137,18 @@ class DatabaseConnection:
             raise DatabaseConnectionError(self, "Database connection is closed")
 
     def commit_transaction(self) -> None:
-            if self._db_connection is not None:
+            if self.__db_connection is not None:
                 try:
-                    self._db_connection.commit()
+                    self.__db_connection.commit()
                 except sqlite3.Error as e:
                     raise DatabaseQueryExecutionError(self, "Error committing changes to the database", e)
             else:
                 raise DatabaseConnectionError(self, "Database connection is not open.")
 
     def rollback_transaction(self) -> None:
-        if self._db_connection is not None:
+        if self.__db_connection is not None:
             try:
-                self._db_connection.rollback()
+                self.__db_connection.rollback()
             except sqlite3.Error as e:
                 raise DatabaseQueryExecutionError(self, "Error rolling back changes to the database", e)
         else:
@@ -160,9 +160,9 @@ class DatabaseConnection:
 #     def __init__(self, db_filename, pool_size):
 #         self.db_filename = db_filename
 #         self.pool = queue.Queue(pool_size)
-#         self._create_connections(pool_size)
+#         self.__create_connections(pool_size)
 
-#     def _create_connections(self, num_connections):
+#     def __create_connections(self, num_connections):
 #         for _ in range(num_connections):
 #             connection = sqlite3.connect(self.db_filename)
 #             self.pool.put(connection)

@@ -21,17 +21,17 @@ import logging
 # SessionManager class for managing the current user session
 class SessionManager:
     def __init__(self):
-        self._current_user: UserAccount | None = None
-        self._session_token: str | None = None
-        self._modifications = []
-        self._session_history = []
+        self.__current_user: UserAccount | None = None
+        self.__session_token: str | None = None
+        self.__modifications = []
+        self.__session_history = []
         logging.debug("Session Manager initialized.")
 
     def get_current_user(self) -> UserAccount | None:
-        return self._current_user
+        return self.__current_user
     
     def set_current_user(self, current_user: UserAccount | None) -> None:
-        self._current_user = current_user
+        self.__current_user = current_user
 
     def get_current_user_id(self) -> int:
         current_user = self.get_current_user()
@@ -41,10 +41,10 @@ class SessionManager:
             return current_user.user_id
 
     def get_session_token(self) -> str | None:
-        return self._session_token
+        return self.__session_token
     
     def set_session_token(self, session_token: str | None) -> None:
-        self._session_token = session_token
+        self.__session_token = session_token
 
     def start_session(self) -> None:
         # # Add the initial snapshot to session history
@@ -53,39 +53,39 @@ class SessionManager:
         self.saved = False
 
         # Only keep the latest 100 snapshots
-        if len(self._session_history) > 100:
-            self._session_history.pop(0)  # Remove the oldest snapshot
+        if len(self.__session_history) > 100:
+            self.__session_history.pop(0)  # Remove the oldest snapshot
 
     def track_modification(self, modification) -> None:
         # Track modifications made during the session
         if not self.saved:
-            self._modifications.append(modification)
+            self.__modifications.append(modification)
 
     def save_changes(self) -> None:
         # Apply the tracked modifications to the database
         if not self.saved:
-            for modification in self._modifications:
+            for modification in self.__modifications:
                 modification.execute()
-            self._modifications = []
+            self.__modifications = []
             self.saved = True
             print("Portfolio saved!")
 
     def discard_changes(self) -> None:
         # Clear the tracked modifications without applying them
         if not self.saved:
-            self._modifications = []
+            self.__modifications = []
             print("Most recent Portfolio changes discarded!")
 
     def rollback_changes(self) -> None:
-        if len(self._session_history) > 1:
+        if len(self.__session_history) > 1:
             # Remove the latest snapshot from session history
-            self._session_history.pop()
+            self.__session_history.pop()
             # Roll back the database to the previous snapshot
-            previous_snapshot = self._session_history[-1]
+            previous_snapshot = self.__session_history[-1]
             previous_snapshot.rollback()
 
     def close_session(self) -> None:
-        if not self.saved and self._modifications:
+        if not self.saved and self.__modifications:
             # Prompt the user to save or discard changes before exiting
             choice = input("Do you want to save changes? ([y]/n): ").strip().lower()
             if choice == "y" or choice == "":
@@ -101,8 +101,8 @@ class SessionManager:
                     self.discard_changes()
 
         # Clear session-related data
-        self._modifications = []
-        self._session_history = []
+        self.__modifications = []
+        self.__session_history = []
         
 
 if __name__ == "__main__":

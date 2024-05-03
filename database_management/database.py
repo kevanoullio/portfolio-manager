@@ -25,49 +25,49 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
     # TODO - Rewrite all SQL queries to use ? instead of f-strings
     #  It's generally recommended to use parameterized queries with placeholders (? in SQLite)
     def __init__(self, db_filename: str, db_schema_filename: str):
-        self._db_filename = db_filename
-        self._db_schema_filename = db_schema_filename
-        self._db_connection = DatabaseConnection(db_filename)
-        self._backup_manager = BackupManager(self._db_filename)
+        self.__db_filename = db_filename
+        self.__db_schema_filename = db_schema_filename
+        self.__db_connection = DatabaseConnection(db_filename)
+        self.__backup_manager = BackupManager(self.__db_filename)
         self.session_manager = SessionManager()
-        self.query_executor = QueryExecutor(self._db_connection, self.session_manager)
+        self.query_executor = QueryExecutor(self.__db_connection, self.session_manager)
 
     def start(self) -> None:
         # Check if the database file exists
-        if os.path.exists(self._db_filename):
+        if os.path.exists(self.__db_filename):
             # Check if a backup file exists
-            if os.path.exists(self._backup_manager.db_backup_filename):
+            if os.path.exists(self.__backup_manager.db_backup_filename):
                 logging.info("Backup file exists.")
             else:
                 print("Backup file does not exist.")
                 logging.info("Backup file does not exist.")
                 # Create a new backup database file and initialize it
-                self._backup_manager.create_backup()
+                self.__backup_manager.create_backup()
         else:
             print("Database file does not exist.")
             logging.info("Database file does not exist.")
             # Check if a backup file exists
-            if os.path.exists(self._backup_manager.db_backup_filename):
+            if os.path.exists(self.__backup_manager.db_backup_filename):
                 print("Backup file exists.")
                 logging.info("Backup file exists.")
                 # Restore from the backup file
-                self._backup_manager.restore_from_backup()
+                self.__backup_manager.restore_from_backup()
             else:
                 print("Initializing new database file...")
                 logging.info("Initializing new database file...")
                 # Create a new database file by opening and closing a connection
                 # Create a Database Schema object and initialize the database using the schema file
-                db_schema = DatabaseSchema(self.query_executor, self._db_schema_filename)
+                db_schema = DatabaseSchema(self.query_executor, self.__db_schema_filename)
                 db_schema.initialize_database()
                 print(f"Database file created and initialized successfully.")
-                logging.info(f"Database file created and initialized successfully. Database: {self._db_filename}")
-                if os.path.exists(self._backup_manager.db_backup_filename):
+                logging.info(f"Database file created and initialized successfully. Database: {self.__db_filename}")
+                if os.path.exists(self.__backup_manager.db_backup_filename):
                     logging.info("Backup file exists.")
                 else:
                     print("Backup file does not exist.")
                     logging.info("Backup file does not exist.")
                     # Create a new backup database file and initialize it
-                    self._backup_manager.create_backup()
+                    self.__backup_manager.create_backup()
 
     def restore(self, snapshot_data) -> None:
         # Implement the logic to restore the database to the state of the given snapshot
@@ -78,7 +78,7 @@ class Database: # TODO prevent SQL injections in all SQL queries!!!
         # Example: Assuming you have a snapshot of the entire database,
         # you can replace the existing database file with the snapshot file
         snapshot_filename = snapshot_data.get_snapshot_filename()
-        shutil.copyfile(snapshot_filename, self._db_filename)
+        shutil.copyfile(snapshot_filename, self.__db_filename)
 
     def import_custom_script(self, menu_options: dict) -> None:
         # Only allow importing python scripts

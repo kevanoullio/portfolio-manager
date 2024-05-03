@@ -15,17 +15,17 @@ import logging
 # DatabaseSchema class for creating and initializing the database schema
 class DatabaseSchema:
     def __init__(self, query_executor: QueryExecutor, db_schema_filename: str) -> None:
-        self._query_executor = query_executor
-        self._db_schema_filename = db_schema_filename
+        self.__query_executor = query_executor
+        self.__db_schema_filename = db_schema_filename
     
     def initialize_database(self) -> None:
-        self._query_executor.initialize_database_schema(self._db_schema_filename)
-        self._insert_default_asset_classes_and_subclasses()
-        self._insert_default_country_codes()
-        self._insert_default_currency_codes()
-        self._insert_default_exchanges()
+        self.__query_executor.initialize_database_schema(self.__db_schema_filename)
+        self.__insert_default_asset_classes_and_subclasses()
+        self.__insert_default_country_codes()
+        self.__insert_default_currency_codes()
+        self.__insert_default_exchanges()
 
-    def _insert_default_asset_classes_and_subclasses(self) -> None:
+    def __insert_default_asset_classes_and_subclasses(self) -> None:
         # Create a dataframe with the default asset classes
         asset_classes_and_subclasses = {
             "equity": ["common_stock", "preferred_share", "warrant", "unit", "depository_share", "other", "unknown"],
@@ -51,11 +51,11 @@ class DatabaseSchema:
         df_asset_subclasses = pd.DataFrame(data)
 
         # Insert the default asset classes into the database
-        self._query_executor.dataframe_to_existing_sql_table(df_asset_classes, "asset_class")
+        self.__query_executor.dataframe_to_existing_sql_table(df_asset_classes, "asset_class")
         # Insert the default asset subclasses into the database
-        self._query_executor.dataframe_to_existing_sql_table(df_asset_subclasses, "asset_subclass")
+        self.__query_executor.dataframe_to_existing_sql_table(df_asset_subclasses, "asset_subclass")
     
-    def _insert_default_country_codes(self) -> None:
+    def __insert_default_country_codes(self) -> None:
         # Get the country codes from Wikipedia and format them into a pandas dataframe
         url = "https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
         tables = pd.read_html(url)
@@ -84,9 +84,9 @@ class DatabaseSchema:
         country_codes = country_codes.sort_values(by=["name"])
 
         # Insert the default country codes into the database
-        self._query_executor.dataframe_to_existing_sql_table(country_codes, "country")
+        self.__query_executor.dataframe_to_existing_sql_table(country_codes, "country")
 
-    def _insert_default_currency_codes(self) -> None:
+    def __insert_default_currency_codes(self) -> None:
         # Get the currency codes from Wikipedia and format them into a pandas dataframe
         url = "https://en.wikipedia.org/wiki/List_of_circulating_currencies"
         tables = pd.read_html(url)
@@ -122,32 +122,32 @@ class DatabaseSchema:
         currency_codes = pd.concat([currency_codes, new_row], ignore_index=True)
 
         # Insert the default currency codes into the database
-        self._query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
+        self.__query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
 
-    def _insert_default_exchanges(self) -> None:
+    def __insert_default_exchanges(self) -> None:
         # TODO - replace this with function that imports exchange data from csv file
 
         country_id = {}
         # Search for the country_id of the exchange in the database
-        country_id["USA"] = self._query_executor.get_country_id_by_country_iso_code("USA")
-        country_id["JPN"] = self._query_executor.get_country_id_by_country_iso_code("JPN")
-        country_id["CHN"] = self._query_executor.get_country_id_by_country_iso_code("CHN")
-        country_id["HKG"] = self._query_executor.get_country_id_by_country_iso_code("HKG")
-        country_id["FRA"] = self._query_executor.get_country_id_by_country_iso_code("FRA")
-        country_id["GBR"] = self._query_executor.get_country_id_by_country_iso_code("GBR")
-        country_id["IND"] = self._query_executor.get_country_id_by_country_iso_code("IND")
-        country_id["CAN"] = self._query_executor.get_country_id_by_country_iso_code("CAN")
-        country_id["CHE"] = self._query_executor.get_country_id_by_country_iso_code("CHE")
-        country_id["AUS"] = self._query_executor.get_country_id_by_country_iso_code("AUS")
-        country_id["KOR"] = self._query_executor.get_country_id_by_country_iso_code("KOR")
-        country_id["DEU"] = self._query_executor.get_country_id_by_country_iso_code("DEU")
-        country_id["ESP"] = self._query_executor.get_country_id_by_country_iso_code("ESP")
-        country_id["ITA"] = self._query_executor.get_country_id_by_country_iso_code("ITA")
-        country_id["BRA"] = self._query_executor.get_country_id_by_country_iso_code("BRA")
-        country_id["TWN"] = self._query_executor.get_country_id_by_country_iso_code("TWN")
-        country_id["SGP"] = self._query_executor.get_country_id_by_country_iso_code("SGP")
-        country_id["ZAF"] = self._query_executor.get_country_id_by_country_iso_code("ZAF")
-        country_id["UNK"] = self._query_executor.get_country_id_by_country_iso_code("UNK")
+        country_id["USA"] = self.__query_executor.get_country_id_by_country_iso_code("USA")
+        country_id["JPN"] = self.__query_executor.get_country_id_by_country_iso_code("JPN")
+        country_id["CHN"] = self.__query_executor.get_country_id_by_country_iso_code("CHN")
+        country_id["HKG"] = self.__query_executor.get_country_id_by_country_iso_code("HKG")
+        country_id["FRA"] = self.__query_executor.get_country_id_by_country_iso_code("FRA")
+        country_id["GBR"] = self.__query_executor.get_country_id_by_country_iso_code("GBR")
+        country_id["IND"] = self.__query_executor.get_country_id_by_country_iso_code("IND")
+        country_id["CAN"] = self.__query_executor.get_country_id_by_country_iso_code("CAN")
+        country_id["CHE"] = self.__query_executor.get_country_id_by_country_iso_code("CHE")
+        country_id["AUS"] = self.__query_executor.get_country_id_by_country_iso_code("AUS")
+        country_id["KOR"] = self.__query_executor.get_country_id_by_country_iso_code("KOR")
+        country_id["DEU"] = self.__query_executor.get_country_id_by_country_iso_code("DEU")
+        country_id["ESP"] = self.__query_executor.get_country_id_by_country_iso_code("ESP")
+        country_id["ITA"] = self.__query_executor.get_country_id_by_country_iso_code("ITA")
+        country_id["BRA"] = self.__query_executor.get_country_id_by_country_iso_code("BRA")
+        country_id["TWN"] = self.__query_executor.get_country_id_by_country_iso_code("TWN")
+        country_id["SGP"] = self.__query_executor.get_country_id_by_country_iso_code("SGP")
+        country_id["ZAF"] = self.__query_executor.get_country_id_by_country_iso_code("ZAF")
+        country_id["UNK"] = self.__query_executor.get_country_id_by_country_iso_code("UNK")
 
         # Put the country_id and exchange name and acronym into a dataframe
         exchanges = [
@@ -188,7 +188,7 @@ class DatabaseSchema:
         logging.debug(f"df_exchanges: {df_exchanges}")
 
         # Insert the default exchanges into the database
-        self._query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
+        self.__query_executor.dataframe_to_existing_sql_table(df_exchanges, "exchange")
 
 
 if __name__ == "__main__":

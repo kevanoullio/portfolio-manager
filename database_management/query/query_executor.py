@@ -9,7 +9,7 @@ import pandas as pd
 # Local Modules
 from account_management.accounts import UserAccount, EmailAccount
 from database_management.connection import DatabaseConnection, DatabaseConnectionError
-from database_management.schema.asset_dataclass import AssetTransaction
+# from database_management.schema.asset_dataclass import AssetTransaction
 from session_management.session_manager import SessionManager
 from database_management.schema.asset_dataclass import AssetInfoWithIDs
 
@@ -20,14 +20,14 @@ import logging
 # QueryExecutor class for executing SQL statements
 class QueryExecutor:
     def __init__(self, db_connection: DatabaseConnection, session_manager: SessionManager):
-        self._db_connection = db_connection
-        self._session_manager = session_manager
-        self._complex_queries_file = "./database_management/query/complex_queries.sql"
-        logging.debug(f"Query executor initialized. Database: {self._db_connection._db_filename}")
+        self.__db_connection = db_connection
+        self.__session_manager = session_manager
+        self.__complex_queries_file = "./database_management/query/complex_queries.sql"
+        logging.debug(f"Query executor initialized. Database: {self.__db_connection.__db_filename}")
 
     def initialize_database_schema(self, db_schema_filename: str) -> None:
         try:
-            with self._db_connection as connection:
+            with self.__db_connection as connection:
                 try:
                     with connection.cursor() as cursor:
                         with open(db_schema_filename, "r") as database_schema_file:
@@ -37,10 +37,10 @@ class QueryExecutor:
                             logging.info("Database schema initialized using the schema.sql file.")
                 except sqlite3.Error as e:
                     logging.debug("Database schema initialization failed.")
-                    raise DatabaseQueryError(self._db_connection, "Error executing SQL query", e)
+                    raise DatabaseQueryError(self.__db_connection, "Error executing SQL query", e)
         except DatabaseConnectionError as e:
             logging.debug("Database connection is closed.")
-            raise DatabaseConnectionError(self._db_connection, "Database connection is closed.")
+            raise DatabaseConnectionError(self.__db_connection, "Database connection is closed.")
 
     def dictionary_to_existing_sql_table(self, dictionary: dict, table_name: str) -> None:
         # Check if the dictionary is None or not
@@ -62,7 +62,7 @@ class QueryExecutor:
         # Check if the dataframe is None or not
         if dataframe is not None:
             try:
-                connection = sqlite3.connect(self._db_connection._db_filename)
+                connection = sqlite3.connect(self.__db_connection.__db_filename)
                 try:
                     # Insert all rows from the dataframe into the existing database table
                     dataframe.to_sql(table_name, connection, index=False, if_exists="append")
@@ -70,12 +70,12 @@ class QueryExecutor:
                 except sqlite3.IntegrityError as e:
                     logging.error(f"Dataframe could not be inserted into the '{table_name}' table. {e}")
             except sqlite3.Error as e:
-                raise DatabaseConnectionError(self._db_connection, "Error opening the database connection", e)
+                raise DatabaseConnectionError(self.__db_connection, "Error opening the database connection", e)
         else:
             logging.error("Dataframe is None.")
 
     def execute_query(self, query: str, params: tuple | None=None) -> list[tuple] | None:
-        with self._db_connection as connection:
+        with self.__db_connection as connection:
             connection.begin_transaction()
             cursor = connection.execute_query(query, params)
             result = cursor.fetchall() # TODO - use QueryResults class to handle and format the results
@@ -111,7 +111,7 @@ class QueryExecutor:
 
     def execute_complex_query_by_title(self, query_title: str, *args: tuple) -> list[tuple] | None:
         # Read the complex_queries.sql file
-        with open(self._complex_queries_file, "r") as file:
+        with open(self.__complex_queries_file, "r") as file:
             queries = file.read()
 
         # Find the selected query by matching the title
@@ -119,7 +119,7 @@ class QueryExecutor:
 
         # Check if the query was found
         if selected_query is None:
-            raise DatabaseQueryError(self._db_connection, f"Query with title '{query_title}' not found.")
+            raise DatabaseQueryError(self.__db_connection, f"Query with title '{query_title}' not found.")
         else:
             # Execute the selected query with variable substitution
             result = self.execute_query(self.__replace_variables(selected_query, args))
@@ -482,7 +482,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         store_email_address_query = f"{query_type} INTO email (user_id, email_usage_id, [address]) VALUES (?, ?, ?)"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -496,7 +496,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         store_email_address_and_password_hash_query = f"{query_type} INTO email (user_id, email_usage_id, [address], password_hash) VALUES (?, ?, ?, ?)"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -536,7 +536,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_usage_names_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -562,7 +562,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_all_current_user_email_accounts_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -592,7 +592,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_user_email_accounts_by_usage_query = f"{query_type} [address] FROM email WHERE user_id = ? AND email_usage_id = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -600,7 +600,7 @@ class QueryExecutor:
         else:
             email_usage_id = self.get_email_usage_id_by_email_usage_name(email_usage_name)
             if email_usage_id is None:
-                raise DatabaseQueryError(self._db_connection, f"Email usage '{email_usage_name}' does not exist.")
+                raise DatabaseQueryError(self.__db_connection, f"Email usage '{email_usage_name}' does not exist.")
             else:    
                 params = (current_user_id, str(email_usage_id))
                 # Execute the query
@@ -622,7 +622,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_by_email_address_query = f"{query_type} email_usage_id, [address] FROM email WHERE user_id = ? AND [address] = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -637,14 +637,14 @@ class QueryExecutor:
             # Replace the email usage id with the email usage name
             usage = self.get_email_usage_name_by_usage_id(int(result[0][0]))
             if usage is None:
-                raise DatabaseQueryError(self._db_connection, f"Email usage id '{result[0][0]}' does not exist.")
+                raise DatabaseQueryError(self.__db_connection, f"Email usage id '{result[0][0]}' does not exist.")
             return EmailAccount(usage, email_address)
 
     def get_email_account_password_hash_by_email_address(self, email_address: str) -> bytes | None:
         # Define the query parameters
         query_type = "SELECT"
         get_email_account_password_hash_by_email_address_query = f"{query_type} password_hash FROM email WHERE user_id = ? AND address = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -940,7 +940,7 @@ class QueryExecutor:
         # Define the first query parameters
         query_type = "SELECT"
         get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND email_usage_id = ? AND address = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -975,7 +975,7 @@ class QueryExecutor:
         # Define the first query parameters
         query_type = "SELECT"
         get_email_id_by_email_address_query = f"{query_type} id FROM email WHERE user_id = ? AND address = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -1038,7 +1038,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         insert_brokerage_query = f"{query_type} INTO brokerage (user_id, name) VALUES (?, ?)"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         logging.debug(f"Current user id: {current_user_id}")
         if current_user_id is None:
             print("No user is currently logged in.")
@@ -1052,7 +1052,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "INSERT"
         insert_investment_account_query = f"{query_type} INTO investment_account (user_id, brokerage_id, name) VALUES (?, ?, ?)"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         params = (current_user_id, brokerage_id, investment_account_name)
         # Execute the query
         self.execute_query(insert_investment_account_query, params)
@@ -1061,7 +1061,7 @@ class QueryExecutor:
         # Define the query parameters
         query_type = "SELECT"
         get_investment_account_id_by_investment_account_name_query = f"{query_type} id FROM investment_account WHERE user_id = ? AND brokerage_id = ? AND name = ?"
-        current_user_id = self._session_manager.get_current_user_id()
+        current_user_id = self.__session_manager.get_current_user_id()
         params = (current_user_id, brokerage_id, investment_account_name,)
         # Execute the query
         result = self.execute_query(get_investment_account_id_by_investment_account_name_query, params)
@@ -1077,7 +1077,7 @@ class QueryExecutor:
     #     insert_asset_transaction_query = f"{query_type} INTO asset_transaction (user_id, asset_id, transaction_type_id, " \
     #         f"brokerage_id, investment_account_id, quantity, avg_price, total, transaction_fee, transaction_date, " \
     #         f"imported_from, import_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    #     current_user_id = self._session_manager.get_current_user_id()
+    #     current_user_id = self.__session_manager.get_current_user_id()
     #     params = (current_user_id, asset_transaction.asset_id, asset_transaction.transaction_type_id,
     #         asset_transaction.brokerage_id, asset_transaction.investment_account_id, asset_transaction.quantity,
     #         asset_transaction.avg_price, asset_transaction.total, asset_transaction.transaction_fee,

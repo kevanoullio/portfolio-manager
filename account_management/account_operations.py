@@ -23,10 +23,10 @@ import logging
 # UserAccountOperation class for defining user account operations
 class UserAccountOperation:
     def __init__(self, database: Database):
-        self._database = database
+        self.__database = database
 
     def check_username_exists(self, provided_username: str) -> bool:
-        result = self._database.query_executor.get_user_account_by_username(provided_username)
+        result = self.__database.query_executor.get_user_account_by_username(provided_username)
         if result is None:
             return False
         if isinstance(result, UserAccount):
@@ -36,7 +36,7 @@ class UserAccountOperation:
 
     # TODO - account for user roles for all methods that make changes to the database
     def create_user_account(self, provided_username: str, provided_password: bytes) -> None:
-        self._database.query_executor.store_username_and_password(provided_username, provided_password)
+        self.__database.query_executor.store_username_and_password(provided_username, provided_password)
 
     def delete_user_account_from_database(self, user_account: UserAccount) -> None:
         # Delete the user's information from the database
@@ -49,10 +49,10 @@ class UserAccountOperation:
         return UserAccount(provided_user_id, "username")
     
     def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
-        return self._database.query_executor.get_user_account_by_username(provided_username)
+        return self.__database.query_executor.get_user_account_by_username(provided_username)
     
     def get_user_password_by_username(self, provided_username: str) -> bytes | None:
-        return self._database.query_executor.get_user_password_by_username(provided_username)
+        return self.__database.query_executor.get_user_password_by_username(provided_username)
 
     def update_username(self, user_account: UserAccount, new_username: str) -> None:
         # Update the user's username to the new username
@@ -88,12 +88,12 @@ class UserAccountOperation:
 # EmailAccountOperation class for defining email account operations
 class EmailAccountOperation:
     def __init__(self, database: Database):
-        self._database = database
-        self._user_input = UserInput()
+        self.__database = database
+        self.__user_input = UserInput()
 
     # TODO - finish this, should I do email_address or email_account???
     def check_email_address_exists(self, provided_email_address: str) -> bool:
-        result = self._database.query_executor.get_email_account_by_email_address(provided_email_address)
+        result = self.__database.query_executor.get_email_account_by_email_address(provided_email_address)
         if result is None:
             return False
         if isinstance(result, UserAccount):
@@ -102,16 +102,16 @@ class EmailAccountOperation:
             return False
 
     def store_email_address_only(self, email_usage_id: int, provided_email_address: str) -> None:
-        self._database.query_executor.store_email_address_only(email_usage_id, provided_email_address)
+        self.__database.query_executor.store_email_address_only(email_usage_id, provided_email_address)
 
     def store_email_address_and_password_hash(self, email_usage_id: int, provided_email_address: str, provided_password_hash: bytes) -> None:
-        self._database.query_executor.store_email_address_and_password_hash(email_usage_id, provided_email_address, provided_password_hash)
+        self.__database.query_executor.store_email_address_and_password_hash(email_usage_id, provided_email_address, provided_password_hash)
 
     def get_email_usage_by_email_address(self, provided_email_address: str) -> list[str] | None:
-        return self._database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
+        return self.__database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
 
     def get_email_account_password_hash_by_email_address(self, provided_email_address: str) -> bytes | None:
-        return self._database.query_executor.get_email_account_password_hash_by_email_address(provided_email_address)
+        return self.__database.query_executor.get_email_account_password_hash_by_email_address(provided_email_address)
 
     # def import_data(self):
     #     # Logic to import data from the email account
@@ -124,7 +124,7 @@ class EmailAccountOperation:
 
 
     def add_email_account(self) -> int:
-        if self._database.session_manager.get_current_user() is None:
+        if self.__database.session_manager.get_current_user() is None:
             print("You are not logged in.")
             return 1
 
@@ -136,7 +136,7 @@ class EmailAccountOperation:
         print("4. Cancel")
 
         # Get the user's choice
-        choice = self._user_input.get_valid_menu_choice(4)
+        choice = self.__user_input.get_valid_menu_choice(4)
 
         # Check if the user wants to cancel
         if choice == 4:
@@ -144,10 +144,10 @@ class EmailAccountOperation:
             return 0
 
         # Get the email address from the user (email_prompt checks if it's valid)
-        provided_email_address = self._user_input.email_address_prompt()
+        provided_email_address = self.__user_input.email_address_prompt()
 
         # Get the email usage from the provided email address
-        email_usage_names = self._database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
+        email_usage_names = self.__database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
         
         # Check if the email address is already in the database based on usage type
         if email_usage_names is not None:
@@ -165,8 +165,8 @@ class EmailAccountOperation:
                     return 2
 
         # Get the email usage id by usage name
-        import_id = self._database.query_executor.get_email_usage_id_by_email_usage_name("import")
-        notification_id = self._database.query_executor.get_email_usage_id_by_email_usage_name("notification")
+        import_id = self.__database.query_executor.get_email_usage_id_by_email_usage_name("import")
+        notification_id = self.__database.query_executor.get_email_usage_id_by_email_usage_name("notification")
 
         # Check if the email usage id is None
         if import_id is None or notification_id is None:
@@ -176,13 +176,13 @@ class EmailAccountOperation:
         # Only get the email password if the email usage is not "notification"
         if choice == 1:
             # Get the password from the user (password_prompt checks if it's valid)
-            provided_email_password = self._user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
+            provided_email_password = self.__user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
             self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
         elif choice == 2:
             self.store_email_address_only(notification_id, provided_email_address)
         elif choice == 3:
             # Get the password from the user (password_prompt checks if it's valid)
-            provided_email_password = self._user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
+            provided_email_password = self.__user_input.password_prompt(prompt="Enter your email password: ", confirm=True)
             self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
             self.store_email_address_only(notification_id, provided_email_address)
         else:

@@ -29,13 +29,13 @@ import logging
 # Dashboard class for managing the user interface and all menu navigation
 class Dashboard:
     def __init__(self, database: Database, login_manager: LoginManager) -> None:
-        self._database = database
-        self._login_manager = login_manager
-        self._query_results = QueryResults()
-        self._user_input = UserInput()
-        self._user_account_operation = UserAccountOperation(self._database)
-        self._email_account_operation = EmailAccountOperation(self._database)
-        self._is_running = False
+        self.__database = database
+        self.__login_manager = login_manager
+        self.__query_results = QueryResults()
+        self.__user_input = UserInput()
+        self.__user_account_operation = UserAccountOperation(self.__database)
+        self.__email_account_operation = EmailAccountOperation(self.__database)
+        self.__is_running = False
  
     def __print_welcome_screen(self):
         print("\n====================================")
@@ -54,7 +54,7 @@ class Dashboard:
         logging.info("Login Dashboard has started running.")
 
         # Main loop for the dashboard
-        while self.current_menu and self._is_running:
+        while self.current_menu and self.__is_running:
             # Print the menu options
             self.current_menu.print_options()
             # Get the user's choice
@@ -66,7 +66,7 @@ class Dashboard:
             if next_menu:
                 # Run the menu logic which executes the coresponding dashboard function based on user's choice
                 next_menu()
-                if self._database.session_manager.get_current_user() is not None:
+                if self.__database.session_manager.get_current_user() is not None:
                     self.current_menu = self.current_menu.get_next_menu(choice)
                 else: # FIXME - seems like a hacky way to get the logout to work
                     self.current_menu = Login(self)
@@ -84,23 +84,23 @@ class Dashboard:
 
     # Login Menu Functions
     def create_account(self):
-        self._login_manager.create_account()
-        if self._database.session_manager.get_current_user() is not None:
-            logging.debug(f"User login: {self._database.session_manager.get_current_user()}")
+        self.__login_manager.create_account()
+        if self.__database.session_manager.get_current_user() is not None:
+            logging.debug(f"User login: {self.__database.session_manager.get_current_user()}")
         else:
             logging.debug("User login failed.")
 
     def login(self):
-        self._login_manager.user_login()
+        self.__login_manager.user_login()
 
     def start_program(self):
         # Start the Dashboard
-        self._is_running = True
+        self.__is_running = True
         logging.info("Dashboard has started running.")
 
     def exit_program(self):
         # Stop the Dashboard
-        self._is_running = False
+        self.__is_running = False
         logging.info("Dashboard has stopped running.")
 
 
@@ -126,7 +126,7 @@ class Dashboard:
     
 
     def logout(self):
-        self._login_manager.user_logout()
+        self.__login_manager.user_logout()
 
 
     def view_portfolio(self):
@@ -168,29 +168,29 @@ class Dashboard:
     def view_portfolio_summary(self):
         # TODO - review and finish this function
         print("\nNET VALUE OF SECURITIES:")
-        results = self._database.query_executor.execute_complex_query_by_title("net_value_of_securities")
-        self._query_results.simple_row_print(results, currency=True)
+        results = self.__database.query_executor.execute_complex_query_by_title("net_value_of_securities")
+        self.__query_results.simple_row_print(results, currency=True)
         
         print("\nTOTAL VALUE OF SECURITIES:")
-        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_securities")
-        self._query_results.simple_row_print(results, currency=True)
+        results = self.__database.query_executor.execute_complex_query_by_title("total_value_of_securities")
+        self.__query_results.simple_row_print(results, currency=True)
 
         print("\nTOTAL VALUE OF DIVIDENDS:")
-        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends")
-        self._query_results.simple_row_print(results, currency=True)
+        results = self.__database.query_executor.execute_complex_query_by_title("total_value_of_dividends")
+        self.__query_results.simple_row_print(results, currency=True)
 
         print("\nTOTAL VALUE OF DIVIDENDS BY SECURITY:")
-        results = self._database.query_executor.execute_complex_query_by_title("total_value_of_dividends_by_security")
-        self._query_results.simple_row_print(results, currency=True)
+        results = self.__database.query_executor.execute_complex_query_by_title("total_value_of_dividends_by_security")
+        self.__query_results.simple_row_print(results, currency=True)
 
 
     def view_current_portfolio(self):
         # TODO - review and finish this function
-        results = self._database.query_executor.execute_complex_query_by_title("view_current_portfolio")
+        results = self.__database.query_executor.execute_complex_query_by_title("view_current_portfolio")
         print("CURRENT PORTFOLIO:")
         headers = ["symbol", "total_buy_qty", "total_buy_amnt", "avg_buy_price", "total_sell_qty", "total_sell_amnt",
                "avg_sell_price", "total_divs", "net_qty", "net_value", "net_avg_price", "break_even_value"]
-        self._query_results.print_rows_with_headers(headers, results, currency=True)
+        self.__query_results.print_rows_with_headers(headers, results, currency=True)
     
 
     def view_entire_portfolio_history(self):
@@ -209,9 +209,9 @@ class Dashboard:
             print("Invalid ticker symbol. Please try again: ", end="")
             ticker = input()
         # Execute the query to search for an investment in portfolio history
-        results = self._database.query_executor.execute_complex_query_by_title("net_ticker_summary", (ticker, ticker, ticker))
+        results = self.__database.query_executor.execute_complex_query_by_title("net_ticker_summary", (ticker, ticker, ticker))
         # Print the query results
-        self._query_results.simple_row_print(results)
+        self.__query_results.simple_row_print(results)
 
 
     def build_portfolio_from_data_set(self):
@@ -256,7 +256,7 @@ class Dashboard:
 
     def import_existing_portfolio_from_database_file(self):
         # TODO - fix and finish this function
-        current_user = self._database.session_manager.get_current_user()
+        current_user = self.__database.session_manager.get_current_user()
         # if current_user is not None:
         #     if current_user.user_id is not None:
         #         # self.database.import_file(current_user.user_id, "database", [".db"])
@@ -268,12 +268,12 @@ class Dashboard:
         # TODO - Use AvailableEmailAccount class instead???
         # Call the import_from_email_account script
         from import_modules.import_from_email_account import import_from_email_account
-        import_from_email_account(self._database)
+        import_from_email_account(self.__database)
         
     
     # def get_available_email_accounts(self) -> list[EmailAccount] | None:
     #     # Fetch all email addresses of usage "import" from the user
-    #     import_email_accounts = self._database._query_executor.get_user_email_accounts_by_usage("import")
+    #     import_email_accounts = self.__database.__query_executor.get_user_email_accounts_by_usage("import")
     #     # Return the list of email accounts, if there's no emails, it returns None
     #     return import_email_accounts
         
@@ -340,9 +340,9 @@ class Dashboard:
         self.initialize_cboe_canada_asset_information_data()
 
 
-    def _initialize_nasdaq_trader_market_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str, exchange_in_url: str, exchange_filter: str | None) -> None:
+    def __initialize_nasdaq_trader_market_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str, exchange_in_url: str, exchange_filter: str | None) -> None:
         # Initialize the exchange listings object
-        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        exchange_listings_extractor = ExchangeListingsExtractor(self.__database)
         # Initialize the exchange listings
         exchange_listings_extractor.initialize_nasdaq_trader_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_in_url, exchange_filter)
         
@@ -352,7 +352,7 @@ class Dashboard:
             raise Exception("Exchange listings info not initialized.")
         
         # Initialize the asset information
-        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor = AssetInfoExtractor(self.__database)
         asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
         
         # Print and log the success message
@@ -369,7 +369,7 @@ class Dashboard:
         exchange_filter = None
 
         # Initialize the exchange listings
-        self._initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
+        self.__initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
                                            exchange_in_url, exchange_filter)
 
 
@@ -382,7 +382,7 @@ class Dashboard:
         exchange_filter = "N"
 
         # Initialize the exchange listings
-        self._initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
+        self.__initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
                                            exchange_in_url, exchange_filter)
 
     
@@ -395,7 +395,7 @@ class Dashboard:
         exchange_filter = "A"
  
         # Initialize the exchange listings
-        self._initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
+        self.__initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
                                            exchange_in_url, exchange_filter)
 
 
@@ -408,7 +408,7 @@ class Dashboard:
         exchange_filter = "P"
 
         # Initialize the exchange listings
-        self._initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
+        self.__initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
                                            exchange_in_url, exchange_filter)
 
 
@@ -421,13 +421,13 @@ class Dashboard:
         exchange_filter = "Z"
 
         # Initialize the exchange listings
-        self._initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
+        self.__initialize_nasdaq_trader_market_listings(country_iso_code, exchange_name, exchange_acronym,
                                            exchange_in_url, exchange_filter)
 
 
-    def _initialize_cboe_canada_market_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str, exchange_filter: str) -> None:
+    def __initialize_cboe_canada_market_listings(self, country_iso_code: str, exchange_name: str, exchange_acronym: str, exchange_filter: str) -> None:
         # Initialize the exchange listings
-        exchange_listings_extractor = ExchangeListingsExtractor(self._database)
+        exchange_listings_extractor = ExchangeListingsExtractor(self.__database)
         # Initialize the exchange listings
         exchange_listings_extractor.initialize_cboe_canada_market_data(country_iso_code, exchange_name, exchange_acronym, exchange_filter)
         
@@ -437,7 +437,7 @@ class Dashboard:
             raise Exception("Exchange listings info not initialized.")
         
         # Initialize the asset information
-        asset_info_extractor = AssetInfoExtractor(self._database)
+        asset_info_extractor = AssetInfoExtractor(self.__database)
         asset_info_extractor.initialize_asset_info(df_exchange_listings_info, exchange_acronym)
         
         # Print and log the success message
@@ -453,7 +453,7 @@ class Dashboard:
         exchange_filter = "XTSE"
         
         # Initialize the exchange listings
-        self._initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
+        self.__initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
                                                      exchange_acronym, exchange_filter)
 
 
@@ -465,7 +465,7 @@ class Dashboard:
         exchange_filter = "XTSX"
 
         # Initialize the exchange listings
-        self._initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
+        self.__initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
                                                      exchange_acronym, exchange_filter)
 
 
@@ -477,7 +477,7 @@ class Dashboard:
         exchange_filter = "XCNQ"
 
         # Initialize the exchange listings
-        self._initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
+        self.__initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
                                                      exchange_acronym, exchange_filter)
 
 
@@ -489,7 +489,7 @@ class Dashboard:
         exchange_filter = "NEOE"
 
         # Initialize the exchange listings
-        self._initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
+        self.__initialize_cboe_canada_market_listings(country_iso_code, exchange_name,
                                                      exchange_acronym, exchange_filter)
 
 
@@ -667,13 +667,13 @@ class Dashboard:
 
     def view_user_details(self):
         # Print the username
-        user = self._database.session_manager.get_current_user()
+        user = self.__database.session_manager.get_current_user()
         if user is not None:
             print(user)
         else:
             print("No user details found.")
         # Print the user email accounts
-        email_accounts = self._database.query_executor.get_all_current_user_email_accounts()
+        email_accounts = self.__database.query_executor.get_all_current_user_email_accounts()
         if email_accounts is not None:
             for email_account in email_accounts:
                 print(email_account)
@@ -696,7 +696,7 @@ class Dashboard:
 
 
     def view_current_email_accounts(self):
-        email_accounts = self._database.query_executor.get_all_current_user_email_accounts()
+        email_accounts = self.__database.query_executor.get_all_current_user_email_accounts()
         logging.debug(f"Current email accounts: {email_accounts}")
         if email_accounts is not None:
             for email_account in email_accounts:
@@ -711,7 +711,7 @@ class Dashboard:
         print(f"\n{title}")
         print("-" * len(title))
         # Run through the prompts to get the email address and password
-        self._email_account_operation.add_email_account()
+        self.__email_account_operation.add_email_account()
 
 
     def remove_email_account(self):

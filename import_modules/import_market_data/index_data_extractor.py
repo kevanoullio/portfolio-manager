@@ -24,19 +24,19 @@ class IndexData(TypedDict):
 
 class IndexHoldingsExtractor:
     def __init__(self, index_data: IndexData) -> None:
-        self._index_data = index_data
+        self.__index_data = index_data
 
     def get_holdings_from_index(self) -> pd.DataFrame | None:
         # Reate the HTML text from the specified URL
-        html_text = WebScraper(user_agent=True).get_html_content_as_text(self._index_data["website_url"])
+        html_text = WebScraper(user_agent=True).get_html_content_as_text(self.__index_data["website_url"])
         if html_text is None:
             return None
         # Extract the tables from the HTML text
         html_tables = pd.read_html(html_text)
         # Access the specific table based on the table_index
-        index_table = html_tables[self._index_data["table_index"]]
+        index_table = html_tables[self.__index_data["table_index"]]
         # Extract the column indicated by "ticker_column" and convert to a list
-        index_holdings = index_table[self._index_data["symbol_column"]].tolist()
+        index_holdings = index_table[self.__index_data["symbol_column"]].tolist()
         # Create a DataFrame from the list of tickers
         index_holdings_df = pd.DataFrame(index_holdings, columns=["symbol"])
         return index_holdings_df
