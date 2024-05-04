@@ -2,7 +2,7 @@
 
 # Standard Libraries
 from contextlib import contextmanager
-import queue
+# import queue
 import sqlite3
 
 # Third-party Libraries
@@ -22,7 +22,7 @@ class DatabaseConnection:
     - Static Instance: The Singleton class maintains a static reference (often named _instance) to the single instance of the class that it creates.
     - Global Access: The Singleton provides a public static method (often named getInstance()) that allows clients to access the single instance of the class. This method ensures that only one instance is created and returned.
     """
-    _instance = None
+    __instance = None
 
     def __new__(cls, db_filename: str):
         if cls.__instance is None:
@@ -31,9 +31,9 @@ class DatabaseConnection:
         return cls.__instance
 
     def __init_db(self, db_filename: str):
-        self.__db_filename = db_filename
+        self.db_filename = db_filename
         self.__db_connection = None
-        logging.debug(f"Database connection initialized. Database: {self.__db_filename}")
+        logging.debug(f"Database connection initialized. Database: {self.db_filename}")
 
     def __enter__(self):
         """The __enter__ method is called when entering the context manager's scope.
@@ -61,13 +61,13 @@ class DatabaseConnection:
             finally:
                 cursor.close()
         else:
-            logging.error(f"Database connection is closed: {self.__db_filename}")
+            logging.error(f"Database connection is closed: {self.db_filename}")
             raise DatabaseConnectionError(self, "Database connection is closed")
 
     def open_connection(self):
         if self.__db_connection is None:
             try:
-                self.__db_connection = sqlite3.connect(self.__db_filename)
+                self.__db_connection = sqlite3.connect(self.db_filename)
             except sqlite3.Error as e:
                 raise DatabaseConnectionError(self, "Error opening the database connection", e)
         else:

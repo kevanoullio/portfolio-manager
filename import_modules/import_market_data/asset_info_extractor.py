@@ -8,7 +8,7 @@ import pandas as pd
 # Local Modules
 from database_management.database import Database
 from database_management.schema.asset_dataclass import ExchangeListingsInfo, YFinanceAssetInfo, AssetInfoWithNames, AssetInfoWithIDs
-from import_modules.import_market_data.exchange_listings_extractor import ExchangeListingsExtractor
+# from import_modules.import_market_data.exchange_listings_extractor import ExchangeListingsExtractor
 from import_modules.import_market_data.yfinance_data_extractor import YahooFinanceDataExtractor
 
 # Configure logging
@@ -21,9 +21,8 @@ class AssetInfoExtractor:
         self.__database = database
         self.__exchange_acronym: str | None = None
         self.__exchange_listings_info: ExchangeListingsInfo | None = None
-        self.__yfinance_data_extractor = YahooFinanceDataExtractor(self.__database)
+        self.__yfinance_data_extractor = YahooFinanceDataExtractor()
         self.__yfinance_asset_info: YFinanceAssetInfo | None = None
-        self.__replacement_asset_info: dict[str, str] | None = None
         self.__asset_info_with_names: AssetInfoWithNames | None = None
         self.__asset_info_with_ids: AssetInfoWithIDs | None = None
         # self.__df_asset_info: pd.DataFrame | None = None
@@ -41,14 +40,9 @@ class AssetInfoExtractor:
     def __extract_asset_info_from_yfinance(self, exchange_acronym: str, asset_symbol: str) -> None:
         if self.__exchange_acronym is None:
             raise ValueError("Exchange Acronym must be extracted before Asset Info With Names.")
+        
         # Extract the asset info with names
-        # if self.__exchange_acronym == "Cboe CA":
-        #     self.__yfinance_data_extractor.extract_asset_info_from_yfinance_website("NE", asset_symbol)
-        # else:
-        #     self.__yfinance_data_extractor.extract_asset_info_from_yfinance(asset_symbol)
-        self.__yfinance_data_extractor.extract_asset_info_from_yfinance(exchange_acronym, asset_symbol)
-        # Get the asset info with names
-        yf_asset_info = self.__yfinance_data_extractor.get_yfinance_asset_info()
+        yf_asset_info = self.__yfinance_data_extractor.extract_asset_info_from_yfinance(exchange_acronym, asset_symbol)
         if yf_asset_info is None:
             logging.warning(f"Could not retrieve asset information for {asset_symbol} from Yahoo Finance.")
             return None

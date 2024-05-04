@@ -8,7 +8,7 @@ import yfinance as yf
 import re
 
 # Local Modules
-from database_management.database import Database
+# from database_management.database import Database
 # from import_modules.web_scraper import WebScraper
 from database_management.schema.asset_dataclass import YFinanceAssetInfo
 
@@ -17,10 +17,12 @@ import logging
 
 
 class YahooFinanceDataExtractor:
-    def __init__(self, database: Database) -> None:
-        self.__database = database
-        self.__asset_symbol: str | None = None
-        self.__yfinance_asset_info: YFinanceAssetInfo | None = None
+    def __init__(self) -> None:
+        pass
+    # def __init__(self, database: Database) -> None:
+        # self.__database = database
+        # self.__asset_symbol: str | None = None
+        # self.__yfinance_asset_info: YFinanceAssetInfo | None = None
     
     def __format_symbol(self, original_symbol: str, char_to_replace: str, replacement_char: str) -> str:
         pattern = r'\{}([A-Z]+)'.format(char_to_replace)
@@ -120,9 +122,17 @@ class YahooFinanceDataExtractor:
             print(f"Value error occurred for symbol {asset_symbol}: {err}")
             return None
 
-    def __store_raw_yfinance_data(self, df_asset_info: dict) -> None:
-        # Store the yahoo finance data in a YFinanceAssetInfo object
-        self.__yfinance_asset_info = YFinanceAssetInfo(
+    def extract_asset_info_from_yfinance(self, exchange_acronym, asset_symbol: str) -> YFinanceAssetInfo | None:  
+        # Get the raw yahoo finance data
+        df_asset_info = self.__get_asset_info_from_yfinance(exchange_acronym, asset_symbol)
+
+        # Check if the asset info is None
+        if df_asset_info is None:
+            logging.error(f"Could not find any asset info for {asset_symbol} on Yahoo Finance.")
+            return None
+
+        # Return the raw yfinance asset info
+        return YFinanceAssetInfo(
             asset_class_name=str(df_asset_info.get("quoteType")),
             sector_name=str(df_asset_info.get("sector")),
             industry_name=str(df_asset_info.get("industry")),
@@ -135,20 +145,6 @@ class YahooFinanceDataExtractor:
             logo_url=str(df_asset_info.get("logo_url"))
         )
 
-    def extract_asset_info_from_yfinance(self, exchange_acronym, asset_symbol: str) -> None:  
-        # Get the raw yahoo finance data
-        df_asset_info = self.__get_asset_info_from_yfinance(exchange_acronym, asset_symbol)
-
-        # Check if the asset info is None
-        if df_asset_info is None:
-            logging.error(f"Could not find any asset info for {asset_symbol} on Yahoo Finance.")
-            return None
-              
-        # Store the raw yahoo finance data
-        self.__store_raw_yfinance_data(df_asset_info)
-
-    def get_yfinance_asset_info(self) -> YFinanceAssetInfo | None:
-        return self.__yfinance_asset_info
 
 if __name__ == "__main__":
     print("This module is not meant to be executed directly.")

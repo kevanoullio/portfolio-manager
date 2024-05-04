@@ -174,8 +174,8 @@ class ExchangeListingsExtractor:
             logging.error("Asset class names could not be retrieved from the database.")
             raise ValueError("Asset class names could not be retrieved from the database.")
 
-        # Remove all "_" from the asset class names
-        asset_class_names = [asset_class_name.replace("_", " ") for asset_class_name in asset_class_names]
+        # # Remove all "_" from the asset class names
+        # asset_class_names = [asset_class_name.replace("_", " ") for asset_class_name in asset_class_names]
 
         # Fill the asset class lookup dictionary with asset class names as keys and subclasses as a list of values
         for asset_class in asset_class_names:
@@ -189,8 +189,8 @@ class ExchangeListingsExtractor:
                 logging.error(f"Asset subclass names could not be retrieved for asset class '{asset_class}' from the database.")
                 raise ValueError(f"Asset subclass names could not be retrieved for asset class '{asset_class}' from the database.")
             
-            # Remove all "_" from the asset subclass names
-            asset_subclass_names = [asset_subclass_name.replace("_", " ") for asset_subclass_name in asset_subclass_names]
+            # # Remove all "_" from the asset subclass names
+            # asset_subclass_names = [asset_subclass_name.replace("_", " ") for asset_subclass_name in asset_subclass_names]
 
             # Add the asset subclass names to the dictionary
             self.__asset_class_lookup[asset_class] = asset_subclass_names
@@ -524,6 +524,9 @@ class ExchangeListingsExtractor:
         self.__add_static_columns_to_nasdaq_trader_dataframe()
         # Cleanup the exchange listings
         self.__cleanup_nasdaq_trader_exchange_listings()
+        # Fetch asset classes and subclasses from the database
+        if self.__asset_class_subclass_names is None:
+            self.__fetch_asset_classes_and_subclasses()
         # Build the asset class and subclass lookup dictionary
         if self.__asset_class_lookup is None:
             self.__build_asset_class_and_subclass_lookup()
@@ -531,7 +534,6 @@ class ExchangeListingsExtractor:
         self.__add_asset_class_and_subclass_names_to_dataframe()
         print(f"{exchange_name} listings information successfully collected.")
         logging.info(f"{exchange_name} listings information successfully collected.")
-
 
     def __extract_cboe_canada_exchange_listings(self, exchange_acronym: str, exchange_filter: str) -> None:
         """
@@ -598,6 +600,9 @@ class ExchangeListingsExtractor:
         self.__extract_cboe_canada_exchange_listings(exchange_acronym, exchange_filter)
         # Cleanup the exchange listings
         self.__cleanup_cboe_canada_exchange_listings()
+        # Fetch asset classes and subclasses from the database
+        if self.__asset_class_subclass_names is None:
+            self.__fetch_asset_classes_and_subclasses()
         # Build the asset class and subclass lookup dictionary
         if self.__asset_class_lookup is None:
             self.__build_asset_class_and_subclass_lookup()

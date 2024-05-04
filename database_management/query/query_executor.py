@@ -23,7 +23,7 @@ class QueryExecutor:
         self.__db_connection = db_connection
         self.__session_manager = session_manager
         self.__complex_queries_file = "./database_management/query/complex_queries.sql"
-        logging.debug(f"Query executor initialized. Database: {self.__db_connection.__db_filename}")
+        logging.debug(f"Query executor initialized. Database: {self.__db_connection.db_filename}")
 
     def initialize_database_schema(self, db_schema_filename: str) -> None:
         try:
@@ -62,7 +62,7 @@ class QueryExecutor:
         # Check if the dataframe is None or not
         if dataframe is not None:
             try:
-                connection = sqlite3.connect(self.__db_connection.__db_filename)
+                connection = sqlite3.connect(self.__db_connection.db_filename)
                 try:
                     # Insert all rows from the dataframe into the existing database table
                     dataframe.to_sql(table_name, connection, index=False, if_exists="append")
