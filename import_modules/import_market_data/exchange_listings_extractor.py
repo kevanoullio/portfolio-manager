@@ -15,6 +15,11 @@ from import_modules.file_management.txt_file_manager import TXTFileManager
 import logging
 
 
+# Website links:
+# http://ftp.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt
+# http://ftp.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt
+# https://cdn.cboe.com/ca/equities/mnow/symbol_listings.csv
+
 # ExchangeListingsExtractor class for extracting exchange listings data from various websites
 class ExchangeListingsExtractor:
     def __init__(self, database: Database) -> None:
