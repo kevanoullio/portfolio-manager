@@ -12,7 +12,10 @@ from import_modules.web_scraper import WebScraper
 # Configure logging
 import logging
 
-
+# Website links:
+# https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average
+# https://en.wikipedia.org/wiki/S&P/TSX_Composite_Index#List_of_companies
+# https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
 
 class IndexData(TypedDict):
     name: str
