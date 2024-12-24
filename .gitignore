@@ -1,5 +1,6 @@
 # Ignore VS Code specific files
 .vscode/
+*.code-workspace
 
 # Ignore old code and old data which has sensitive information
 old_code
