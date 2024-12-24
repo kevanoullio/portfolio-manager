@@ -7,6 +7,7 @@ import pandas as pd
 
 # Local Modules
 from database_management.query.query_executor import QueryExecutor
+# from import_modules.web_data_importer import WebDataImporter
 
 # Configure logging
 import logging
@@ -56,16 +57,25 @@ class DatabaseSchema:
         self._query_executor.dataframe_to_existing_sql_table(df_asset_subclasses, "asset_subclass")
     
     def _insert_default_country_codes(self) -> None:
-        # Get the country codes from Wikipedia and format them into a pandas dataframe
+        # Set the URL for the Wikipedia page containing the country codes
         url = "https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
         tables = pd.read_html(url)
 
+        # # Print all tables to debug
+        # for i, table in enumerate(tables):
+        #     logging.debug(f"Table {i}:")
+        #     logging.debug(table.head())
+
         # The first table contains the country codes
-        country_codes = tables[0]
+        table_index = 0
+        country_codes = tables[table_index]
+
         # The dataframe has a multi-level column index, so we need to flatten it
         country_codes.columns = country_codes.columns.get_level_values(1)
 
         # Rename the columns we want to keep
+        # Last accessed Dec 22, 2024, these were the formatted column names:
+        # "name": ["Country name (using title case)"], "iso_code": ["Alpha-2 code"]
         country_codes = country_codes.rename(columns={"ISO 3166[1] name[5]": "name", "A-3 [5]": "iso_code"})
         # Rebuild a new dataframe with only the columns we want to keep
         country_codes = country_codes[["name", "iso_code"]]
@@ -87,24 +97,45 @@ class DatabaseSchema:
         self._query_executor.dataframe_to_existing_sql_table(country_codes, "country")
 
     def _insert_default_currency_codes(self) -> None:
-        # Get the currency codes from Wikipedia and format them into a pandas dataframe
+        # Set the URL for the Wikipedia page containing the currency codes
         url = "https://en.wikipedia.org/wiki/List_of_circulating_currencies"
         tables = pd.read_html(url)
 
+        # Print all tables to debug
+        for i, table in enumerate(tables):
+            logging.debug(f"Table {i}:")
+            logging.debug(table.head())
+
         # The second table contains the country codes
-        currency_codes = tables[1]
+        table_index = 1
+        currency_codes = tables[table_index]
 
         # Rename the columns we want to keep
-        currency_codes = currency_codes.rename(columns={"Currency[1][2]": "name", "ISO code[2]": "iso_code", "Symbol[D] or Abbrev.[3]": "symbol"})
+        # Last accessed Dec 22, 2024, these were the formatted column names:
+        # "name": ["Currency[2][3]"], "iso_code": ["ISO code[3]"], "symbol": ["Symbol[D] or Abbrev.[4]"]
+        currency_codes = currency_codes.rename(columns={"Currency[2][3]": "name", "ISO code[3]": "iso_code", "Symbol[D] or Abbrev.[4]": "symbol"})
+
         # Rebuild a new dataframe with only the columns we want to keep
         currency_codes = currency_codes[["name", "iso_code", "symbol"]]
+        logging.debug(f"currency_codes: {currency_codes}")
 
-        # Filter out the rows that have "(none)" for their iso_code
+        # Print out all rows that are "none" in all columns
+        logging.debug(currency_codes[(currency_codes["name"] == "(none)")])
+        logging.debug(currency_codes[(currency_codes["iso_code"] == "(none)")])
+        logging.debug(currency_codes[(currency_codes["symbol"] == "(none)")])
+
+        # Remove any rows with "(none)" in the name column
+        mask = currency_codes["name"] != "(none)"
+        currency_codes = currency_codes[mask]
+        # Remove any rows that have "(none)" for their iso_code
         mask = currency_codes["iso_code"] != "(none)"
         currency_codes = currency_codes[mask]
         # Remove any rows with "(none)" in the symbol column
         mask = currency_codes["symbol"] != "(none)"
         currency_codes = currency_codes[mask]
+
+        # Remove any rows with null values for all columns
+        currency_codes = currency_codes.dropna(subset=["name", "iso_code", "symbol"])
 
         # Remove any duplicate entries
         currency_codes = currency_codes.drop_duplicates(subset=["iso_code"])
