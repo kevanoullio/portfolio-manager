@@ -13,8 +13,7 @@ from database_management.database import Database
 from user_interface.user_input import UserInput
 
 # Local modules imported for Type Checking purposes only
-if TYPE_CHECKING:
-    from account_management.accounts import UserAccount
+from account_management.accounts import UserAccount
 
 # Configure logging
 import logging
@@ -47,10 +46,10 @@ class UserAccountOperation:
         # Logic to retrieve user account from the database based on provided user_id
         # TODO - Implement this method and fix return
         return UserAccount(provided_user_id, "username")
-    
+
     def get_user_account_by_username(self, provided_username: str) -> UserAccount | None:
         return self.__database.query_executor.get_user_account_by_username(provided_username)
-    
+
     def get_user_password_by_username(self, provided_username: str) -> bytes | None:
         return self.__database.query_executor.get_user_password_by_username(provided_username)
 
@@ -148,7 +147,7 @@ class EmailAccountOperation:
 
         # Get the email usage from the provided email address
         email_usage_names = self.__database.query_executor.get_email_usage_names_by_email_address(provided_email_address)
-        
+
         # Check if the email address is already in the database based on usage type
         if email_usage_names is not None:
             if choice == 1:
@@ -172,7 +171,7 @@ class EmailAccountOperation:
         if import_id is None or notification_id is None:
             print("Error getting email usage id.")
             return 3
-        
+
         # Only get the email password if the email usage is not "notification"
         if choice == 1:
             # Get the password from the user (password_prompt checks if it's valid)
@@ -201,7 +200,7 @@ class EmailAccountOperation:
     #     # if self.session_manager.current_user.user_id is None:
     #     #     print("User id is None. Cannot remove email account.")
     #     #     return 1
-    
+
     #     # Get the email address from the user (email_prompt checks if it's valid)
     #     provided_email = self.user_input.email_prompt()
 
@@ -231,7 +230,7 @@ class EmailAccountOperation:
     #         # Prep the email information for insertion into the database
     #         columns = ("email_address", "password_hash", "email_usage_id")
     #         values = (provided_email, provided_password, email_usage_id)
-        
+
     #     # Delete the entry from the database
     #     try:
     #         self.query_executor.delete_entry("email", columns, values, self.session_manager.current_user.user_id)
@@ -241,7 +240,7 @@ class EmailAccountOperation:
     #         print("Error deleting email account from the database.")
     #         logging.warning(e)
     #         return 3
-        
+
     #     print("Email account successfully removed.")
     #     return 0
 

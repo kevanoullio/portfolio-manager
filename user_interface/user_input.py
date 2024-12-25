@@ -8,6 +8,7 @@ import re
 import bcrypt
 
 # Local Modules
+from exceptions.validation_exceptions import ValidationError, LengthError, CharacterError, FormError
 
 # Configure logging
 import logging
@@ -26,25 +27,22 @@ class Validator:
 
     def __is_valid_characters(self, value: str) -> bool:
         return re.match(f"^[{self.__allowed_characters}]*$", value) is not None
-   
+
     def __is_valid_form(self, value: str) -> bool:
         return re.match(self.__valid_form, value) is not None
 
-    def validate(self, value: str) -> int:
-        # Validate the length of the provided username
+    def validate(self, value: str) -> None:
+        # Validate the length of the provided input
         if not self.__is_valid_length(value):
-            return 1
-        
-        # Validate the characters of the provided username
-        if not self.__is_valid_characters(value):
-            return 2
-        
-        # Validate the form of the provided username
-        if not self.__is_valid_form(value):
-            return 3
+            raise LengthError(self.__minimum_length, self.__maximum_length)
 
-        # All checks completed, provided username is valid
-        return 0
+		# Validate the characters of the provided input
+        if not self.__is_valid_characters(value):
+            raise CharacterError()
+
+		# Validate the form of the provided input
+        if not self.__is_valid_form(value):
+            raise FormError()
 
 
 # UsernameValidator class for validating usernames
@@ -53,7 +51,7 @@ class UsernameValidator(Validator):
         allowed_characters = r"a-zA-Z0-9_"
         valid_username_form = r"^[a-zA-Z0-9_]*$"
         super().__init__(minimum_length, maximum_length, allowed_characters, valid_username_form)
-    
+
 
 # PasswordValidator class for validating passwords
 class PasswordValidator(Validator):
@@ -91,24 +89,18 @@ class UserInput:
         return hashed_password
 
     def username_prompt(self, prompt: str="Enter your username: ") -> str:
-        # Get the username from the user
-        provided_username = input(prompt)
+            while True:
+                # Get the username from the user
+                provided_username = input(prompt)
 
-        # Check if the provided username is valid
-        while self.__username_validator.validate(provided_username) != 0:
-            print("Invalid username. ", end="")
-            if self.__username_validator.validate(provided_username) == 1:
-                print(f"Must be between {self.__username_validator.__minimum_length} and {self.__username_validator.__maximum_length} characters long.")
-            elif self.__username_validator.validate(provided_username) == 2:
-                print("Only alphanumeric characters and underscores are allowed.")
-            elif self.__username_validator.validate(provided_username) == 3:
-                print("Must only contain alphanumeric characters and underscores with no separations.")
-            provided_username = input("Please try again: ")
-
-        # Sanitize the provided username
-        provided_username = self.__sanitize_input(provided_username)
-
-        return provided_username
+                try:
+                    # Validate the provided username
+                    self.__username_validator.validate(provided_username)
+                    # Sanitize the provided username
+                    provided_username = self.__sanitize_input(provided_username)
+                    return provided_username
+                except ValidationError as e:
+                    print(f"Invalid username. {e.message}")
 
     def password_prompt(self, prompt: str="Enter your password: ", confirm: bool=False, confirm_prompt: str="Confirm your password: ") -> bytes:
         """
@@ -122,20 +114,17 @@ class UserInput:
         Returns:
             (bytes): If confirm is set to False, this function returns the hashed password as bytes, otherwise it returns the provided password as bytes without hashing.
         """
-        
-        # Get the password from the user
-        provided_password = getpass(prompt)
 
-        # Check if the provided password is valid
-        while self.__password_validator.validate(provided_password) != 0:
-            print("Invalid password. ", end="")
-            if self.__password_validator.validate(provided_password) == 1:
-                print(f"Must be between {self.__password_validator.__minimum_length} and {self.__password_validator.__maximum_length} characters long.")
-            elif self.__password_validator.validate(provided_password) == 2:
-                print("Single quotes, double quotes, less than, greater than, and semicolons are not allowed.")
-            elif self.__password_validator.validate(provided_password) == 3:
-                print("Must use allowed characters only with no separations.")
-            provided_password = getpass("Please try again: ")
+        while True:
+            # Get the password from the user
+            provided_password = getpass(prompt)
+
+            try:
+                # Validate the provided password
+                self.__password_validator.validate(provided_password)
+                break
+            except ValidationError as e:
+                print(f"Invalid password. {e.message}")
 
         # Confirm the provided password if confirm was set to True
         if confirm:
@@ -145,9 +134,6 @@ class UserInput:
                     print("Passwords do not match. Please try again.")
                     continue
                 break
-        
-        # Sanitize the provided password
-        provided_password = self.__sanitize_input(provided_password)
 
         # Convert the password to bytes
         encoded_password = provided_password.encode()
@@ -160,24 +146,18 @@ class UserInput:
             return encoded_password
 
     def email_address_prompt(self, prompt: str="Enter your email address: ") -> str:
-        # Get the email address from the user
-        provided_email = input(prompt)
+        while True:
+            # Get the email address from the user
+            provided_email = input(prompt)
 
-        # Check if the provided email address is valid
-        while self.__email_validator.validate(provided_email) != 0:
-            print("Invalid email address. ", end="")
-            if self.__email_validator.validate(provided_email) == 1:
-                print(f"Must be between {self.__email_validator.__minimum_length} and {self.__email_validator.__maximum_length} characters long.")
-            elif self.__email_validator.validate(provided_email) == 2:
-                print("Only alphanumeric characters, underscores, periods, hyphens, and @ symbols are allowed.")
-            elif self.__email_validator.validate(provided_email) == 3:
-                print("Must be in the form of a standard email address, i.e. 'email@service.something'")
-            provided_email = input("Please try again: ")
-
-        # Sanitize the provided email address
-        provided_email = self.__sanitize_input(provided_email)
-
-        return provided_email
+            try:
+                # Validate the provided email address
+                self.__email_validator.validate(provided_email)
+                # Sanitize the provided email address
+                provided_email = self.__sanitize_input(provided_email)
+                return provided_email
+            except ValidationError as e:
+                print(f"Invalid email address. {e.message}")
 
     def get_valid_menu_choice(self, maximum_choice: int, choice_prompt: str | None="Please enter your choice: ") -> int:
         while True:
