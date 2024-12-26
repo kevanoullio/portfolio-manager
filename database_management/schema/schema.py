@@ -18,7 +18,7 @@ class DatabaseSchema:
     def __init__(self, query_executor: QueryExecutor, db_schema_filename: str) -> None:
         self.__query_executor = query_executor
         self.__db_schema_filename = db_schema_filename
-    
+
     def initialize_database(self) -> None:
         self.__query_executor.initialize_database_schema(self.__db_schema_filename)
         self.__insert_default_asset_classes_and_subclasses()
@@ -55,16 +55,16 @@ class DatabaseSchema:
         self.__query_executor.dataframe_to_existing_sql_table(df_asset_classes, "asset_class")
         # Insert the default asset subclasses into the database
         self.__query_executor.dataframe_to_existing_sql_table(df_asset_subclasses, "asset_subclass")
-    
+
     def __insert_default_country_codes(self) -> None:
         # Set the URL for the Wikipedia page containing the country codes
         url = "https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes"
         tables = pd.read_html(url)
 
-        # # Print all tables to debug
-        # for i, table in enumerate(tables):
-        #     logging.debug(f"Table {i}:")
-        #     logging.debug(table.head())
+        # Print all tables to debug
+        for i, table in enumerate(tables):
+            logging.debug(f"Table {i}:")
+            logging.debug(table.head())
 
         # The first table contains the country codes
         table_index = 0
@@ -156,7 +156,7 @@ class DatabaseSchema:
         self.__query_executor.dataframe_to_existing_sql_table(currency_codes, "currency")
 
     def __insert_default_exchanges(self) -> None:
-        # TODO - replace this with function that imports exchange data from csv file
+        # TODO - replace this with function that imports exchange data from csv file???
 
         country_id = {}
         # Search for the country_id of the exchange in the database
