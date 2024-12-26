@@ -16,6 +16,7 @@ import logging
 class UserAccount:
     user_id: int # TODO - store user_role?
     username: str
+    password_hash: bytes | None = None
 
     def __post_init__(self) -> None:
         logging.info(f"User initialized successfully. Username: {self.username}, User ID: {self.user_id}")
@@ -29,6 +30,7 @@ class UserAccount:
 class EmailAccount:
     usage: str
     address: str
+    password_hash: bytes | None = None
 
     def __post_init__(self) -> None:
         logging.info(f"Email account initialized successfully. Address: {self.address}, Usage: {self.usage}")
