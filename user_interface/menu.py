@@ -15,7 +15,7 @@ import logging
 # Menu base class for managing menu related functions
 class Menu:
     def __init__(self, dashboard: Dashboard) -> None:
-        self.__dashboard = dashboard
+        self.dashboard = dashboard
         self.is_active = False
         self.title = ""
         self.previous_menu = None
@@ -47,7 +47,7 @@ class Menu:
             value_tmp = ""
             for value in inner_dict.values():
                 value_tmp += f"{value} "
-            debug_options.append(value_tmp)
+            debug_options.append(value_tmp.strip())
         logging.info(f"Options: {debug_options}")
 
         # Print the sorted options to the console
@@ -120,17 +120,17 @@ class Menu:
         else:
             print(f"Option {option} does not exist.")
 
-    def add_option(self, verb: str = "", connector: str = "", subject: str = "") -> None:
+    def add_option(self, verb: str | None = None, connector: str | None = None, subject: str | None = None) -> None:
         new_option = {}
-        if verb:
+        if verb is not None:
             new_option["verb"] = verb
-        if connector:
+        if connector is not None:
             new_option["connector"] = connector
-        if subject:
+        if subject is not None:
             new_option["subject"] = subject
         self.option_count += 1
         self.options[self.option_count] = new_option
-        logging.debug(f"Option {self.option_count} '{verb} {connector} {subject}' has been added to {self.title} menu.")
+        logging.debug(f"Option {self.option_count} '{verb + ' ' if verb is not None else ''}{connector + ' ' if connector is not None else ''}{subject if subject is not None else ''}' has been added to {self.title} menu.")
 
     def update_option(self, option_id: int, **kwargs) -> None:
         option = self.options.get(option_id)
@@ -167,7 +167,7 @@ class Menu:
         else:
             next_menu = self.menu_mapping.get(choice)
             if next_menu:
-                return next_menu(self.__dashboard)
+                return next_menu(self.dashboard)
             return None
 
 
@@ -187,9 +187,9 @@ class Login(Menu):
             0: None
         }
         self.menu_logic = {
-            1: self.__dashboard.create_account,
-            2: self.__dashboard.login,
-            0: self.__dashboard.exit_program
+            1: self.dashboard.create_account,
+            2: self.dashboard.login,
+            0: self.dashboard.exit_program
         }
 
 
@@ -216,12 +216,12 @@ class Main(Menu):
             0: Login
         }
         self.menu_logic = {
-            1: self.__dashboard.portfolio_manager,
-            2: self.__dashboard.account_settings,
-            3: self.__dashboard.help_information,
-            4: self.__dashboard.save_changes,
-            5: self.__dashboard.discard_changes,
-            0: self.__dashboard.logout
+            1: self.dashboard.portfolio_manager,
+            2: self.dashboard.account_settings,
+            3: self.dashboard.help_information,
+            4: self.dashboard.save_changes,
+            5: self.dashboard.discard_changes,
+            0: self.dashboard.logout
         }
 
 
@@ -258,17 +258,17 @@ class PortfolioManager(Menu):
             0: Main
         }
         self.menu_logic = {
-            1: self.__dashboard.view_portfolio,
-            2: self.__dashboard.manage_portfolio,
-            3: self.__dashboard.view_market_data,
-            4: self.__dashboard.manage_market_data,
-            5: self.__dashboard.statistical_analysis,
-            6: self.__dashboard.trading_strategies,
-            7: self.__dashboard.reports,
-            8: self.__dashboard.export_data,
-            9: self.__dashboard.automation,
-            10: self.__dashboard.notifications,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_portfolio,
+            2: self.dashboard.manage_portfolio,
+            3: self.dashboard.view_market_data,
+            4: self.dashboard.manage_market_data,
+            5: self.dashboard.statistical_analysis,
+            6: self.dashboard.trading_strategies,
+            7: self.dashboard.reports,
+            8: self.dashboard.export_data,
+            9: self.dashboard.automation,
+            10: self.dashboard.notifications,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -295,12 +295,12 @@ class ViewPortfolio(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.view_portfolio_summary,
-            2: self.__dashboard.view_current_portfolio,
-            3: self.__dashboard.view_entire_portfolio_history,
-            4: self.__dashboard.search_for_current_investment,
-            5: self.__dashboard.search_for_investment_in_portfolio_history,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_portfolio_summary,
+            2: self.dashboard.view_current_portfolio,
+            3: self.dashboard.view_entire_portfolio_history,
+            4: self.dashboard.search_for_current_investment,
+            5: self.dashboard.search_for_investment_in_portfolio_history,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -329,13 +329,13 @@ class ManagePortfolio(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.build_portfolio_from_data_set,
-            2: self.__dashboard.import_existing_portfolio_data_set,
-            3: self.__dashboard.delete_existing_portfolio_data_set,
-            4: self.__dashboard.manage_custom_import_scripts,
-            5: self.__dashboard.add_investment_manually,
-            6: self.__dashboard.modify_investment_entry,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.build_portfolio_from_data_set,
+            2: self.dashboard.import_existing_portfolio_data_set,
+            3: self.dashboard.delete_existing_portfolio_data_set,
+            4: self.dashboard.manage_custom_import_scripts,
+            5: self.dashboard.add_investment_manually,
+            6: self.dashboard.modify_investment_entry,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -377,13 +377,13 @@ class ImportExistingPortfolio(Menu):
             0: ManagePortfolio
         }
         self.menu_logic = {
-            1: self.__dashboard.import_existing_portfolio_from_brokerage_account,
-            2: self.__dashboard.import_existing_portfolio_from_csv_file,
-            3: self.__dashboard.import_existing_portfolio_from_excel_file,
-            4: self.__dashboard.import_existing_portfolio_from_pdf_file,
-            5: self.__dashboard.import_existing_portfolio_from_database_file,
-            6: self.__dashboard.import_existing_portfolio_from_email_account,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.import_existing_portfolio_from_brokerage_account,
+            2: self.dashboard.import_existing_portfolio_from_csv_file,
+            3: self.dashboard.import_existing_portfolio_from_excel_file,
+            4: self.dashboard.import_existing_portfolio_from_pdf_file,
+            5: self.dashboard.import_existing_portfolio_from_database_file,
+            6: self.dashboard.import_existing_portfolio_from_email_account,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -529,10 +529,10 @@ class ManageCustomImportScripts(Menu):
             0: ManagePortfolio
         }
         self.menu_logic = {
-            1: self.__dashboard.view_custom_import_scripts,
-            2: self.__dashboard.add_custom_import_script,
-            3: self.__dashboard.remove_custom_import_script,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_custom_import_scripts,
+            2: self.dashboard.add_custom_import_script,
+            3: self.dashboard.remove_custom_import_script,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -585,10 +585,10 @@ class ViewMarketData(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.previous_menu,
-            2: self.__dashboard.previous_menu,
-            3: self.__dashboard.previous_menu,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.previous_menu,
+            2: self.dashboard.previous_menu,
+            3: self.dashboard.previous_menu,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -611,10 +611,10 @@ class ManageMarketData(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.initialize_market_data,
-            2: self.__dashboard.import_custom_market_data,
-            3: self.__dashboard.modify_market_data,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.initialize_market_data,
+            2: self.dashboard.import_custom_market_data,
+            3: self.dashboard.modify_market_data,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -640,10 +640,10 @@ class InitializeMarketData(Menu):
         }
         self.menu_logic = {
             # 1: self.dashboard.menu_without_logic,
-            1: self.__dashboard.menu_without_logic,
-            2: self.__dashboard.initialize_index_holdings_data,
-            3: self.__dashboard.initialize_macro_data,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.menu_without_logic,
+            2: self.dashboard.initialize_index_holdings_data,
+            3: self.dashboard.initialize_macro_data,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -727,17 +727,17 @@ class InitializeAssetInformationData(Menu):
             0: InitializeMarketData
         }
         self.menu_logic = { # TODO - add logic
-            1: self.__dashboard.initialize_all_asset_information_data,
-            2: self.__dashboard.initialize_nasdaq_asset_information_data,
-            3: self.__dashboard.initialize_nyse_asset_information_data,
-            4: self.__dashboard.initialize_nyse_mkt_asset_information_data,
-            5: self.__dashboard.initialize_nyse_arca_asset_information_data,
-            6: self.__dashboard.initialize_bats_asset_information_data,
-            7: self.__dashboard.initialize_tsx_asset_information_data,
-            8: self.__dashboard.initialize_tsxv_asset_information_data,
-            9: self.__dashboard.initialize_cse_asset_information_data,
-            10: self.__dashboard.initialize_cboe_canada_asset_information_data,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.initialize_all_asset_information_data,
+            2: self.dashboard.initialize_nasdaq_asset_information_data,
+            3: self.dashboard.initialize_nyse_asset_information_data,
+            4: self.dashboard.initialize_nyse_mkt_asset_information_data,
+            5: self.dashboard.initialize_nyse_arca_asset_information_data,
+            6: self.dashboard.initialize_bats_asset_information_data,
+            7: self.dashboard.initialize_tsx_asset_information_data,
+            8: self.dashboard.initialize_tsxv_asset_information_data,
+            9: self.dashboard.initialize_cse_asset_information_data,
+            10: self.dashboard.initialize_cboe_canada_asset_information_data,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -754,7 +754,7 @@ class InitializeIndexHoldingsData(Menu):
             0: ManageMarketData
         }
         self.menu_logic = { # TODO - add logic
-            0: self.__dashboard.previous_menu
+            0: self.dashboard.previous_menu
         }
 
 
@@ -771,7 +771,7 @@ class InitializeMacroData(Menu):
             0: ManageMarketData
         }
         self.menu_logic = { # TODO - add logic
-            0: self.__dashboard.previous_menu
+            0: self.dashboard.previous_menu
         }
 
 
@@ -798,12 +798,12 @@ class ImportCustomMarketData(Menu):
             0: ManageMarketData
         }
         self.menu_logic = {
-            1: self.__dashboard.import_market_data_from_csv,
-            2: self.__dashboard.import_market_data_from_excel,
-            3: self.__dashboard.import_market_data_from_database,
-            4: self.__dashboard.import_market_data_from_api,
-            5: self.__dashboard.import_market_data_from_online_source,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.import_market_data_from_csv,
+            2: self.dashboard.import_market_data_from_excel,
+            3: self.dashboard.import_market_data_from_database,
+            4: self.dashboard.import_market_data_from_api,
+            5: self.dashboard.import_market_data_from_online_source,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -881,10 +881,10 @@ class ModifyMarketData(Menu):
             0: ManageMarketData
         }
         self.menu_logic = {
-            1: self.__dashboard.modify_single_market_data_entry,
-            2: self.__dashboard.modify_entire_market_data_column,
-            3: self.__dashboard.modify_entire_market_data_table,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.modify_single_market_data_entry,
+            2: self.dashboard.modify_entire_market_data_column,
+            3: self.dashboard.modify_entire_market_data_table,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -952,16 +952,16 @@ class StatisticalAnalysis(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.portfolio_overview,
-            2: self.__dashboard.performance_analysis,
-            3: self.__dashboard.risk_analysis,
-            4: self.__dashboard.correlation_analysis,
-            5: self.__dashboard.portfolio_optimization,
-            6: self.__dashboard.portfolio_backtesting,
-            7: self.__dashboard.portfolio_simulation,
-            8: self.__dashboard.portfolio_forecasting,
-            9: self.__dashboard.portfolio_stress_testing,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.portfolio_overview,
+            2: self.dashboard.performance_analysis,
+            3: self.dashboard.risk_analysis,
+            4: self.dashboard.correlation_analysis,
+            5: self.dashboard.portfolio_optimization,
+            6: self.dashboard.portfolio_backtesting,
+            7: self.dashboard.portfolio_simulation,
+            8: self.dashboard.portfolio_forecasting,
+            9: self.dashboard.portfolio_stress_testing,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1085,11 +1085,11 @@ class TradingStrategies(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.current_trading_strategies,
-            2: self.__dashboard.add_trading_strategy,
-            3: self.__dashboard.modify_trading_strategy,
-            4: self.__dashboard.remove_trading_strategy,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.current_trading_strategies,
+            2: self.dashboard.add_trading_strategy,
+            3: self.dashboard.modify_trading_strategy,
+            4: self.dashboard.remove_trading_strategy,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1158,11 +1158,11 @@ class Reports(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.view_current_reports,
-            2: self.__dashboard.add_report,
-            3: self.__dashboard.modify_report,
-            4: self.__dashboard.remove_report,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_current_reports,
+            2: self.dashboard.add_report,
+            3: self.dashboard.modify_report,
+            4: self.dashboard.remove_report,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1233,12 +1233,12 @@ class ExportData(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.export_portfolio_data,
-            2: self.__dashboard.export_market_data,
-            3: self.__dashboard.export_statistical_analysis,
-            4: self.__dashboard.export_trading_strategies,
-            5: self.__dashboard.export_reports,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.export_portfolio_data,
+            2: self.dashboard.export_market_data,
+            3: self.dashboard.export_statistical_analysis,
+            4: self.dashboard.export_trading_strategies,
+            5: self.dashboard.export_reports,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1318,11 +1318,11 @@ class Automation(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.view_automations,
-            2: self.__dashboard.add_automation,
-            3: self.__dashboard.modify_automation,
-            4: self.__dashboard.remove_automation,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_automations,
+            2: self.dashboard.add_automation,
+            3: self.dashboard.modify_automation,
+            4: self.dashboard.remove_automation,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1391,11 +1391,11 @@ class Notifications(Menu):
             0: PortfolioManager
         }
         self.menu_logic = {
-            1: self.__dashboard.view_notifications,
-            2: self.__dashboard.add_notification,
-            3: self.__dashboard.modify_notification,
-            4: self.__dashboard.remove_notification,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_notifications,
+            2: self.dashboard.add_notification,
+            3: self.dashboard.modify_notification,
+            4: self.dashboard.remove_notification,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1466,12 +1466,12 @@ class AccountSettings(Menu):
             0: Main
         }
         self.menu_logic = {
-            1: self.__dashboard.view_user_details,
-            2: self.__dashboard.manage_email_accounts,
-            3: self.__dashboard.change_account_username,
-            4: self.__dashboard.change_account_password,
-            5: self.__dashboard.delete_account,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_user_details,
+            2: self.dashboard.manage_email_accounts,
+            3: self.dashboard.change_account_username,
+            4: self.dashboard.change_account_password,
+            5: self.dashboard.delete_account,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1494,10 +1494,10 @@ class ManageEmailAccounts(Menu):
             0: AccountSettings
         }
         self.menu_logic = {
-            1: self.__dashboard.view_current_email_accounts,
-            2: self.__dashboard.add_email_account,
-            3: self.__dashboard.remove_email_account,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_current_email_accounts,
+            2: self.dashboard.add_email_account,
+            3: self.dashboard.remove_email_account,
+            0: self.dashboard.previous_menu
         }
 
 
@@ -1585,15 +1585,15 @@ class HelpAndInformation(Menu):
             0: Main
         }
         self.menu_logic = {
-            1: self.__dashboard.view_user_manual,
-            2: self.__dashboard.view_faq,
-            3: self.__dashboard.view_glossary,
-            4: self.__dashboard.about,
-            5: self.__dashboard.contact_us,
-            6: self.__dashboard.report_bug,
-            7: self.__dashboard.request_feature,
-            8: self.__dashboard.view_license,
-            0: self.__dashboard.previous_menu
+            1: self.dashboard.view_user_manual,
+            2: self.dashboard.view_faq,
+            3: self.dashboard.view_glossary,
+            4: self.dashboard.about,
+            5: self.dashboard.contact_us,
+            6: self.dashboard.report_bug,
+            7: self.dashboard.request_feature,
+            8: self.dashboard.view_license,
+            0: self.dashboard.previous_menu
         }
 
 
