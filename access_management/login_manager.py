@@ -1,9 +1,5 @@
 # Purpose: Login Manager module for managing the user interface for the login process and the login process itself.
 
-# Type Checking
-from __future__ import annotations
-from typing import TYPE_CHECKING
-
 # Standard Libraries
 
 # Third-party Libraries
@@ -14,10 +10,7 @@ from account_management.account_operations import UserAccountOperation, EmailAcc
 from access_management.account_authenticator import AccountAuthenticator
 from session_management.token_manager  import SessionTokenManager
 from user_interface.user_input import UserInput
-
-# Local modules imported for Type Checking purposes only
-if TYPE_CHECKING:
-    from account_management.accounts import UserAccount, EmailAccount
+from account_management.accounts import UserAccount
 
 # Configure logging
 import logging
@@ -28,30 +21,27 @@ class LoginManager:
     def __init__(self, database: Database) -> None:
         self.__database = database
         self.__session_token_manager = SessionTokenManager(self.__database.session_manager)
-        # TODO - may nee to pass account operation as arguments since they'll be used elsewhere
-        self.user_account_operation = UserAccountOperation(self.__database)
-        self.email_account_operation = EmailAccountOperation(self.__database)
-        self.__account_authenticator = AccountAuthenticator(self.user_account_operation, self.email_account_operation)
-        self.user_input = UserInput()
+        self.__user_account_operation = UserAccountOperation(self.__database)
+        self.__account_authenticator = AccountAuthenticator(self.__database)
         logging.debug("Login Manager initialized.")
 
-    def create_account(self) -> None:
+    def create_user_account(self) -> None:
         # Get the username from the user (username_prompt checks if it's valid)
-        provided_username = self.user_input.username_prompt()
-        
+        provided_username = UserInput.username_prompt()
+
         # Check if the username already exists
-        if self.user_account_operation.check_username_exists(provided_username):
+        if self.__user_account_operation.check_username_exists(provided_username):
             print("Username already exists. Account creation failed. Please try again")
             return None
 
         # Get the password from the user (password_prompt checks if it's valid), confirm it with a second prompt
-        provided_password = self.user_input.password_prompt(confirm=True)
+        provided_password = UserInput.password_prompt(confirm=True)
 
         # Create the account
-        self.user_account_operation.create_user_account(provided_username, provided_password)
+        self.__user_account_operation.create_user_account(provided_username, provided_password)
 
         # Retrieve the created user account, will return None if creation failed
-        user_account = self.user_account_operation.get_user_account_by_username(provided_username)
+        user_account = self.__user_account_operation.get_user_account_by_username(provided_username)
         if user_account is not None:
             # Run the login_management function to log the user in
             self.__execute_login_operations(user_account)
@@ -64,23 +54,20 @@ class LoginManager:
             print("Account creation failed. Please try again.")
             logging.info(f"Account creation '{provided_username}' failed. No user ID.")
 
-    def user_login(self) -> None:
+    def user_account_login(self) -> None:
         # Get the username from the user, sanitize it, and store it
-        provided_username = self.user_input.username_prompt()
+        provided_username = UserInput.username_prompt()
 
         # Check if the username exists, will return None if it doesn't
-        user_account = self.user_account_operation.get_user_account_by_username(provided_username)
+        user_account = self.__user_account_operation.get_user_account_by_username(provided_username)
         if user_account is None:
             print("Username does not exist. Account login failed. Please try again.")
             return None
         else:
             print(f"Logging in as '{user_account.username}'...")
 
-        # Get the password from the user (password_prompt checks if it's valid)
-        provided_password_hash = self.user_input.password_prompt()
-
         # Verify the username and password
-        if self.__account_authenticator.validate_user_credentials(provided_username, provided_password_hash):
+        if self.__account_authenticator.authenticate_user_credentials(provided_username):
             if self.__database.session_manager.get_current_user() is None:
                 # Run the login_management function to log the user in
                 self.__execute_login_operations(user_account)
@@ -95,7 +82,7 @@ class LoginManager:
             print("Account login failed. Please try again")
             logging.info(f"User '{user_account.username}' user_id '{user_account.user_id}' failed to log in with session token: {self.__database.session_manager.get_session_token()}")
 
-    def user_logout(self) -> None:
+    def user_account_logout(self) -> None:
         current_user = self.__database.session_manager.get_current_user()
         session_token = self.__database.session_manager.get_session_token()
         user_id = None
@@ -125,7 +112,7 @@ class LoginManager:
         # Generate a session token and start the session
         self.__session_token_manager.generate_session_token()
         self.__database.session_manager.start_session()
-    
+
     def __execute_logout_operations(self) -> None:
         # Unload the user from the session manager
         self.__database.session_manager.set_current_user(None)
