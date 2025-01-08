@@ -247,11 +247,21 @@ class QueryExecutor:
 		self.execute_query(query)
 
 	def delete_entry(self, table_name: str, columns: tuple, values: tuple, user_id: int) -> None:
+		# Sanitize the input to avoid SQL injection
+		table_name = UserInput.sanitize_input(table_name)
+		columns = tuple([UserInput.sanitize_input(col) for col in columns])
+
+		# Construct the WHERE clause
+		where_clause = " AND ".join([f"{col} = ?" for col in columns])
+		where_clause += " AND user_id = ?"
+
 		# Define the query parameters
 		query_type = "DELETE"
-		query = f"{query_type} FROM {table_name} WHERE {columns} = {values} AND user_id = {user_id}"
+		query = f"{query_type} FROM {table_name} WHERE {where_clause}"
+		params = values + (user_id,)
+
 		# Execute the query
-		self.execute_query(query)
+		self.execute_query(query, params)
 
 	def select(self, table_name: str, columns: tuple[str], user_id: int, where_clause: str | None = None) -> list[tuple[str]] | None:
 		# Define the query parameters
@@ -405,13 +415,10 @@ class QueryExecutor:
 	#     # Handle the exists query result
 	#     return self.__handle_exists_result(result, item_name)
 
-	def __item_exists(self, item_name: str, query: str, params: tuple) -> bool:
-		# Define the query parameters
-		query_type = "SELECT"
-		query = f"{query_type} {item_name} FROM {query}"
+	def __item_exists(self, query: str, params: tuple) -> bool:
 		# Execute the query
 		result = self.execute_query(query, params)
-		return result is not None  # Returns True if a row is returned, indicating the item exists
+		return result is not None and len(result) > 0  # Returns True if a row is returned, indicating the item exists
 
 	def table_exists(self, table_name: str) -> bool:
 		# Define the query parameters
@@ -421,41 +428,42 @@ class QueryExecutor:
 		# Set the query parameters
 		params = (table_name,)
 		# Check if the table exists
-		return self.__item_exists(table_name, query, params)
+		return self.__item_exists(query, params)
 
 	def column_exists(self, table_name: str, column_name: str) -> bool:
 		# Define the query parameters
 		query_type = "SELECT"
 		# SQL query to check if a column exists
-		query = f"{query_type} count(*) FROM pragma_table_info('{table_name}') WHERE name='{column_name}'"
+		query = f"{query_type} count(*) FROM pragma_table_info('{table_name}') WHERE name=?"
 		# Set the query parameters
-		params = (table_name, column_name)
+		params = (column_name,)
 		# Check if the column exists
-		return self.__item_exists(column_name, query, params)
+		return self.__item_exists(query, params)
 
-	def entry_exists(self, table_name: str, condition: str, user_id: int) -> bool:
+	def entry_exists(self, table_name: str, column_name: str, value: str, user_id: int) -> bool:
 		# Sanitize the input to avoid SQL injection
 		table_name = UserInput.sanitize_input(table_name)
-		condition = UserInput.sanitize_input(condition)
+		column_name = UserInput.sanitize_input(column_name)
+
 		# Define the query parameters
 		query_type = "SELECT"
 		# SQL query to check if the entry exists in the table
-		query = f"{query_type} 1 FROM {table_name} WHERE {condition} AND user_id = ?"
+		query = f"{query_type} 1 FROM {table_name} WHERE {column_name} = ? AND user_id = ? LIMIT 1"
 		# Set the query parameters
-		params = (user_id,)
+		params = (value, user_id)
 		# Check if the entry exists
-		return self.__item_exists(table_name, query, params)
+		return self.__item_exists(query, params)
 
 	def table_is_empty(self, table_name: str) -> bool:
 		# Define the query parameters
 		query_type = "SELECT"
 		# SQL query to check if a table is empty
-		query = f"{query_type} * FROM ? LIMIT 1"
+		query = f"{query_type} * FROM {table_name} LIMIT 1"
 		# Set the query parameters
-		params = (table_name,)
+		params = ()
 		# Execute the query
 		result = self.execute_query(query, params)
-		return result is None  # Returns True if no row is returned, indicating the table is empty
+		return result is None or len(result) == 0  # Returns True if no row is returned, indicating the table is empty
 
 
 

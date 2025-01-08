@@ -32,8 +32,8 @@ class UserAccountOperation:
 		return isinstance(result, UserAccount)
 
 	# TODO - account for user roles for all methods that make changes to the database
-	def create_user_account(self, provided_username: str, provided_password: bytes) -> None:
-		self.__database.query_executor.store_username_and_password(provided_username, provided_password)
+	def create_user_account(self, provided_username: str, provided_password_hash: bytes) -> None:
+		self.__database.query_executor.store_username_and_password(provided_username, provided_password_hash)
 
 	def delete_user_account_from_database(self, user_account: UserAccount) -> None:
 		# Delete the user's information from the database
@@ -199,14 +199,14 @@ class EmailAccountOperation:
 		# Only get the email password if the email usage is not "notification"
 		if choice == 1:
 			# Get the password from the user (password_prompt checks if it's valid)
-			provided_email_password = UserInput.password_prompt(prompt="Enter your email password: ", confirm=True)
-			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
+			provided_email_password_hash: bytes = UserInput.password_prompt(prompt="Enter your email password: ", hash=True, confirm=True)
+			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password_hash)
 		elif choice == 2:
 			self.store_email_address_only(notification_id, provided_email_address)
 		elif choice == 3:
 			# Get the password from the user (password_prompt checks if it's valid)
-			provided_email_password = UserInput.password_prompt(prompt="Enter your email password: ", confirm=True)
-			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password)
+			provided_email_password_hash: bytes = UserInput.password_prompt(prompt="Enter your email password: ", hash=True, confirm=True)
+			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password_hash)
 			self.store_email_address_only(notification_id, provided_email_address)
 		else:
 			print("Invalid choice.")
@@ -217,56 +217,63 @@ class EmailAccountOperation:
 		return 0
 
 
-	# def remove_email_account(self, email_usage: str) -> int:
-	#     if self.session_manager.current_user is None:
-	#         print("You are not logged in.")
-	#         return 1
-	#     # if self.session_manager.current_user.user_id is None:
-	#     #     print("User id is None. Cannot remove email account.")
-	#     #     return 1
+	def remove_email_account(self) -> int:
+		if self.__database.session_manager.get_current_user() is None:
+			print("You are not logged in.")
+			return 1
+		if self.__database.session_manager.get_current_user_id() is None:
+			print("User id is None. Cannot remove email account.")
+			return 1
 
-	#     # Get the email address from the user (email_prompt checks if it's valid)
-	#     provided_email = self.user_input.email_prompt()
+		# Fetch all email addresses of usage "import" from the user
+		email_accounts: list[EmailAccount] | None = self.__database.query_executor.get_all_current_user_email_accounts()
+		logging.debug(f"Email accounts: {email_accounts}")
 
-	#     # Get the email_usage_id from the database
-	#     email_usage_id = self.query_executor.get_email_usage_id(email_usage)
+		# Check if any import email addresses are found
+		if email_accounts is None or len(email_accounts) <= 0:
+			print("No email accounts for found.")
+			print("Please add an email account in the account settings.")
+			return 1
 
-	#     # Check that the email address is in the database
-	#     if not self.query_executor.entry_exists("email",
-	#             f"email_address='{provided_email}' AND email_usage_id='{email_usage_id}'",
-	#             self.session_manager.current_user.user_id):
-	#         print("Email address is not in the database.")
-	#         return 2
+		# Print the available email accounts
+		title = "AVAILABLE EMAIL ACCOUNTS:"
+		print(f"\n{title}")
+		for i, email_account in enumerate(email_accounts, start=1):
+			print(f"{i}: {email_account.address}")
 
-	#     # Only get the email password if the email usage is not "notification"
-	#     if email_usage == "notification":
-	#         provided_password = None
-	#         # Prep the email information for insertion into the database
-	#         columns = ("email_address", "email_usage_id")
-	#         values = (provided_email, email_usage_id)
-	#     else:
-	#         # Get the password from the user (password_prompt checks if it's valid)
-	#         provided_password = self.user_input.password_prompt(prompt="Enter your email password", confirm=True)
-	#         # Verify the email password
-	#         if not self.validate_email_credentials(provided_email, provided_password):
-	#             print("Invalid email credentials.")
-	#             return 2
-	#         # Prep the email information for insertion into the database
-	#         columns = ("email_address", "password_hash", "email_usage_id")
-	#         values = (provided_email, provided_password, email_usage_id)
+		# Initialize the UserInput class
+		user_input = UserInput()
 
-	#     # Delete the entry from the database
-	#     try:
-	#         self.query_executor.delete_entry("email", columns, values, self.session_manager.current_user.user_id)
-	#         # Remove the email account from the current user
-	#         self.session_manager.current_user.remove_email_account(EmailAccount(email_usage, provided_email, provided_password))
-	#     except Exception as e:
-	#         print("Error deleting email account from the database.")
-	#         logging.warning(e)
-	#         return 3
+		# Get the user's choice
+		choice = user_input.get_valid_menu_choice(len(email_accounts), "Choose the email account you would like to delete: ")
+		# Get the email account based on the user's choice
+		selected_email_account = email_accounts[choice - 1]
+		logging.debug(f"Selected email account: {selected_email_account}")
 
-	#     print("Email account successfully removed.")
-	#     return 0
+		# Check that the email address is in the database
+		if not self.__database.query_executor.entry_exists(
+				"email",
+				"address",
+				selected_email_account.address,
+				self.__database.session_manager.get_current_user_id()):
+			print("Email address is not in the database.")
+			return 2
+
+		# Prep the email information for deletion into the database
+		columns = ("address",)
+		values = (selected_email_account.address,)
+
+		# Delete the entry from the database
+		try:
+			self.__database.query_executor.delete_entry("email", columns, values, self.__database.session_manager.get_current_user_id())
+		except Exception as e:
+			print("Error deleting email account from the database.")
+			logging.warning(e)
+			return 3
+
+		print("Email account successfully removed.")
+		logging.info(f"Email account {selected_email_account.address} successfully removed.")
+		return 0
 
 
 if __name__ == "__main__":
