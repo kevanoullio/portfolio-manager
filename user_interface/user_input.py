@@ -87,7 +87,7 @@ class UserInput:
 				print(f"Invalid username. {e.message}")
 
 	@staticmethod
-	def password_prompt(prompt: str = "Enter your password: ", confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
+	def password_prompt(prompt: str = "Enter your password: ", hash: bool = False, confirm: bool = False, confirm_prompt: str = "Confirm your password: ") -> bytes:
 		"""
 		This function prompts the user for a password and ensures that it is a valid password format.
 
@@ -124,11 +124,9 @@ class UserInput:
 		# Convert the password to bytes
 		encoded_password = provided_password.encode()
 
-		if confirm:
-			# If confirm is True, hash the password (bytes) and return it as bytes
+		if hash:
 			return UserInput.__hash_password(encoded_password)
 		else:
-			# If confirm is False, don't hash the password and return it as bytes
 			return encoded_password
 
 	@staticmethod
