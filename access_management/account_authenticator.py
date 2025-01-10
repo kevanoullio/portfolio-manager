@@ -13,7 +13,6 @@ import bcrypt
 
 # Local modules imported for Type Checking purposes only
 from database_management.database import Database
-from user_interface.user_input import UserInput
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
 from exceptions.authentication_exceptions import InvalidCredentialsError
 
@@ -29,10 +28,7 @@ class AccountAuthenticator:
 		self.__email_account_operation = EmailAccountOperation(self.__database)
 		logging.debug("UserAuthentication initialized.")
 
-	def authenticate_user_credentials(self, provided_username: str) -> bool:
-		# Prompt the user for the user account password
-		provided_password_hash = UserInput.password_prompt(prompt="Verify your user account credentials by entering your user account password: ", confirm=False)
-
+	def authenticate_user_credentials(self, provided_username: str, provided_password_bytes: bytes) -> bool:
 		# Get the user account password hash
 		user_account_password_hash: bytes | None = self.__user_account_operation.get_user_password_hash_by_username(provided_username)
 
@@ -42,14 +38,15 @@ class AccountAuthenticator:
 			return False
 
 		# Verify the password
-		if self.__authenticate_password(provided_password_hash, user_account_password_hash):
-			print("User account authenticated.")
+		if self.__authenticate_password(provided_password_bytes, user_account_password_hash):
+			print("User account credentials authenticated successfully.")
+			logging.info(f"User '{provided_username}' authenticated successfully.")
 			return True
 		else:
 			print("Invalid user credentials.")
 			return False
 
-	def authenticate_email_credentials(self, provided_email_address: str) -> bool:
+	def authenticate_email_credentials(self, provided_email_address: str, provided_password_bytes: bytes) -> bool:
 		# TODO - put the commented out code in EmailAccountOperation
 		# # Get an EmailAccount class based on the email
 		# email_account: EmailAccount | None = self.email_account_operation.get_email_account_by_email_address(provided_email_address)
@@ -57,9 +54,6 @@ class AccountAuthenticator:
 		# if email_account is None:
 		#     print("Email address is not in the database.")
 		#     return None
-
-		# Prompt the user for the email account password
-		provided_password_hash = UserInput.password_prompt(prompt="Verify your email credentials by entering your email password: ", confirm=False)
 
 		# Get the email account password hash
 		email_account_password_hash: bytes | None = self.__email_account_operation.get_email_account_password_hash_by_email_address(provided_email_address)
@@ -70,16 +64,16 @@ class AccountAuthenticator:
 			raise InvalidCredentialsError("email", "Email password hash is None.")
 
 		# Validate the user's email credentials
-		if self.__authenticate_password(provided_password_hash, email_account_password_hash):
-			print("Email account authenticated.")
+		if self.__authenticate_password(provided_password_bytes, email_account_password_hash):
+			print("Email account credentials authenticated successfully.")
+			logging.info(f"Email '{provided_email_address}' authenticated successfully.")
 			return True
 		else:
 			raise InvalidCredentialsError("email", None)
 
-	def __authenticate_password(self, provided_password_hash: bytes, stored_password_hash: bytes) -> bool:
+	def __authenticate_password(self, provided_password_bytes: bytes, stored_password_hash: bytes) -> bool:
 		# Verify if the provided password matches the user's stored password
-		result = bcrypt.checkpw(provided_password_hash, stored_password_hash)
-		return result
+		return bcrypt.checkpw(provided_password_bytes, stored_password_hash)
 
 
 if __name__ == "__main__":
