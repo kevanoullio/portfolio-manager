@@ -719,7 +719,7 @@ class Dashboard:
 
 
 	def remove_email_account(self):
-		print("Remove Email Account logic goes here...")
+		self.__email_account_operation.remove_email_account()
 
 
 	def view_user_manual(self):

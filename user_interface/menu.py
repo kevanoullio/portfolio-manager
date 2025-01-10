@@ -1490,7 +1490,7 @@ class ManageEmailAccounts(Menu):
         self.menu_mapping = {
             1: ManageEmailAccounts,
             2: ManageEmailAccounts,
-            3: RemoveEmailAccount,
+            3: ManageEmailAccounts,
             0: AccountSettings
         }
         self.menu_logic = {
@@ -1512,15 +1512,15 @@ class ManageEmailAccounts(Menu):
 #         # TODO - finish this menu
 
 
-# RemoveEmailAccount Menu class for managing the remove email account menu
-class RemoveEmailAccount(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "REMOVE EMAIL ACCOUNT"
-        self.previous_menu = ManageEmailAccounts(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of email accounts to choose from
-        # TODO - finish this menu
+# # RemoveEmailAccount Menu class for managing the remove email account menu
+# class RemoveEmailAccount(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "REMOVE EMAIL ACCOUNT"
+#         self.previous_menu = ManageEmailAccounts(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of email accounts to choose from
+#         # TODO - finish this menu
 
 
 # ChangeAccountUsername Menu class for managing the change account username menu
