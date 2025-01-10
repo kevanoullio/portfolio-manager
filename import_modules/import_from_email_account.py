@@ -36,9 +36,9 @@ last_uid_cache: int | None = None
 
 # Class to handle IMAP connection and login
 class IMAPClient:
-	def __init__(self, email_address: str, email_account_password_hash: bytes) -> None:
+	def __init__(self, email_address: str, password_bytes: bytes) -> None:
 		self.__email_address = email_address
-		self.__email_account_password_hash = email_account_password_hash
+		self.__password_bytes = password_bytes
 		self.__mail = None
 		self.__server_hosts = {
 			"outlook": "outlook.office365.com",
@@ -50,22 +50,27 @@ class IMAPClient:
 
 	def email_login(self) -> imaplib.IMAP4_SSL | None:
 		# Need to check if email address and password are None for decode() to work
-		if self.__email_address is None or self.__email_account_password_hash is None:
+		if self.__email_address is None:
 			print("Please set email account first.")
 			return None
 
 		# Get the email type from the email address
 		email_service_host = self.__email_address.split("@")[-1].split(".")[0]
+		logging.debug(f"Email service host: {email_service_host}")
 		if email_service_host not in self.__server_hosts:
 			print("Email service provider not supported for import.")
 			return None
 		else:
 			try:
-				self.__mail = imaplib.IMAP4_SSL(self.__server_hosts[email_service_host])
-				self.__mail.login(self.__email_address, self.__email_account_password_hash.decode())
+				server_host = self.__server_hosts[email_service_host]
+				logging.info(f"Connecting to email server '{server_host}' with email address '{self.__email_address}'...")
+				self.__mail = imaplib.IMAP4_SSL(server_host)
+				self.__mail.login(self.__email_address, self.__password_bytes.decode())
+				logging.info("Logged into email account successfully.")
 				return self.__mail
 			except imaplib.IMAP4.error as e:
-				print(f"Failed to login. Please check your credentials. Error: {str(e)}")
+				print(f"Failed to log into email account. Please check your credentials and ensure IMAP access is enabled. Error: {str(e)}")
+				logging.error(f"Failed to log into email account. Please check your credentials and ensure IMAP access is enabled. Error: {str(e)}")
 				self.__mail = None  # Reset the mail object to None upon login failure
 				return None
 
@@ -294,6 +299,7 @@ def import_from_email_account(database: Database) -> int:
 	# TODO - Replace with AvailableEmailAccount class???
 	# Print the available email accounts
 	title = "AVAILABLE EMAIL ACCOUNTS:"
+	print(f"\n{title}")
 	for i, email_account in enumerate(import_email_accounts, start=1):
 		print(f"{i}: {email_account.address}")
 
@@ -306,24 +312,20 @@ def import_from_email_account(database: Database) -> int:
 	selected_import_email_account = import_email_accounts[choice - 1]
 	logging.debug(f"Selected import email account: {selected_import_email_account}")
 
+	# Prompt the user for the email account password
+	provided_password_bytes: bytes = UserInput.password_prompt(prompt="Verify your email credentials by entering your email password: ", hash=False, confirm=False)
+
 	# Validate the user's email credentials
-	email_account_operation = EmailAccountOperation(database)
 	account_authenticator = AccountAuthenticator(database)
-	provided_password_hash: bytes | None = None
 	try:
-		if account_authenticator.authenticate_email_credentials(selected_import_email_account.address):
-			print("Email credentials authenticated successfully.")
-			provided_password_hash = email_account_operation.get_email_account_password_hash_by_email_address(selected_import_email_account.address)
+		if account_authenticator.authenticate_email_credentials(selected_import_email_account.address, provided_password_bytes):
+			pass
 	except InvalidCredentialsError as e:
 		print(f"{e}")
 		return 3
 
-	# Check if the provided password hash is None
-	if provided_password_hash is None:
-		raise InvalidCredentialsError("email", "Email password hash is None.")
-
 	# Login to the IMAP server using the selected email account
-	imap_client = IMAPClient(selected_import_email_account.address, provided_password_hash)
+	imap_client = IMAPClient(selected_import_email_account.address, provided_password_bytes)
 	try:
 		mail = imap_client.email_login()
 		if mail is None:
