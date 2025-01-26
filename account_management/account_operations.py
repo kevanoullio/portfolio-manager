@@ -199,13 +199,23 @@ class EmailAccountOperation:
 		# Only get the email password if the email usage is not "notification"
 		if choice == 1:
 			# Get the password from the user (password_prompt checks if it's valid)
-			provided_email_password_hash: bytes = UserInput.password_prompt(prompt="Enter your email password: ", hash=True, confirm=True)
+			provided_email_password_hash: str | bytes = UserInput.password_prompt(encode=True, hash=True, prompt="Enter your email password: ", confirm=True)
+
+			# Ensure that the password is hashed before storing it
+			if not isinstance(provided_email_password_hash, bytes):
+				raise TypeError("Password must be hashed before storing it.")
+
 			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password_hash)
 		elif choice == 2:
 			self.store_email_address_only(notification_id, provided_email_address)
 		elif choice == 3:
 			# Get the password from the user (password_prompt checks if it's valid)
-			provided_email_password_hash: bytes = UserInput.password_prompt(prompt="Enter your email password: ", hash=True, confirm=True)
+			provided_email_password_hash: str | bytes = UserInput.password_prompt(encode=True, hash=True, prompt="Enter your email password: ", confirm=True)
+
+			# Ensure that the password is hashed before storing it
+			if not isinstance(provided_email_password_hash, bytes):
+				raise TypeError("Password must be hashed before storing it.")
+
 			self.store_email_address_and_password_hash(import_id, provided_email_address, provided_email_password_hash)
 			self.store_email_address_only(notification_id, provided_email_address)
 		else:

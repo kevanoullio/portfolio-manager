@@ -35,7 +35,11 @@ class LoginManager:
 			return None
 
 		# Get the password from the user (password_prompt checks if it's valid), confirm it with a second prompt
-		provided_password_hash = UserInput.password_prompt(hash=True, confirm=True)
+		provided_password_hash: str | bytes = UserInput.password_prompt(encode=True, hash=True, confirm=True)
+
+		# Ensure that the password is hashed before storing it
+		if not isinstance(provided_password_hash, bytes):
+			raise TypeError("Password must be hashed before storing it.")
 
 		# Create the account
 		self.__user_account_operation.create_user_account(provided_username, provided_password_hash)
@@ -67,7 +71,11 @@ class LoginManager:
 			print(f"Logging in as '{user_account.username}'...")
 
 		# Prompt the user for the user account password
-		provided_password_bytes = UserInput.password_prompt(prompt="Verify your user account credentials by entering your user account password: ", hash=False, confirm=False)
+		provided_password_bytes = UserInput.password_prompt(encode=True, hash=False, prompt="Verify your user account credentials by entering your user account password: ", confirm=False)
+
+		# Ensure that the password is encoded before logging in
+		if not isinstance(provided_password_bytes, bytes):
+			raise TypeError("Password must be encoded before logging in.")
 
 		# Verify the username and password
 		if self.__account_authenticator.authenticate_user_credentials(provided_username, provided_password_bytes):
