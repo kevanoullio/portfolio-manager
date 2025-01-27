@@ -369,11 +369,11 @@ class ImportExistingPortfolio(Menu):
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
-            1: ImportFromBrokerageAccount,
-            2: ImportFromCSVFile,
-            3: ImportFromExcelFile,
-            4: ImportFromPDFFile,
-            5: ImportFromDatabaseFile,
+            1: ImportExistingPortfolio,
+            2: ImportExistingPortfolio,
+            3: ImportExistingPortfolio,
+            4: ImportExistingPortfolio,
+            5: ImportExistingPortfolio,
             6: ImportExistingPortfolio,
             7: ImportExistingPortfolio,
             0: ManagePortfolio
@@ -390,59 +390,59 @@ class ImportExistingPortfolio(Menu):
         }
 
 
-# ImportFromBrokerageAccount Menu class for managing the import from brokerage account menu
-class ImportFromBrokerageAccount(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM BROKERAGE ACCOUNT"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of brokerage accounts to choose from
-        # TODO - finish this menu
+# # ImportFromBrokerageAccount Menu class for managing the import from brokerage account menu
+# class ImportFromBrokerageAccount(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM BROKERAGE ACCOUNT"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of brokerage accounts to choose from
+#         # TODO - finish this menu
 
 
-# ImportFromCSVFile Menu class for managing the import from CSV file menu
-class ImportFromCSVFile(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM CSV FILE"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of CSV files to choose from
-        # TODO - finish this menu
+# # ImportFromCSVFile Menu class for managing the import from CSV file menu
+# class ImportFromCSVFile(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM CSV FILE"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of CSV files to choose from
+#         # TODO - finish this menu
 
 
-# ImportFromExcelFile Menu class for managing the import from Excel file menu
-class ImportFromExcelFile(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM EXCEL FILE"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of Excel files to choose from
-        # TODO - finish this menu
+# # ImportFromExcelFile Menu class for managing the import from Excel file menu
+# class ImportFromExcelFile(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM EXCEL FILE"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of Excel files to choose from
+#         # TODO - finish this menu
 
 
-# ImportFromPDFFile Menu class for managing the import from PDF file menu
-class ImportFromPDFFile(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM PDF FILE"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of PDF files to choose from
-        # TODO - finish this menu
+# # ImportFromPDFFile Menu class for managing the import from PDF file menu
+# class ImportFromPDFFile(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM PDF FILE"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of PDF files to choose from
+#         # TODO - finish this menu
 
 
-# ImportFromDatabaseFile Menu class for managing the import from database file menu
-class ImportFromDatabaseFile(Menu):
-    def __init__(self, dashboard: Dashboard) -> None:
-        super().__init__(dashboard)
-        self.title = "IMPORT FROM DATABASE FILE"
-        self.previous_menu = ImportExistingPortfolio(dashboard)
-        # Add menu options
-        self.options = {} # TODO - Add dynamic list of database files to choose from
-        # TODO - finish this menu
+# # ImportFromDatabaseFile Menu class for managing the import from database file menu
+# class ImportFromDatabaseFile(Menu):
+#     def __init__(self, dashboard: Dashboard) -> None:
+#         super().__init__(dashboard)
+#         self.title = "IMPORT FROM DATABASE FILE"
+#         self.previous_menu = ImportExistingPortfolio(dashboard)
+#         # Add menu options
+#         self.options = {} # TODO - Add dynamic list of database files to choose from
+#         # TODO - finish this menu
 
 
 # # ImportFromEmail Menu class for managing the import from email menu

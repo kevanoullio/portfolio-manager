@@ -243,7 +243,9 @@ class Dashboard:
 
 
 	def import_existing_portfolio_from_csv_file(self):
-		print("Import Existing Portfolio from CSV File logic goes here...")
+		# Call the import_from_csv script
+		from import_modules.import_portfolio_from_csv import import_portfolio_from_csv
+		import_portfolio_from_csv(self.__database)
 
 
 	def import_existing_portfolio_from_excel_file(self):
@@ -267,13 +269,13 @@ class Dashboard:
 	def import_existing_portfolio_from_email_account(self):
 		# TODO - Use AvailableEmailAccount class instead???
 		# Call the import_from_email_account script
-		from import_modules.import_from_email_account import import_from_email_account
+		from import_modules.import_portfolio_from_email_account import import_from_email_account
 		import_from_email_account(self.__database)
 
 
 	def import_existing_portfolio_from_outlook_desktop_app(self):
 		# Call the import_from_outlook_desktop_app script
-		from import_modules.import_from_outlook_desktop_app import import_from_outlook_desktop_app
+		from import_modules.import_portfolio_from_outlook_desktop_app import import_from_outlook_desktop_app
 		import_from_outlook_desktop_app(self.__database)
 
 
