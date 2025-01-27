@@ -47,6 +47,7 @@ class IMAPClient:
 			"aol": "imap.aol.com",
 			"icloud": "imap.mail.me.com"
 		}
+		self.__port = 993 # IMAP port for SSL/TLS
 
 	def email_login(self) -> imaplib.IMAP4_SSL | None:
 		# Need to check if email address and password are None for decode() to work
@@ -64,7 +65,7 @@ class IMAPClient:
 			try:
 				server_host = self.__server_hosts[email_service_host]
 				logging.info(f"Connecting to email server '{server_host}' with email address '{self.__email_address}'...")
-				self.__mail = imaplib.IMAP4_SSL(server_host)
+				self.__mail = imaplib.IMAP4_SSL(server_host, self.__port)
 				self.__mail.login(self.__email_address, self.__password_bytes.decode())
 				logging.info("Logged into email account successfully.")
 				return self.__mail
@@ -313,7 +314,11 @@ def import_from_email_account(database: Database) -> int:
 	logging.debug(f"Selected import email account: {selected_import_email_account}")
 
 	# Prompt the user for the email account password
-	provided_password_bytes: bytes = UserInput.password_prompt(prompt="Verify your email credentials by entering your email password: ", hash=False, confirm=False)
+	provided_password_bytes: str | bytes = UserInput.password_prompt(encode=True, hash=False, prompt="Verify your email credentials by entering your email password: ", confirm=False)
+
+	# Ensure that the password is hashed before proceeding
+	if not isinstance(provided_password_bytes, bytes):
+		raise TypeError("Password must be hashed before proceeding.")
 
 	# Validate the user's email credentials
 	account_authenticator = AccountAuthenticator(database)

@@ -271,6 +271,12 @@ class Dashboard:
 		import_from_email_account(self.__database)
 
 
+	def import_existing_portfolio_from_outlook_desktop_app(self):
+		# Call the import_from_outlook_desktop_app script
+		from import_modules.import_from_outlook_desktop_app import import_from_outlook_desktop_app
+		import_from_outlook_desktop_app(self.__database)
+
+
 	# def get_available_email_accounts(self) -> list[EmailAccount] | None:
 	#     # Fetch all email addresses of usage "import" from the user
 	#     import_email_accounts = self.__database.__query_executor.get_user_email_accounts_by_usage("import")

@@ -365,6 +365,7 @@ class ImportExistingPortfolio(Menu):
         self.add_option(verb="Import", subject="Existing Portfolio from PDF file")
         self.add_option(verb="Import", subject="Existing Portfolio from Database file")
         self.add_option(verb="Import", subject="Existing Portfolio from Email Account")
+        self.add_option(verb="Import", subject="Existing Portfolio from Outlook Desktop App")
         # Format option 0
         self.format_return_to_previous_menu_option()
         self.menu_mapping = {
@@ -374,6 +375,7 @@ class ImportExistingPortfolio(Menu):
             4: ImportFromPDFFile,
             5: ImportFromDatabaseFile,
             6: ImportExistingPortfolio,
+            7: ImportExistingPortfolio,
             0: ManagePortfolio
         }
         self.menu_logic = {
@@ -383,6 +385,7 @@ class ImportExistingPortfolio(Menu):
             4: self.dashboard.import_existing_portfolio_from_pdf_file,
             5: self.dashboard.import_existing_portfolio_from_database_file,
             6: self.dashboard.import_existing_portfolio_from_email_account,
+            7: self.dashboard.import_existing_portfolio_from_outlook_desktop_app,
             0: self.dashboard.previous_menu
         }
 
