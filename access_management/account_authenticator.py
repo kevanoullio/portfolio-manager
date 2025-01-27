@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 # Third-party Libraries
 import bcrypt
 
-# Local Modules
-
 # Local modules imported for Type Checking purposes only
 from database_management.database import Database
 from account_management.account_operations import UserAccountOperation, EmailAccountOperation
